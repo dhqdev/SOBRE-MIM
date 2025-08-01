@@ -21,5 +21,22 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Chatwoot Widget -->
+    <script>
+      (function(d,t) {
+        var BASE_URL="https://app.tekvosoft.com";
+        var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+        g.src=BASE_URL+"/packs/js/sdk.js";
+        g.async = true;
+        s.parentNode.insertBefore(g,s);
+        g.onload=function(){
+          window.chatwootSDK.run({
+            websiteToken: 'Bp9hj9g8FfmYPnKRMtfoskiC',
+            baseUrl: BASE_URL
+          })
+        }
+      })(document,"script");
+    </script>
   </body>
 </html>
