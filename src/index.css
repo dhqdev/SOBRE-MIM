@@ -2,39 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* David Fernandes Portfolio Design System - Futuristic Dark Theme with Neon Accents */
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;800&display=swap');
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Dark base colors */
+    --background: 220 20% 8%;
+    --foreground: 180 100% 95%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    /* Card system */
+    --card: 220 20% 12%;
+    --card-foreground: 180 100% 95%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 220 20% 15%;
+    --popover-foreground: 180 100% 95%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Neon color palette */
+    --primary: 180 100% 50%; /* Neon cyan */
+    --primary-foreground: 220 20% 8%;
+    
+    --neon-violet: 270 100% 70%; /* Electric violet */
+    --neon-yellow: 45 100% 60%; /* Mustard yellow */
+    --neon-green: 160 100% 45%; /* Aqua green */
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 220 20% 15%;
+    --secondary-foreground: 180 100% 95%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 15% 20%;
+    --muted-foreground: 180 50% 70%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 270 100% 70%; /* Neon violet */
+    --accent-foreground: 220 20% 8%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 100% 65%;
+    --destructive-foreground: 220 20% 8%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 220 20% 20%;
+    --input: 220 20% 15%;
+    --ring: 180 100% 50%;
+    
+    /* Gradients */
+    --gradient-neon: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--neon-violet)));
+    --gradient-terminal: linear-gradient(45deg, hsl(var(--neon-green)), hsl(var(--primary)));
+    --gradient-dark: linear-gradient(180deg, hsl(var(--background)), hsl(var(--card)));
+    
+    /* Shadows and glows */
+    --shadow-neon: 0 0 20px hsl(var(--primary) / 0.5);
+    --shadow-violet: 0 0 20px hsl(var(--neon-violet) / 0.3);
+    --shadow-card: 0 10px 30px -10px hsl(var(--primary) / 0.2);
+    
+    /* Animation timing */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     --radius: 0.5rem;
 
@@ -100,6 +121,216 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-inter;
+  }
+}
+
+@layer components {
+  /* Terminal/Console styles */
+  .terminal-text {
+    @apply font-mono text-primary;
+  }
+  
+  .terminal-prompt {
+    @apply text-neon-green font-mono;
+  }
+  
+  .terminal-output {
+    @apply text-neon-yellow font-mono;
+  }
+  
+  /* Neon glow effects */
+  .neon-glow {
+    @apply text-primary;
+    text-shadow: 0 0 10px hsl(var(--primary) / 0.8);
+  }
+  
+  .neon-glow-violet {
+    @apply text-accent;
+    text-shadow: 0 0 10px hsl(var(--neon-violet) / 0.8);
+  }
+  
+  .neon-border {
+    @apply border border-primary;
+    box-shadow: 0 0 10px hsl(var(--primary) / 0.3);
+  }
+  
+  /* Card styles */
+  .portfolio-card {
+    @apply bg-card/80 backdrop-blur-sm border border-border/50 rounded-lg p-6;
+    box-shadow: var(--shadow-card);
+    transition: var(--transition-smooth);
+  }
+  
+  .portfolio-card:hover {
+    @apply border-primary/50;
+    box-shadow: var(--shadow-neon);
+    transform: translateY(-4px);
+  }
+  
+  /* Button variants */
+  .btn-neon {
+    @apply bg-transparent border-2 border-primary text-primary px-6 py-3 rounded-lg font-medium;
+    transition: var(--transition-smooth);
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.2);
+  }
+  
+  .btn-neon:hover {
+    @apply bg-primary text-primary-foreground;
+    box-shadow: var(--shadow-neon);
+  }
+  
+  .btn-violet {
+    @apply bg-transparent border-2 border-accent text-accent px-6 py-3 rounded-lg font-medium;
+    transition: var(--transition-smooth);
+  }
+  
+  .btn-violet:hover {
+    @apply bg-accent text-accent-foreground;
+    box-shadow: var(--shadow-violet);
+  }
+  
+  /* Typing animation */
+  .typing-animation {
+    border-right: 2px solid hsl(var(--primary));
+    animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+  }
+  
+  /* Scroll reveal animations */
+  .scroll-reveal {
+    opacity: 0;
+    transform: translateY(50px);
+    transition: all 0.6s ease-out;
+  }
+  
+  .scroll-reveal.revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  /* Digital rain effect */
+  .digital-rain {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .digital-rain::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      linear-gradient(90deg, transparent 98%, hsl(var(--primary) / 0.1) 100%),
+      linear-gradient(0deg, transparent 98%, hsl(var(--primary) / 0.1) 100%);
+    background-size: 20px 20px;
+    animation: digital-rain 20s linear infinite;
+    pointer-events: none;
+  }
+  
+  /* Hologram effect */
+  .hologram {
+    position: relative;
+  }
+  
+  .hologram::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      45deg,
+      transparent 30%, 
+      hsl(var(--primary) / 0.1) 50%, 
+      transparent 70%
+    );
+    animation: hologram-sweep 3s ease-in-out infinite;
+    pointer-events: none;
+  }
+}
+
+@layer utilities {
+  /* Font families */
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+  
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  /* Neon colors */
+  .text-neon-violet {
+    color: hsl(var(--neon-violet));
+  }
+  
+  .text-neon-yellow {
+    color: hsl(var(--neon-yellow));
+  }
+  
+  .text-neon-green {
+    color: hsl(var(--neon-green));
+  }
+  
+  .bg-neon-violet {
+    background-color: hsl(var(--neon-violet));
+  }
+  
+  .bg-neon-yellow {
+    background-color: hsl(var(--neon-yellow));
+  }
+  
+  .bg-neon-green {
+    background-color: hsl(var(--neon-green));
+  }
+  
+  .border-neon-violet {
+    border-color: hsl(var(--neon-violet));
+  }
+  
+  .border-neon-yellow {
+    border-color: hsl(var(--neon-yellow));
+  }
+  
+  .border-neon-green {
+    border-color: hsl(var(--neon-green));
+  }
+}
+
+/* Keyframe animations */
+@keyframes typing {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent }
+  50% { border-color: hsl(var(--primary)) }
+}
+
+@keyframes digital-rain {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+@keyframes hologram-sweep {
+  0% { transform: translateX(-100%) skewX(-45deg); }
+  100% { transform: translateX(200%) skewX(-45deg); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes pulse-neon {
+  0%, 100% { 
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+  }
+  50% { 
+    box-shadow: 0 0 40px hsl(var(--primary) / 0.8);
   }
 }

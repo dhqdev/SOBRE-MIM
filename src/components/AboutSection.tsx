@@ -1,0 +1,133 @@
+import { Code2, Heart, Zap, Users } from 'lucide-react';
+import davidProfile from '@/assets/david-profile.jpg';
+
+const AboutSection = () => {
+  const highlights = [
+    {
+      icon: Code2,
+      title: "1+ ano em Vue, React, Python, Frappe",
+      description: "Experiência sólida em desenvolvimento full-stack"
+    },
+    {
+      icon: Zap,
+      title: "Integrações com APIs, Docker, WhatsApp, n8n",
+      description: "Automação e integração de sistemas complexos"
+    },
+    {
+      icon: Heart,
+      title: "Fé, Ética e Código com propósito",
+      description: "Tecnologia a serviço do Reino e das pessoas"
+    }
+  ];
+
+  return (
+    <section id="sobre" className="py-20 relative">
+      <div className="container mx-auto px-6">
+        <div className="max-w-4xl mx-auto">
+          {/* Section Header */}
+          <div className="text-center mb-16 scroll-reveal">
+            <h2 className="text-4xl font-bold mb-4">
+              <span className="neon-glow">Além do</span>{' '}
+              <span className="neon-glow-violet">Código</span>
+            </h2>
+            <div className="w-20 h-1 bg-gradient-to-r from-primary to-accent mx-auto"></div>
+          </div>
+
+          {/* Main Content */}
+          <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
+            {/* Profile Image */}
+            <div className="scroll-reveal flex justify-center lg:justify-start">
+              <div className="relative group">
+                <div className="w-64 h-64 rounded-full overflow-hidden border-4 border-primary/30 shadow-lg hover:shadow-neon transition-all duration-500">
+                  <img
+                    src={davidProfile}
+                    alt="David Fernandes - Desenvolvedor Full-Stack"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                </div>
+                <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-lg opacity-70 group-hover:opacity-100 transition-opacity duration-500 -z-10"></div>
+              </div>
+            </div>
+
+            {/* Text Content */}
+            <div className="scroll-reveal">
+              <div className="space-y-6 text-lg leading-relaxed text-muted-foreground">
+                <p className="text-foreground">
+                  Me chamo <span className="neon-glow font-semibold">David Fernandes</span>, 
+                  sou desenvolvedor full-stack, criador de soluções digitais e alguém que 
+                  acredita que a tecnologia deve servir ao Reino e às pessoas.
+                </p>
+                
+                <p>
+                  Hoje atuo na <span className="text-primary font-semibold">GRV Software</span>, 
+                  ajudando empresas a otimizarem seus processos com ERP, Vue.js, Frappe e Python. 
+                  Já implantei projetos internos e externos que vão de dashboards analíticos 
+                  até sistemas cristãos de organização espiritual.
+                </p>
+                
+                <p>
+                  Fora do mundo tech, sou músico, professor cristão e apaixonado por ensinar 
+                  jovens como brilhar a luz de Cristo na universidade e na vida digital.
+                </p>
+                
+                <blockquote className="border-l-4 border-primary pl-4 italic text-primary">
+                  "Servi uns aos outros, cada um conforme o dom que recebeu." 
+                  <br />
+                  <span className="text-sm text-muted-foreground">- 1 Pedro 4:10</span>
+                </blockquote>
+              </div>
+            </div>
+          </div>
+
+          {/* Highlights */}
+          <div className="scroll-reveal">
+            <div className="grid md:grid-cols-3 gap-6 mb-16">
+              {highlights.map((highlight, index) => (
+                <div 
+                  key={index}
+                  className="portfolio-card group cursor-pointer"
+                  style={{ animationDelay: `${index * 0.2}s` }}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 group-hover:bg-primary/20 transition-all duration-300">
+                      <highlight.icon className="w-6 h-6 text-primary group-hover:scale-110 transition-transform duration-300" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-2 group-hover:text-primary transition-colors duration-300">
+                        {highlight.title}
+                      </h3>
+                      <p className="text-muted-foreground text-sm">
+                        {highlight.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Tech Stack Preview */}
+          <div className="mt-16 scroll-reveal">
+            <div className="portfolio-card text-center hologram">
+              <h3 className="text-xl font-semibold mb-4 text-foreground">
+                Principais Tecnologias
+              </h3>
+              <div className="flex flex-wrap justify-center gap-3">
+                {['Vue.js', 'React', 'Python', 'Node.js', 'Tailwind', 'Docker', 'Frappe', 'n8n', 'MySQL', 'MongoDB'].map((tech) => (
+                  <span 
+                    key={tech}
+                    className="px-3 py-1 bg-primary/10 border border-primary/30 rounded-full text-sm text-primary hover:bg-primary/20 transition-all duration-300 cursor-pointer"
+                  >
+                    {tech}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default AboutSection;

@@ -1,12 +1,41 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useEffect } from 'react';
+import Navigation from '@/components/Navigation';
+import TerminalHero from '@/components/TerminalHero';
+import AboutSection from '@/components/AboutSection';
+import ProjectsSection from '@/components/ProjectsSection';
+import TechStackSection from '@/components/TechStackSection';
+import ContactSection from '@/components/ContactSection';
+import Footer from '@/components/Footer';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 const Index = () => {
+  useScrollReveal();
+
+  useEffect(() => {
+    // Smooth scrolling for anchor links
+    document.documentElement.style.scrollBehavior = 'smooth';
+    
+    return () => {
+      document.documentElement.style.scrollBehavior = 'auto';
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      
+      <main>
+        <div id="home">
+          <TerminalHero />
+        </div>
+        
+        <AboutSection />
+        <ProjectsSection />
+        <TechStackSection />
+        <ContactSection />
+      </main>
+      
+      <Footer />
     </div>
   );
 };
