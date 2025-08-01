@@ -8,7 +8,8 @@ const ProjectsSection = () => {
       icon: Brain,
       color: "neon-violet",
       link: "https://meu.tekvosoft.com",
-      type: "Produtividade Espiritual"
+      type: "Produtividade Espiritual",
+      image: "/lovable-uploads/8a4b6273-1447-4607-a656-e008ad60ac17.png"
     },
     {
       title: "app.tekvosoft.com", 
@@ -16,7 +17,8 @@ const ProjectsSection = () => {
       icon: MessageCircle,
       color: "primary",
       link: "https://app.tekvosoft.com",
-      type: "Comunicação Corporativa"
+      type: "Comunicação Corporativa",
+      image: "/lovable-uploads/79117ada-5cfd-4c0b-920e-80810bd9a0d6.png"
     },
     {
       title: "Planejamento com Deus",
@@ -24,7 +26,8 @@ const ProjectsSection = () => {
       icon: Heart,
       color: "neon-yellow",
       link: "#",
-      type: "Ferramenta Cristã"
+      type: "Ferramenta Cristã",
+      image: "/lovable-uploads/0003a999-0ac5-44fe-970f-1386c44853b0.png"
     },
     {
       title: "tekvosoft (GitHub)",
@@ -32,7 +35,8 @@ const ProjectsSection = () => {
       icon: Github,
       color: "neon-green",
       link: "https://github.com/dhqdev/tekvosoft",
-      type: "Open Source"
+      type: "Open Source",
+      image: "/lovable-uploads/79117ada-5cfd-4c0b-920e-80810bd9a0d6.png"
     },
     {
       title: "Mesa Fácil – SaaS para Restaurantes",
@@ -40,7 +44,8 @@ const ProjectsSection = () => {
       icon: Utensils,
       color: "neon-violet",
       link: "https://mesa-facil-gestao-saas-1.onrender.com/",
-      type: "SaaS Business"
+      type: "SaaS Business",
+      image: "/lovable-uploads/97ee0758-207f-4450-9388-cdc6a5df76ad.png"
     },
     {
       title: "Agenda Online",
@@ -48,7 +53,8 @@ const ProjectsSection = () => {
       icon: Calendar,
       color: "primary",
       link: "https://agenda-6f9x.onrender.com/",
-      type: "Sistema Completo"
+      type: "Sistema Completo",
+      image: "/lovable-uploads/d95001ff-46a0-4fb6-b6df-1f4b22ce8bee.png"
     }
   ];
 
@@ -73,18 +79,27 @@ const ProjectsSection = () => {
             {projects.map((project, index) => (
               <div 
                 key={index}
-                className="portfolio-card group relative overflow-hidden"
+                className="portfolio-card group relative overflow-hidden card-3d"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
+                {/* Project Image */}
+                <div className="mb-4 project-image-3d">
+                  <img 
+                    src={project.image}
+                    alt={`Screenshot of ${project.title}`}
+                    className="w-full h-48 object-cover rounded-lg border border-primary/20"
+                  />
+                </div>
+
                 {/* Project Type Badge */}
-                <div className="absolute top-4 right-4 z-10">
+                <div className="absolute top-6 right-6 z-10">
                   <span className={`px-2 py-1 text-xs rounded-full bg-${project.color}/20 text-${project.color} border border-${project.color}/30`}>
                     {project.type}
                   </span>
                 </div>
 
                 {/* Icon */}
-                <div className={`w-12 h-12 rounded-lg bg-${project.color}/10 border border-${project.color}/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                <div className={`w-12 h-12 rounded-lg bg-${project.color}/10 border border-${project.color}/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 floating-3d`}>
                   <project.icon className={`w-6 h-6 text-${project.color}`} />
                 </div>
 

@@ -81,12 +81,12 @@ const TechStackSection = () => {
             {techCategories.map((category, index) => (
               <div 
                 key={index}
-                className="portfolio-card group"
+                className="portfolio-card group card-3d"
                 style={{ animationDelay: `${index * 0.2}s` }}
               >
                 {/* Category Header */}
                 <div className="flex items-center gap-3 mb-6">
-                  <div className={`p-3 rounded-lg bg-${category.color}/10 border border-${category.color}/30 group-hover:bg-${category.color}/20 transition-all duration-300`}>
+                  <div className={`p-3 rounded-lg bg-${category.color}/10 border border-${category.color}/30 group-hover:bg-${category.color}/20 transition-all duration-300 floating-3d`}>
                     <category.icon className={`w-6 h-6 text-${category.color}`} />
                   </div>
                   <h3 className={`font-semibold text-lg text-${category.color}`}>

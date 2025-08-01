@@ -1,5 +1,5 @@
 import { Code2, Heart, Zap, Users } from 'lucide-react';
-import davidProfile from '@/assets/david-profile.jpg';
+import davidProfile from '/lovable-uploads/c9fdf4ce-13b8-42e0-b0bd-2a380f0342d6.png';
 
 const AboutSection = () => {
   const highlights = [
@@ -37,8 +37,8 @@ const AboutSection = () => {
           <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
             {/* Profile Image */}
             <div className="scroll-reveal flex justify-center lg:justify-start">
-              <div className="relative group">
-                <div className="w-64 h-64 rounded-full overflow-hidden border-4 border-primary/30 shadow-lg hover:shadow-neon transition-all duration-500">
+              <div className="relative group profile-3d">
+                <div className="w-64 h-64 rounded-full overflow-hidden border-4 border-primary/30 shadow-lg hover:shadow-neon transition-all duration-500 floating-3d">
                   <img
                     src={davidProfile}
                     alt="David Fernandes - Desenvolvedor Full-Stack"
