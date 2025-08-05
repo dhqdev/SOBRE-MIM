@@ -4,6 +4,7 @@ import TerminalHero from '@/components/TerminalHero';
 import AboutSection from '@/components/AboutSection';
 import ProjectsSection from '@/components/ProjectsSection';
 import TechStackSection from '@/components/TechStackSection';
+import FairasSection from '@/components/FairasSection';
 import ContactSection from '@/components/ContactSection';
 import Footer from '@/components/Footer';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
@@ -21,7 +22,14 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      {/* Background Images */}
+      <div className="fixed inset-0 -z-10 opacity-[0.03]">
+        <div className="absolute top-0 left-0 w-full h-screen bg-gradient-to-br from-primary/20 to-transparent"></div>
+        <div className="absolute top-1/4 right-0 w-96 h-96 bg-neon-violet/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 left-0 w-96 h-96 bg-neon-green/10 rounded-full blur-3xl"></div>
+      </div>
+      
       <Navigation />
       
       <main>
@@ -32,6 +40,7 @@ const Index = () => {
         <AboutSection />
         <ProjectsSection />
         <TechStackSection />
+        <FairasSection />
         <ContactSection />
       </main>
       

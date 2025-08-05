@@ -33,13 +33,6 @@ Mensagem: ${formData.message}`;
 
   const socialLinks = [
     {
-      name: 'WhatsApp',
-      icon: MessageCircle,
-      url: 'https://wa.me/5519995378302',
-      color: 'neon-green',
-      description: 'Conversa direta e rápida'
-    },
-    {
       name: 'LinkedIn',
       icon: Linkedin,
       url: 'https://linkedin.com/in/david-fernandes-dev',
@@ -52,13 +45,6 @@ Mensagem: ${formData.message}`;
       url: 'https://github.com/dhqdev',
       color: 'neon-violet',
       description: 'Projetos e códigos'
-    },
-    {
-      name: 'Email',
-      icon: Mail,
-      url: 'mailto:david@tekvosoft.com',
-      color: 'neon-yellow',
-      description: 'Contato formal'
     }
   ];
 
@@ -144,74 +130,34 @@ Mensagem: ${formData.message}`;
               </div>
             </div>
 
-            {/* Contact Form */}
+            {/* WhatsApp Direct Contact */}
             <div className="scroll-reveal">
-              <div className="portfolio-card">
-                <h3 className="text-xl font-semibold mb-6 text-foreground">
-                  Mande uma mensagem
-                </h3>
+              <div className="portfolio-card text-center">
+                <div className="mb-8">
+                  <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <MessageCircle className="w-10 h-10 text-green-400" />
+                  </div>
+                  <h3 className="text-2xl font-semibold mb-4 text-foreground">
+                    Vamos conversar!
+                  </h3>
+                  <p className="text-muted-foreground mb-6">
+                    Clique no botão abaixo para me enviar uma mensagem direta no WhatsApp
+                  </p>
+                </div>
                 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
-                      Nome
-                    </label>
-                    <Input
-                      id="name"
-                      name="name"
-                      type="text"
-                      value={formData.name}
-                      onChange={handleChange}
-                      placeholder="Seu nome"
-                      required
-                      className="w-full bg-background/50 border-border/50 focus:border-primary transition-colors duration-300"
-                    />
-                  </div>
+                <a
+                  href="https://wa.me/5519995378302?text=Olá David! Vi seu portfólio e gostaria de conversar sobre um projeto 🚀"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-3 bg-green-500 hover:bg-green-600 text-white py-4 px-8 rounded-xl font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-green-500/25"
+                >
+                  <MessageCircle className="w-6 h-6" />
+                  Abrir WhatsApp
+                </a>
 
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-                      Email
-                    </label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="seu@email.com"
-                      required
-                      className="w-full bg-background/50 border-border/50 focus:border-primary transition-colors duration-300"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">
-                      Mensagem
-                    </label>
-                    <Textarea
-                      id="message"
-                      name="message"
-                      value={formData.message}
-                      onChange={handleChange}
-                      placeholder="Conte-me sobre seu projeto ou ideia..."
-                      required
-                      rows={4}
-                      className="w-full bg-background/50 border-border/50 focus:border-primary transition-colors duration-300"
-                    />
-                  </div>
-
-                  <Button 
-                    type="submit"
-                    className="w-full btn-neon flex items-center justify-center gap-2 group"
-                  >
-                    <Send className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
-                    Enviar via WhatsApp
-                  </Button>
-                </form>
-
-                <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                  <p className="text-sm text-primary text-center">
-                    💬 Sua mensagem será enviada diretamente para o meu WhatsApp
+                <div className="mt-6 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+                  <p className="text-sm text-green-400">
+                    💬 Resposta garantida em até 24h!
                   </p>
                 </div>
               </div>

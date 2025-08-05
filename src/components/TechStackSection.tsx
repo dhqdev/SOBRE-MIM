@@ -86,7 +86,7 @@ const TechStackSection = () => {
               >
                 {/* Category Header */}
                 <div className="flex items-center gap-3 mb-6">
-                  <div className={`p-3 rounded-lg bg-${category.color}/10 border border-${category.color}/30 group-hover:bg-${category.color}/20 transition-all duration-300 floating-3d`}>
+                  <div className={`p-3 rounded-lg bg-${category.color}/10 border border-${category.color}/30 group-hover:bg-${category.color}/20 transition-all duration-300`}>
                     <category.icon className={`w-6 h-6 text-${category.color}`} />
                   </div>
                   <h3 className={`font-semibold text-lg text-${category.color}`}>
