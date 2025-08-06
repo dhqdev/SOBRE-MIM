@@ -108,7 +108,7 @@ const TerminalHero = () => {
             {/* Action Buttons */}
             <div className="flex flex-wrap justify-center gap-4">
               <a 
-                href="https://linkedin.com/in/david-fernandes-dev" 
+                href="https://www.linkedin.com/in/david-fernandes-77a663229/" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="btn-neon flex items-center gap-2 group"
