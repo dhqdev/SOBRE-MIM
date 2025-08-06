@@ -35,8 +35,9 @@ const TerminalHero = () => {
         }}
       />
       
-      {/* Digital Rain Overlay */}
-      <div className="absolute inset-0 digital-rain" />
+      {/* Digital Effects */}
+      <div className="absolute inset-0 cyber-grid opacity-30" />
+      <div className="absolute inset-0 matrix-rain" />
       
       {/* Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-background/90 via-background/70 to-background/90" />
@@ -92,7 +93,7 @@ const TerminalHero = () => {
             {/* Main Message */}
             <div className="text-center mb-8">
               <h1 className="text-4xl md:text-6xl font-bold mb-4">
-                <span className="neon-glow">Código limpo.</span>
+                <span className="neon-glow glitch" data-text="Código limpo.">Código limpo.</span>
                 <br />
                 <span className="neon-glow-violet">Coração firme.</span>
                 <br />

@@ -1,5 +1,6 @@
 import { Code2, Heart, Zap, Users } from 'lucide-react';
 import davidProfile from '/lovable-uploads/c9fdf4ce-13b8-42e0-b0bd-2a380f0342d6.png';
+import SkillsCarousel from './SkillsCarousel';
 
 const AboutSection = () => {
   const highlights = [
@@ -38,7 +39,7 @@ const AboutSection = () => {
             {/* Profile Image */}
             <div className="scroll-reveal flex justify-center lg:justify-start">
               <div className="relative group profile-3d">
-                <div className="w-64 h-64 rounded-full overflow-hidden border-4 border-primary/30 shadow-lg hover:shadow-neon transition-all duration-500 floating-3d">
+                <div className="neon-pulse-border w-64 h-64 rounded-full overflow-hidden shadow-lg hover:shadow-neon transition-all duration-500 floating-3d">
                   <img
                     src={davidProfile}
                     alt="David Fernandes - Desenvolvedor Full-Stack"
@@ -116,24 +117,8 @@ const AboutSection = () => {
             </div>
           </div>
 
-          {/* Tech Stack Preview */}
-          <div className="mt-16 scroll-reveal">
-            <div className="portfolio-card text-center hologram">
-              <h3 className="text-xl font-semibold mb-4 text-foreground">
-                Principais Tecnologias
-              </h3>
-              <div className="flex flex-wrap justify-center gap-3">
-                {['Vue.js', 'React', 'Python', 'Node.js', 'Tailwind', 'Docker', 'Frappe', 'n8n', 'MySQL', 'MongoDB'].map((tech) => (
-                  <span 
-                    key={tech}
-                    className="px-3 py-1 bg-primary/10 border border-primary/30 rounded-full text-sm text-primary hover:bg-primary/20 transition-all duration-300 cursor-pointer"
-                  >
-                    {tech}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
+          {/* Skills Carousel */}
+          <SkillsCarousel />
         </div>
       </div>
     </section>
