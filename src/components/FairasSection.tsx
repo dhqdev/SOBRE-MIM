@@ -7,7 +7,7 @@ const FairasSection = () => {
       local: "Unimetrocamp",
       ano: "2024",
       descricao: "Participação na feira de tecnologia apresentando projetos inovadores",
-      image: "/lovable-uploads/feira-1.png",
+      image: "/public/lovable-uploads/feira-1.png",
       destaque: "Apresentação de projetos tech"
     },
     {
@@ -15,14 +15,14 @@ const FairasSection = () => {
       local: "Unimetrocamp", 
       ano: "2024",
       descricao: "Demonstração de soluções tecnológicas para empresas",
-      image: "/lovable-uploads/feira-2.png",
+      image: "/public/lovable-uploads/feira-2.png",
       destaque: "Networking empresarial"
     }
   ];
 
   const galeria = [
-    "/lovable-uploads/feira-3.png",
-    "/lovable-uploads/feira-4.png"
+    "/public/lovable-uploads/feira-3.png",
+    "/public/lovable-uploads/feira-4.png"
   ];
 
   return (

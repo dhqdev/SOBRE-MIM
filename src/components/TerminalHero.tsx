@@ -112,7 +112,7 @@ const TerminalHero = () => {
                 rel="noopener noreferrer"
                 className="btn-neon flex items-center gap-2 group"
               >
-                <Linkedin className="w-5 h-5 group-hover:animate-pulse" />
+                <Linkedin className="w-5 h-5" />
                 LinkedIn
               </a>
               
@@ -122,7 +122,7 @@ const TerminalHero = () => {
                 rel="noopener noreferrer"
                 className="btn-violet flex items-center gap-2 group"
               >
-                <Github className="w-5 h-5 group-hover:animate-pulse" />
+                <Github className="w-5 h-5" />
                 GitHub
               </a>
               
@@ -132,7 +132,7 @@ const TerminalHero = () => {
                 rel="noopener noreferrer"
                 className="bg-neon-green text-background px-6 py-3 rounded-lg font-medium flex items-center gap-2 hover:bg-neon-green/90 transition-all duration-300 group"
               >
-                <Mail className="w-5 h-5 group-hover:animate-pulse" />
+                <Mail className="w-5 h-5" />
                 Fale comigo
               </a>
             </div>

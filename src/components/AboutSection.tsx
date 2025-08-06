@@ -54,20 +54,30 @@ const AboutSection = () => {
               <div className="space-y-6 text-lg leading-relaxed text-muted-foreground">
                 <p className="text-foreground">
                   Me chamo <span className="neon-glow font-semibold">David Fernandes</span>, 
-                  sou desenvolvedor full-stack, criador de soluções digitais e alguém que 
-                  acredita que a tecnologia deve servir ao Reino e às pessoas.
+                  sou desenvolvedor full-stack com mais de 1 ano de experiência, especializado em 
+                  Vue.js, React, Python e Frappe Framework. Acredito que a tecnologia deve servir 
+                  ao Reino de Deus e transformar vidas.
                 </p>
                 
                 <p>
-                  Hoje atuo na <span className="text-primary font-semibold">GRV Software</span>, 
-                  ajudando empresas a otimizarem seus processos com ERP, Vue.js, Frappe e Python. 
-                  Já implantei projetos internos e externos que vão de dashboards analíticos 
-                  até sistemas cristãos de organização espiritual.
+                  Atualmente trabalho na <span className="text-primary font-semibold">GRV Software</span>, 
+                  onde desenvolvo soluções ERP robustas e sistemas integrados. Minha expertise inclui 
+                  desenvolvimento full-stack, integração de APIs, automação com Docker e n8n, e 
+                  criação de dashboards analíticos que impactam diretamente os resultados das empresas.
+                </p>
+
+                <p>
+                  Já participei de importantes feiras de tecnologia como EXPOMAFE e MOBIPE na 
+                  Unimetrocamp, onde apresentei projetos inovadores e construí networking valioso 
+                  no setor tech. Tenho experiência em WhatsApp Business API, sistemas de CRM 
+                  personalizados e integrações complexas.
                 </p>
                 
                 <p>
-                  Fora do mundo tech, sou músico, professor cristão e apaixonado por ensinar 
-                  jovens como brilhar a luz de Cristo na universidade e na vida digital.
+                  Além da programação, sou músico, professor cristão e mentor de jovens universitários. 
+                  Acredito na importância de usar nossos talentos para glorificar a Deus e servir 
+                  ao próximo através da tecnologia. Minha missão é criar soluções que não apenas 
+                  resolvem problemas técnicos, mas também agregam valor humano e espiritual.
                 </p>
                 
                 <blockquote className="border-l-4 border-primary pl-4 italic text-primary">

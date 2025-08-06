@@ -182,7 +182,7 @@ Mensagem: ${formData.message}`;
                     rel="noopener noreferrer"
                     className="btn-neon group"
                   >
-                    <MessageCircle className="w-5 h-5 mr-2 group-hover:animate-pulse" />
+                    <MessageCircle className="w-5 h-5 mr-2" />
                     WhatsApp Direto
                   </a>
                   <a
