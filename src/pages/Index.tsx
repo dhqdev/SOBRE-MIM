@@ -4,7 +4,7 @@ import TerminalHero from '@/components/TerminalHero';
 import AboutSection from '@/components/AboutSection';
 import ProjectsSection from '@/components/ProjectsSection';
 import TechStackSection from '@/components/TechStackSection';
-import FairasSection from '@/components/FairasSection';
+
 import ContactSection from '@/components/ContactSection';
 import Footer from '@/components/Footer';
 import ParticleField from '@/components/ParticleField';
@@ -45,7 +45,7 @@ const Index = () => {
         <AboutSection />
         <ProjectsSection />
         <TechStackSection />
-        <FairasSection />
+        
         <ContactSection />
       </main>
       
