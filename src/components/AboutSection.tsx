@@ -38,15 +38,15 @@ const AboutSection = () => {
           <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
             {/* Profile Image */}
             <div className="scroll-reveal flex justify-center lg:justify-start">
-              <div className="relative group profile-3d">
-                <div className="neon-pulse-border w-64 h-64 rounded-full overflow-hidden shadow-lg hover:shadow-neon transition-all duration-500 floating-3d">
+              <div className="relative group">
+                <div className="w-64 h-64 rounded-full overflow-hidden shadow-lg">
                   <img
                     src={davidProfile}
                     alt="David Fernandes - Desenvolvedor Full-Stack"
-                    className="w-full h-full object-cover transition-transform duration-500"
+                    className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-lg opacity-70 transition-opacity duration-500 -z-10"></div>
+                <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-lg opacity-70 -z-10"></div>
               </div>
             </div>
 
