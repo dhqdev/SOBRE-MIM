@@ -30,8 +30,8 @@ const NubankExperienceSection = () => {
               <div className="relative">
                 <div className="relative overflow-hidden rounded-lg border border-primary/20">
                   <img 
-                    src="/lovable-uploads/c9fdf4ce-13b8-42e0-b0bd-2a380f0342d6.png"
-                    alt="David no escritório da Nubank"
+                    src="/lovable-uploads/ed1efaa2-cca5-4005-8cb4-80d6f9fc5c3a.png"
+                    alt="David no escritório da Nubank - Experiência única"
                     className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
