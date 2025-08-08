@@ -101,7 +101,7 @@ const AboutSection = () => {
                 >
                   <div className="flex items-start gap-4">
                     <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 group-hover:bg-primary/20 transition-all duration-300">
-                      <highlight.icon className="w-6 h-6 text-primary group-hover:scale-110 transition-transform duration-300" />
+                      <highlight.icon className="w-6 h-6 text-primary transition-transform duration-300" />
                     </div>
                     <div>
                       <h3 className="font-semibold text-foreground mb-2 group-hover:text-primary transition-colors duration-300">

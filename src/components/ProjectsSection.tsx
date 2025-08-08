@@ -99,7 +99,7 @@ const ProjectsSection = () => {
                 </div>
 
                 {/* Icon */}
-                <div className={`w-12 h-12 rounded-lg bg-${project.color}/10 border border-${project.color}/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 floating-3d`}>
+                <div className={`w-12 h-12 rounded-lg bg-${project.color}/10 border border-${project.color}/30 flex items-center justify-center mb-4 floating-3d`}>
                   <project.icon className={`w-6 h-6 text-${project.color}`} />
                 </div>
 
