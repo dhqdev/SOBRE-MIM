@@ -30,12 +30,12 @@ const ProjectsSection = () => {
       image: "/lovable-uploads/0003a999-0ac5-44fe-970f-1386c44853b0.png"
     },
     {
-      title: "tekvosoft (GitHub)",
-      description: "Protótipo funcional de um app de mensagens, com arquitetura escalável e clean.",
-      icon: Github,
+      title: "Chat Tekvosoft",
+      description: "Plataforma de chat corporativo completa e funcional. Acesse com login: bemvindo@bemvindo.com | senha: 123456",
+      icon: MessageCircle,
       color: "neon-green",
-      link: "https://github.com/dhqdev/tekvosoft",
-      type: "Open Source",
+      link: "https://chat.tekvosoft.com",
+      type: "Plataforma Live",
       image: "/lovable-uploads/79117ada-5cfd-4c0b-920e-80810bd9a0d6.png"
     },
     {

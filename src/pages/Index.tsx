@@ -4,6 +4,7 @@ import TerminalHero from '@/components/TerminalHero';
 import AboutSection from '@/components/AboutSection';
 import ProjectsSection from '@/components/ProjectsSection';
 import TechStackSection from '@/components/TechStackSection';
+import NubankExperienceSection from '@/components/NubankExperienceSection';
 
 import ContactSection from '@/components/ContactSection';
 import Footer from '@/components/Footer';
@@ -45,7 +46,7 @@ const Index = () => {
         <AboutSection />
         <ProjectsSection />
         <TechStackSection />
-        
+        <NubankExperienceSection />
         <ContactSection />
       </main>
       

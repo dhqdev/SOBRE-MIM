@@ -71,7 +71,7 @@ const TechStackSection = () => {
               <span className="neon-glow-violet">Domino</span>
             </h2>
             <p className="text-xl text-muted-foreground mb-6">
-              Ferramentas que uso para criar soluções impactantes
+              Mais de 2 anos de experiência sólida em cada stack
             </p>
             <div className="w-20 h-1 bg-gradient-to-r from-primary to-accent mx-auto"></div>
           </div>
