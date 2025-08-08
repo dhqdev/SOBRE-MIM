@@ -55,7 +55,7 @@ const AboutSection = () => {
               <div className="space-y-6 text-lg leading-relaxed text-muted-foreground">
                 <p className="text-foreground">
                   Me chamo <span className="neon-glow font-semibold">David Fernandes</span>, 
-                  sou desenvolvedor full-stack com mais de 1 ano de experiência, especializado em 
+                  sou desenvolvedor full-stack com mais de 2 anos de experiência, especializado em 
                   Vue.js, React, Python e Frappe Framework. Acredito que a tecnologia deve servir 
                   ao Reino de Deus e transformar vidas.
                 </p>
