@@ -46,7 +46,7 @@ const AboutSection = () => {
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                 </div>
-                <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-lg opacity-70 group-hover:opacity-100 transition-opacity duration-500 -z-10"></div>
+                <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-lg opacity-70 transition-opacity duration-500 -z-10"></div>
               </div>
             </div>
 
