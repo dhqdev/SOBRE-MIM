@@ -137,15 +137,24 @@ Mensagem: ${formData.message}`;
                 <h3 className="text-2xl font-semibold mb-6 text-foreground">
                   Entre em contato
                 </h3>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3 text-muted-foreground">
+                <div className="space-y-6">
+                  <a
+                    href="https://wa.me/5519995378302"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-3 p-4 bg-green-500/10 border border-green-500/30 rounded-lg hover:bg-green-500/20 transition-all duration-300 group"
+                  >
+                    <MessageCircle className="w-5 h-5 text-green-500" />
+                    <span className="text-green-500 font-medium">WhatsApp</span>
+                  </a>
+                  
+                  <a
+                    href="mailto:david.h.queiroz@gmail.com"
+                    className="flex items-center justify-center gap-3 p-4 bg-primary/10 border border-primary/30 rounded-lg hover:bg-primary/20 transition-all duration-300 group"
+                  >
                     <Mail className="w-5 h-5 text-primary" />
-                    <span>david@tekvosoft.dev</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-muted-foreground">
-                    <MessageCircle className="w-5 h-5 text-primary" />
-                    <span>+55 (19) 99537-8302</span>
-                  </div>
+                    <span className="text-primary font-medium">Email</span>
+                  </a>
                 </div>
               </div>
             </div>
