@@ -139,7 +139,7 @@ Mensagem: ${formData.message}`;
                 </h3>
                 <div className="space-y-6">
                   <a
-                    href="https://wa.me/5519995378302"
+                    href="https://wa.me/5519995378302?text=Olá%20David!%20Vi%20seu%20portfólio%20e%20gostaria%20de%20conversar%20sobre%20um%20projeto."
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-3 p-4 bg-green-500/10 border border-green-500/30 rounded-lg hover:bg-green-500/20 transition-all duration-300 group"
