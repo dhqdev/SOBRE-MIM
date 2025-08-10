@@ -61,23 +61,23 @@ const TechStackSection = () => {
   ];
 
   return (
-    <section id="tecnologias" className="py-20 relative">
-      <div className="container mx-auto px-6">
+    <section id="tecnologias" className="py-12 md:py-20 relative">
+      <div className="container mx-auto px-4 md:px-6">
         <div className="max-w-6xl mx-auto">
           {/* Section Header */}
-          <div className="text-center mb-16 scroll-reveal">
-            <h2 className="text-4xl font-bold mb-4">
+          <div className="text-center mb-8 md:mb-16 scroll-reveal">
+            <h2 className="text-2xl md:text-4xl font-bold mb-2 md:mb-4">
               <span className="neon-glow">Tecnologias que</span>{' '}
               <span className="neon-glow-violet">Domino</span>
             </h2>
-            <p className="text-xl text-muted-foreground mb-6">
+            <p className="text-base md:text-xl text-muted-foreground mb-4 md:mb-6">
               Mais de 2 anos de experiência sólida em cada stack
             </p>
-            <div className="w-20 h-1 bg-gradient-to-r from-primary to-accent mx-auto"></div>
+            <div className="w-16 md:w-20 h-1 bg-gradient-to-r from-primary to-accent mx-auto"></div>
           </div>
 
           {/* Tech Categories Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 mb-8 md:mb-16">
             {techCategories.map((category, index) => (
               <div 
                 key={index}
@@ -85,23 +85,23 @@ const TechStackSection = () => {
                 style={{ animationDelay: `${index * 0.2}s` }}
               >
                 {/* Category Header */}
-                <div className="flex items-center gap-3 mb-6">
-                  <div className={`p-3 rounded-lg bg-${category.color}/10 border border-${category.color}/30 transition-all duration-300`}>
-                    <category.icon className={`w-6 h-6 text-${category.color}`} />
+                <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
+                  <div className={`p-2 md:p-3 rounded-lg bg-${category.color}/10 border border-${category.color}/30 transition-all duration-300`}>
+                    <category.icon className={`w-4 h-4 md:w-6 md:h-6 text-${category.color}`} />
                   </div>
-                  <h3 className={`font-semibold text-lg text-${category.color}`}>
+                  <h3 className={`font-semibold text-sm md:text-lg text-${category.color}`}>
                     {category.title}
                   </h3>
                 </div>
 
                 {/* Tech List */}
-                <div className="space-y-4">
+                <div className="space-y-2 md:space-y-4">
                   {category.techs.map((tech, techIndex) => (
-                    <div key={techIndex} className="space-y-2">
+                    <div key={techIndex} className="space-y-1 md:space-y-2">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">{tech.icon}</span>
-                          <span className="text-sm font-medium text-foreground">
+                        <div className="flex items-center gap-1 md:gap-2">
+                          <span className="text-sm md:text-lg">{tech.icon}</span>
+                          <span className="text-xs md:text-sm font-medium text-foreground">
                             {tech.name}
                           </span>
                         </div>
@@ -111,7 +111,7 @@ const TechStackSection = () => {
                       </div>
                       
                       {/* Progress Bar */}
-                      <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                      <div className="w-full bg-muted rounded-full h-1.5 md:h-2 overflow-hidden">
                         <div 
                           className={`h-full bg-gradient-to-r from-${category.color}/60 to-${category.color} rounded-full transition-all duration-1000 ease-out`}
                           style={{ 
@@ -130,31 +130,31 @@ const TechStackSection = () => {
           {/* Additional Skills */}
           <div className="scroll-reveal">
             <div className="portfolio-card hologram">
-              <h3 className="text-2xl font-semibold mb-6 text-center">
+              <h3 className="text-lg md:text-2xl font-semibold mb-4 md:mb-6 text-center">
                 <span className="neon-glow">Competências Extras</span>
               </h3>
               
-              <div className="grid md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                 <div className="text-center">
-                  <Smartphone className="w-8 h-8 text-primary mx-auto mb-3" />
-                  <h4 className="font-semibold text-foreground mb-2">Mobile First</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <Smartphone className="w-6 h-6 md:w-8 md:h-8 text-primary mx-auto mb-2 md:mb-3" />
+                  <h4 className="font-semibold text-foreground mb-1 md:mb-2 text-sm md:text-base">Mobile First</h4>
+                  <p className="text-xs md:text-sm text-muted-foreground">
                     Design responsivo e experiência otimizada para dispositivos móveis
                   </p>
                 </div>
                 
                 <div className="text-center">
-                  <Globe className="w-8 h-8 text-accent mx-auto mb-3" />
-                  <h4 className="font-semibold text-foreground mb-2">APIs & Integrações</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <Globe className="w-6 h-6 md:w-8 md:h-8 text-accent mx-auto mb-2 md:mb-3" />
+                  <h4 className="font-semibold text-foreground mb-1 md:mb-2 text-sm md:text-base">APIs & Integrações</h4>
+                  <p className="text-xs md:text-sm text-muted-foreground">
                     WhatsApp API, automação com n8n e integrações complexas
                   </p>
                 </div>
                 
                 <div className="text-center">
-                  <Heart className="w-8 h-8 text-neon-yellow mx-auto mb-3" />
-                  <h4 className="font-semibold text-foreground mb-2">Desenvolvimento Cristão</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <Heart className="w-6 h-6 md:w-8 md:h-8 text-neon-yellow mx-auto mb-2 md:mb-3" />
+                  <h4 className="font-semibold text-foreground mb-1 md:mb-2 text-sm md:text-base">Desenvolvimento Cristão</h4>
+                  <p className="text-xs md:text-sm text-muted-foreground">
                     Criação de ferramentas digitais para ministérios e organizações cristãs
                   </p>
                 </div>
@@ -163,29 +163,29 @@ const TechStackSection = () => {
           </div>
 
           {/* Code Philosophy */}
-          <div className="mt-16 scroll-reveal">
+          <div className="mt-8 md:mt-16 scroll-reveal">
             <div className="max-w-3xl mx-auto text-center">
-              <blockquote className="text-2xl italic text-muted-foreground mb-4">
+              <blockquote className="text-base md:text-2xl italic text-muted-foreground mb-2 md:mb-4">
                 "Clean code always looks like it was written by someone who cares."
               </blockquote>
-              <cite className="text-primary font-semibold">- Robert C. Martin</cite>
+              <cite className="text-primary font-semibold text-sm md:text-base">- Robert C. Martin</cite>
               
-              <div className="mt-8 p-6 bg-card/50 border border-primary/20 rounded-lg">
-                <div className="font-mono text-sm text-left">
+              <div className="mt-4 md:mt-8 p-4 md:p-6 bg-card/50 border border-primary/20 rounded-lg">
+                <div className="font-mono text-xs md:text-sm text-left">
                   <span className="text-neon-green">const</span>{' '}
                   <span className="text-neon-yellow">filosofia</span>{' '}
                   <span className="text-foreground">=</span>{' '}
                   <span className="text-primary">{`{`}</span>
                   <br />
-                  <span className="text-muted-foreground ml-4">
+                  <span className="text-muted-foreground ml-2 md:ml-4">
                     qualidade: <span className="text-neon-violet">'sempre'</span>,
                   </span>
                   <br />
-                  <span className="text-muted-foreground ml-4">
+                  <span className="text-muted-foreground ml-2 md:ml-4">
                     proposito: <span className="text-neon-violet">'servir ao Reino'</span>,
                   </span>
                   <br />
-                  <span className="text-muted-foreground ml-4">
+                  <span className="text-muted-foreground ml-2 md:ml-4">
                     impacto: <span className="text-neon-violet">'transformar vidas'</span>
                   </span>
                   <br />
