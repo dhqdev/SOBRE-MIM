@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { MessageCircle, Mail, Github, Linkedin, Send, MapPin, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -130,67 +131,21 @@ Mensagem: ${formData.message}`;
               </div>
             </div>
 
-            {/* WhatsApp Direct Contact */}
+            {/* Contact Form Placeholder */}
             <div className="scroll-reveal">
-              <div className="portfolio-card text-center">
-                <div className="mb-8">
-                  <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <MessageCircle className="w-10 h-10 text-green-400" />
-                  </div>
-                  <h3 className="text-2xl font-semibold mb-4 text-foreground">
-                    Vamos conversar!
-                  </h3>
-                  <p className="text-muted-foreground mb-6">
-                    Clique no botão abaixo para me enviar uma mensagem direta no WhatsApp
-                  </p>
-                </div>
-                
-                <a
-                  href="https://wa.me/5519995378302?text=Olá David! Vi seu portfólio e gostaria de conversar sobre um projeto 🚀"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-3 bg-green-500 hover:bg-green-600 text-white py-4 px-8 rounded-xl font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-green-500/25"
-                >
-                  <MessageCircle className="w-6 h-6" />
-                  Abrir WhatsApp
-                </a>
-
-                <div className="mt-6 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
-                  <p className="text-sm text-green-400">
-                    💬 Resposta garantida em até 24h!
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Call to Action */}
-          <div className="text-center mt-16 scroll-reveal">
-            <div className="portfolio-card max-w-3xl mx-auto">
-              <div className="space-y-4">
-                <h3 className="text-2xl font-semibold">
-                  <span className="neon-glow">Pronto para começar?</span>
+              <div className="portfolio-card">
+                <h3 className="text-2xl font-semibold mb-6 text-foreground">
+                  Entre em contato
                 </h3>
-                <p className="text-muted-foreground">
-                  Seja um app cristão que impacte vidas, um sistema que otimize processos 
-                  ou uma ferramenta inovadora - vamos construir algo incrível juntos.
-                </p>
-                <div className="flex flex-wrap justify-center gap-4 pt-4">
-                  <a
-                    href="https://wa.me/5519995378302"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-neon group"
-                  >
-                    <MessageCircle className="w-5 h-5 mr-2" />
-                    WhatsApp Direto
-                  </a>
-                  <a
-                    href="#projetos"
-                    className="btn-violet group"
-                  >
-                    Ver Projetos
-                  </a>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 text-muted-foreground">
+                    <Mail className="w-5 h-5 text-primary" />
+                    <span>david@tekvosoft.dev</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-muted-foreground">
+                    <MessageCircle className="w-5 h-5 text-primary" />
+                    <span>+55 (19) 99537-8302</span>
+                  </div>
                 </div>
               </div>
             </div>

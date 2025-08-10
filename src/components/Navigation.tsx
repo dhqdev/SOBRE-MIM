@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Menu, X, Code2, Cross } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -87,19 +88,6 @@ const Navigation = () => {
               ))}
             </div>
 
-            {/* CTA Button */}
-            <div className="hidden md:flex items-center gap-4">
-              <a
-                href="https://wa.me/5519995378302"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button className="btn-neon">
-                  Fale comigo
-                </Button>
-              </a>
-            </div>
-
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsOpen(!isOpen)}
@@ -132,18 +120,6 @@ const Navigation = () => {
                     {item.label}
                   </button>
                 ))}
-                
-                <div className="pt-4 border-t border-border/50">
-                  <a
-                    href="https://wa.me/5519995378302"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-neon w-full text-center"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Fale comigo
-                  </a>
-                </div>
               </div>
             </div>
           </div>
