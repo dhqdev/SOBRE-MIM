@@ -7,6 +7,7 @@ import TechStackSection from '@/components/TechStackSection';
 import NubankExperienceSection from '@/components/NubankExperienceSection';
 
 import ContactSection from '@/components/ContactSection';
+import GamesSection from '@/components/GamesSection';
 import Footer from '@/components/Footer';
 import ParticleField from '@/components/ParticleField';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
@@ -70,6 +71,7 @@ const Index = () => {
         <ProjectsSection />
         <TechStackSection />
         <NubankExperienceSection />
+        <GamesSection />
         <ContactSection />
       </main>
       
