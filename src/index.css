@@ -22,6 +22,7 @@
     /* Neon color palette */
     --primary: 180 100% 50%; /* Neon cyan */
     --primary-foreground: 220 20% 8%;
+    --primary-glow: 180 100% 70%; /* Lighter cyan for glow effects */
     
     --neon-violet: 270 100% 70%; /* Electric violet */
     --neon-yellow: 45 100% 60%; /* Mustard yellow */
@@ -52,6 +53,8 @@
     --shadow-neon: 0 0 20px hsl(var(--primary) / 0.5);
     --shadow-violet: 0 0 20px hsl(var(--neon-violet) / 0.3);
     --shadow-card: 0 10px 30px -10px hsl(var(--primary) / 0.2);
+    --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.3);
+    --shadow-glow: 0 0 40px hsl(var(--primary-glow) / 0.4);
     
     /* Animation timing */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -414,6 +417,15 @@
   
   .border-neon-green {
     border-color: hsl(var(--neon-green));
+  }
+  
+  /* Shadow utilities */
+  .shadow-elegant {
+    box-shadow: var(--shadow-elegant);
+  }
+  
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
   }
 }
 

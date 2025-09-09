@@ -9,6 +9,7 @@ import NubankExperienceSection from '@/components/NubankExperienceSection';
 import ContactSection from '@/components/ContactSection';
 import Footer from '@/components/Footer';
 import ParticleField from '@/components/ParticleField';
+import { ChatBubble } from '@/components/ChatBubble';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 const Index = () => {
@@ -74,6 +75,9 @@ const Index = () => {
       </main>
       
       <Footer />
+      
+      {/* Chat Bubble */}
+      <ChatBubble />
     </div>
   );
 };
