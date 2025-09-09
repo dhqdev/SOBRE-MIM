@@ -13,15 +13,6 @@ const ProjectsSection = () => {
       image: "/lovable-uploads/79117ada-5cfd-4c0b-920e-80810bd9a0d6.png"
     },
     {
-      title: "Planejamento com Deus",
-      description: "Aplicativo cristão feito para organização devocional e planejamento espiritual. Desenvolvido com amor pela Igreja.",
-      icon: Heart,
-      color: "neon-yellow",
-      link: "#",
-      type: "Ferramenta Cristã",
-      image: "/lovable-uploads/0003a999-0ac5-44fe-970f-1386c44853b0.png"
-    },
-    {
       title: "Mesa Fácil – SaaS para Restaurantes",
       description: "Front-end completo para gestão de pedidos e mesas, com painel responsivo.",
       icon: Utensils,
