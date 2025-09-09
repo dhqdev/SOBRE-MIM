@@ -4,15 +4,6 @@ import { ExternalLink, Github, Brain, MessageCircle, Calendar, Heart, Utensils, 
 const ProjectsSection = () => {
   const projects = [
     {
-      title: "meu.tekvosoft.com",
-      description: "Um \"Obsidian Online\" feito do zero. Ideal para devocionais, estudos, produtividade pessoal e espiritual.",
-      icon: Brain,
-      color: "neon-violet",
-      link: "https://meu.tekvosoft.com",
-      type: "Produtividade Espiritual",
-      image: "/lovable-uploads/8a4b6273-1447-4607-a656-e008ad60ac17.png"
-    },
-    {
       title: "app.tekvosoft.com", 
       description: "Chat corporativo com integração ao WhatsApp. Comunicação interna descomplicada e elegante.",
       icon: MessageCircle,
@@ -29,15 +20,6 @@ const ProjectsSection = () => {
       link: "#",
       type: "Ferramenta Cristã",
       image: "/lovable-uploads/0003a999-0ac5-44fe-970f-1386c44853b0.png"
-    },
-    {
-      title: "Chat Tekvosoft",
-      description: "Plataforma de chat corporativo completa e funcional. Acesse com login: bemvindo@bemvindo.com | senha: 123456",
-      icon: MessageCircle,
-      color: "neon-green",
-      link: "https://chat.tekvosoft.com",
-      type: "Plataforma Live",
-      image: "/lovable-uploads/79117ada-5cfd-4c0b-920e-80810bd9a0d6.png"
     },
     {
       title: "Mesa Fácil – SaaS para Restaurantes",
