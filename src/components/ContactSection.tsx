@@ -56,10 +56,26 @@ const ContactSection = () => {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    
+    // Formatação especial para o campo de telefone
+    if (name === 'phone') {
+      // Remove tudo que não é número
+      const numbersOnly = value.replace(/\D/g, '');
+      
+      // Limita a 13 dígitos (55 + 11 + 9 dígitos)
+      const limitedNumbers = numbersOnly.slice(0, 13);
+      
+      setFormData({
+        ...formData,
+        [name]: limitedNumbers
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    }
   };
 
   const socialLinks = [
@@ -163,9 +179,15 @@ const ContactSection = () => {
                       required
                       value={formData.phone}
                       onChange={handleChange}
-                      placeholder="(19) 99537-8302"
-                      className="w-full text-lg"
+                      placeholder="5519995378302"
+                      pattern="[0-9]{13}"
+                      title="Digite apenas números no formato: 5519995378302 (13 dígitos)"
+                      maxLength={13}
+                      className="w-full text-lg font-mono"
                     />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Formato: 5519995378302 (código do país + DDD + número)
+                    </p>
                   </div>
 
                   <Button 
