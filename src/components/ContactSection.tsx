@@ -9,17 +9,17 @@ const ContactSection = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    message: ''
+    phone: ''
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Construir mensagem para WhatsApp
-    const whatsappMessage = `Olá David! 
+    const whatsappMessage = `Olá! Aqui estão meus dados de contato:
     
 Nome: ${formData.name}
 Email: ${formData.email}
-Mensagem: ${formData.message}`;
+Telefone: ${formData.phone}`;
     
     const whatsappUrl = `https://wa.me/5519995378302?text=${encodeURIComponent(whatsappMessage)}`;
     window.open(whatsappUrl, '_blank');
@@ -135,27 +135,66 @@ Mensagem: ${formData.message}`;
             <div className="scroll-reveal">
               <div className="portfolio-card">
                 <h3 className="text-2xl font-semibold mb-6 text-foreground">
-                  Entre em contato
+                  Cadastre-se
                 </h3>
-                <div className="space-y-6">
-                  <a
-                    href="https://wa.me/5519995378302?text=Olá%20David!%20Vi%20seu%20portfólio%20e%20gostaria%20de%20conversar%20sobre%20um%20projeto."
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-3 p-4 bg-green-500/10 border border-green-500/30 rounded-lg hover:bg-green-500/20 transition-all duration-300 group"
-                  >
-                    <MessageCircle className="w-5 h-5 text-green-500" />
-                    <span className="text-green-500 font-medium">WhatsApp</span>
-                  </a>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-muted-foreground mb-2">
+                      Nome completo
+                    </label>
+                    <Input
+                      id="name"
+                      name="name"
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={handleChange}
+                      placeholder="Seu nome"
+                      className="w-full"
+                    />
+                  </div>
                   
-                  <a
-                    href="mailto:david.h.queiroz@gmail.com"
-                    className="flex items-center justify-center gap-3 p-4 bg-primary/10 border border-primary/30 rounded-lg hover:bg-primary/20 transition-all duration-300 group"
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-muted-foreground mb-2">
+                      Email
+                    </label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="seu@email.com"
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-medium text-muted-foreground mb-2">
+                      Telefone
+                    </label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      required
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="5519995378302"
+                      defaultValue="5519995378302"
+                      className="w-full"
+                    />
+                  </div>
+
+                  <Button 
+                    type="submit"
+                    className="w-full bg-green-500 hover:bg-green-600 text-white"
                   >
-                    <Mail className="w-5 h-5 text-primary" />
-                    <span className="text-primary font-medium">Email</span>
-                  </a>
-                </div>
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Enviar via WhatsApp
+                  </Button>
+                </form>
               </div>
             </div>
           </div>

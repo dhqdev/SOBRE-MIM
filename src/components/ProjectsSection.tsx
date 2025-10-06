@@ -4,11 +4,11 @@ import { ExternalLink, Github, Brain, MessageCircle, Calendar, Heart, Utensils, 
 const ProjectsSection = () => {
   const projects = [
     {
-      title: "app.tekvosoft.com", 
+      title: "ticket.tekvosoft.com", 
       description: "Chat corporativo com integração ao WhatsApp. Comunicação interna descomplicada e elegante.",
       icon: MessageCircle,
       color: "primary",
-      link: "https://app.tekvosoft.com",
+      link: "http://ticket.tekvosoft.com/",
       type: "Comunicação Corporativa",
       image: "/lovable-uploads/79117ada-5cfd-4c0b-920e-80810bd9a0d6.png"
     },
