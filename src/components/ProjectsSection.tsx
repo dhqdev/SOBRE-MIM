@@ -1,5 +1,5 @@
 
-import { ExternalLink, Github, Brain, MessageCircle, Calendar, Heart, Utensils, Clock, Bot } from 'lucide-react';
+import { ExternalLink, Github, Brain, MessageCircle, Calendar, Heart, Utensils, Clock, Bot, DollarSign } from 'lucide-react';
 
 const ProjectsSection = () => {
   const projects = [
@@ -38,6 +38,15 @@ const ProjectsSection = () => {
       link: "https://github.com/dhqdev/bci-on1?tab=readme-ov-file",
       type: "Automação",
       image: "/lovable-uploads/bci-on1-dashboard.png"
+    },
+    {
+      title: "OX Cash - Investimentos",
+      description: "Bem-vindo ao site-ox-cash! Este repositório contém o código-fonte para o site Ox Cash, um site criado para a empresa ox-ca$h com o intuito de oferecer um design inovador e robusto para eles.",
+      icon: DollarSign,
+      color: "neon-yellow",
+      link: "https://oxcash-sigma.vercel.app/",
+      type: "Site Corporativo",
+      image: "/lovable-uploads/oxcash-site.png"
     }
   ];
 
