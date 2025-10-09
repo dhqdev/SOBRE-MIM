@@ -1,5 +1,5 @@
 
-import { ExternalLink, Github, Brain, MessageCircle, Calendar, Heart, Utensils, Clock } from 'lucide-react';
+import { ExternalLink, Github, Brain, MessageCircle, Calendar, Heart, Utensils, Clock, Bot } from 'lucide-react';
 
 const ProjectsSection = () => {
   const projects = [
@@ -29,6 +29,15 @@ const ProjectsSection = () => {
       link: "https://agenda-6f9x.onrender.com/",
       type: "Sistema Completo",
       image: "/lovable-uploads/d95001ff-46a0-4fb6-b6df-1f4b22ce8bee.png"
+    },
+    {
+      title: "BCI-ON1 - Automação Servopa",
+      description: "O BCI-ON1 é um sistema de automação desenvolvido para simplificar e automatizar processos de licitação no portal Servopa. O sistema realiza login automático, extrai protocolos do Todoist, envia lances e notifica clientes via WhatsApp nos dias 8 e 16 de cada mês.",
+      icon: Bot,
+      color: "neon-violet",
+      link: "https://github.com/dhqdev/bci-on1?tab=readme-ov-file",
+      type: "Automação",
+      image: "/lovable-uploads/bci-on1-dashboard.png"
     }
   ];
 
