@@ -1,124 +1,53 @@
-import { Code2, Heart, Zap, Users } from 'lucide-react';
 import davidProfile from '/lovable-uploads/c9fdf4ce-13b8-42e0-b0bd-2a380f0342d6.png';
-import SkillsCarousel from './SkillsCarousel';
 
 const AboutSection = () => {
-  const highlights = [
-    {
-      icon: Code2,
-      title: "1+ ano em Vue, React, Python, Frappe",
-      description: "Experiência sólida em desenvolvimento full-stack"
-    },
-    {
-      icon: Zap,
-      title: "Integrações com APIs, Docker, WhatsApp, n8n",
-      description: "Automação e integração de sistemas complexos"
-    },
-    {
-      icon: Heart,
-      title: "Fé, Ética e Código com propósito",
-      description: "Tecnologia a serviço do Reino e das pessoas"
-    }
-  ];
-
   return (
     <section id="sobre" className="py-20 relative">
       <div className="container mx-auto px-6">
-        <div className="max-w-4xl mx-auto">
-          {/* Section Header */}
-          <div className="text-center mb-16 scroll-reveal">
-            <h2 className="text-4xl font-bold mb-4">
-              <span className="neon-glow">Além do</span>{' '}
-              <span className="neon-glow-violet">Código</span>
+        <div className="max-w-6xl mx-auto">
+          {/* Profile Image at Top - Circular */}
+          <div className="flex justify-center mb-12 scroll-reveal">
+            <div className="relative">
+              <div className="w-48 h-48 rounded-full overflow-hidden shadow-2xl border-4 border-primary/30">
+                <img
+                  src={davidProfile}
+                  alt="David Fernandes"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="absolute -inset-2 bg-gradient-to-r from-primary/30 to-accent/30 rounded-full blur-xl opacity-50 -z-10"></div>
+            </div>
+          </div>
+
+          {/* Title */}
+          <div className="text-center mb-12 scroll-reveal">
+            <h2 className="text-4xl md:text-5xl font-bold mb-2">
+              Desenvolvedor <span className="text-primary">Full-Stack</span>
             </h2>
-            <div className="w-20 h-1 bg-gradient-to-r from-primary to-accent mx-auto"></div>
+            <div className="w-20 h-1 bg-gradient-to-r from-primary to-accent mx-auto mt-4"></div>
           </div>
 
           {/* Main Content */}
-          <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
-            {/* Profile Image */}
-            <div className="scroll-reveal flex justify-center lg:justify-start">
-              <div className="relative group">
-                <div className="w-64 h-64 rounded-full overflow-hidden shadow-lg">
-                  <img
-                    src={davidProfile}
-                    alt="David Fernandes - Desenvolvedor Full-Stack"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-lg opacity-70 -z-10"></div>
-              </div>
-            </div>
+          <div className="max-w-4xl mx-auto mb-16 scroll-reveal">
+            <div className="space-y-6 text-center">
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                Sou desenvolvedor full-stack com <span className="text-primary font-semibold">2+ anos de experiência</span>, 
+                especializado em <span className="text-primary font-semibold">Vue.js, React, JS e Python</span>. 
+                Atualmente na <span className="text-primary font-semibold">GRV Software</span>, desenvolvo dentro do frappe Framework com diversas integrações.
+              </p>
 
-            {/* Text Content */}
-            <div className="scroll-reveal">
-              <div className="space-y-6 text-lg leading-relaxed text-muted-foreground">
-                <p className="text-foreground">
-                  Me chamo <span className="neon-glow font-semibold">David Fernandes</span>, 
-                  sou desenvolvedor full-stack com mais de 2 anos de experiência, especializado em 
-                  Vue.js, React, Python e Frappe Framework. Acredito que a tecnologia deve servir 
-                  ao Reino de Deus e transformar vidas.
-                </p>
-                
-                <p>
-                  Atualmente trabalho na <span className="text-primary font-semibold">GRV Software</span>, 
-                  onde desenvolvo soluções ERP robustas e sistemas integrados. Minha expertise inclui 
-                  desenvolvimento full-stack, integração de APIs, automação com Docker e n8n, e 
-                  criação de dashboards analíticos que impactam diretamente os resultados das empresas.
-                </p>
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                Minha expertise inclui conhecimento em ERP Protheus advindo da TOTVS, desenvolvimento de software usando várias linguagens mas a 
+                principal sendo Python, integração de APIs, automação usando Docker e n8n, 
+                criação de dashboards analíticos integrados com banco de dados.
+              </p>
 
-                <p>
-                  Já participei de importantes feiras de tecnologia como EXPOMAFE e MOBIPE na 
-                  Unimetrocamp, onde apresentei projetos inovadores e construí networking valioso 
-                  no setor tech. Tenho experiência em WhatsApp Business API, sistemas de CRM 
-                  personalizados e integrações complexas.
-                </p>
-                
-                <p>
-                  Além da programação, sou músico, professor cristão e mentor de jovens universitários. 
-                  Acredito na importância de usar nossos talentos para glorificar a Deus e servir 
-                  ao próximo através da tecnologia. Minha missão é criar soluções que não apenas 
-                  resolvem problemas técnicos, mas também agregam valor humano e espiritual.
-                </p>
-                
-                <blockquote className="border-l-4 border-primary pl-4 italic text-primary">
-                  "Servi uns aos outros, cada um conforme o dom que recebeu." 
-                  <br />
-                  <span className="text-sm text-muted-foreground">- 1 Pedro 4:10</span>
-                </blockquote>
-              </div>
+              <blockquote className="border-l-4 border-primary pl-6 py-4 italic text-primary bg-primary/5 rounded-r-lg inline-block">
+                "The people who are crazy enough to think they can change the world are the ones who do." 
+                <span className="block text-sm mt-2 text-muted-foreground">- Steve Jobs</span>
+              </blockquote>
             </div>
           </div>
-
-          {/* Highlights */}
-          <div className="scroll-reveal">
-            <div className="grid md:grid-cols-3 gap-6 mb-16">
-              {highlights.map((highlight, index) => (
-                <div 
-                  key={index}
-                  className="portfolio-card group cursor-pointer"
-                  style={{ animationDelay: `${index * 0.2}s` }}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 group-hover:bg-primary/20 transition-all duration-300">
-                      <highlight.icon className="w-6 h-6 text-primary transition-transform duration-300" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-2 group-hover:text-primary transition-colors duration-300">
-                        {highlight.title}
-                      </h3>
-                      <p className="text-muted-foreground text-sm">
-                        {highlight.description}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Skills Carousel */}
-          <SkillsCarousel />
         </div>
       </div>
     </section>

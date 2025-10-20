@@ -1,5 +1,4 @@
-
-import { ExternalLink, Github, Brain, MessageCircle, Calendar, Heart, Utensils, Clock, Bot, DollarSign } from 'lucide-react';
+import { ExternalLink, MessageCircle, Calendar, Utensils, Bot, DollarSign } from 'lucide-react';
 
 const ProjectsSection = () => {
   const projects = [
@@ -7,27 +6,24 @@ const ProjectsSection = () => {
       title: "ticket.tekvosoft.com", 
       description: "Chat corporativo com integração ao WhatsApp. Comunicação interna descomplicada e elegante.",
       icon: MessageCircle,
-      color: "primary",
       link: "http://ticket.tekvosoft.com/",
-      type: "Comunicação Corporativa",
+      tags: ["WhatsApp", "Chat", "Real-time"],
       image: "/lovable-uploads/79117ada-5cfd-4c0b-920e-80810bd9a0d6.png"
     },
     {
-      title: "Mesa Fácil – SaaS para Restaurantes",
-      description: "Front-end completo para gestão de pedidos e mesas, com painel responsivo.",
+      title: "Mesa Fácil",
+      description: "SaaS para gestão de pedidos e mesas em restaurantes com painel responsivo.",
       icon: Utensils,
-      color: "neon-violet",
       link: "https://mesa-facil-gestao-saas-1.onrender.com/",
-      type: "SaaS Business",
+      tags: ["SaaS", "React", "Node.js"],
       image: "/lovable-uploads/97ee0758-207f-4450-9388-cdc6a5df76ad.png"
     },
     {
       title: "Agenda Online",
       description: "Sistema completo de agendamentos com back-end e front-end integrados.",
       icon: Calendar,
-      color: "primary",
       link: "https://agenda-6f9x.onrender.com/",
-      type: "Sistema Completo",
+      tags: ["Full-Stack", "Sistema"],
       image: "/lovable-uploads/d95001ff-46a0-4fb6-b6df-1f4b22ce8bee.png"
     },
     {
@@ -56,14 +52,13 @@ const ProjectsSection = () => {
         <div className="max-w-6xl mx-auto">
           {/* Section Header */}
           <div className="text-center mb-16 scroll-reveal">
-            <h2 className="text-4xl font-bold mb-4">
-              <span className="neon-glow">Projetos com</span>{' '}
-              <span className="neon-glow-violet">Alma</span>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              <span className="text-primary">Projetos</span>
             </h2>
-            <p className="text-xl text-muted-foreground mb-6">
-              Coisas que construí com propósito
+            <div className="w-20 h-1 bg-gradient-to-r from-primary to-accent mx-auto mb-6"></div>
+            <p className="text-xl text-muted-foreground">
+              Feitos por mim
             </p>
-            <div className="w-20 h-1 bg-gradient-to-r from-primary to-accent mx-auto"></div>
           </div>
 
           {/* Projects Grid */}
@@ -71,56 +66,49 @@ const ProjectsSection = () => {
             {projects.map((project, index) => (
               <div 
                 key={index}
-                className="portfolio-card group relative overflow-hidden card-3d"
-                style={{ animationDelay: `${index * 0.1}s` }}
+                className="group rounded-lg bg-card border border-border overflow-hidden hover:border-primary transition-all duration-300 hover:shadow-lg"
               >
                 {/* Project Image */}
-                <div className="mb-4 project-image-3d">
+                <div className="overflow-hidden">
                   <img 
                     src={project.image}
-                    alt={`Screenshot of ${project.title}`}
-                    className="w-full h-48 object-cover rounded-lg border border-primary/20"
+                    alt={project.title}
+                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                 </div>
 
-                {/* Project Type Badge */}
-                <div className="absolute top-6 right-6 z-10">
-                  <span className={`px-2 py-1 text-xs rounded-full bg-${project.color}/20 text-${project.color} border border-${project.color}/30`}>
-                    {project.type}
-                  </span>
-                </div>
-
-                {/* Icon */}
-                <div className={`w-12 h-12 rounded-lg bg-${project.color}/10 border border-${project.color}/30 flex items-center justify-center mb-4 floating-3d`}>
-                  <project.icon className={`w-6 h-6 text-${project.color}`} />
-                </div>
-
-                {/* Content */}
-                <div className="flex-1">
-                  <h3 className="text-xl font-semibold mb-2 text-foreground group-hover:text-primary transition-colors duration-300">
-                    {project.title}
-                  </h3>
+                <div className="p-6">
+                  {/* Icon & Title */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <project.icon className="w-5 h-5 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-semibold">{project.title}</h3>
+                  </div>
                   
                   <p className="text-muted-foreground text-sm leading-relaxed mb-4">
                     {project.description}
                   </p>
-                </div>
 
-                {/* Action Button */}
-                <div className="pt-4 border-t border-border/50">
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {project.tags.map((tag, i) => (
+                      <span key={i} className="px-2 py-1 text-xs rounded-full bg-primary/10 text-primary">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Link */}
                   <a 
                     href={project.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`inline-flex items-center gap-2 text-${project.color} hover:text-${project.color}/80 transition-colors duration-300 group-hover:translate-x-1 transform transition-transform duration-300`}
+                    className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors duration-300 text-sm font-medium"
                   >
-                    <span className="text-sm font-medium">Ver projeto</span>
-                    <ExternalLink className="w-4 h-4" />
+                    Ver projeto <ExternalLink className="w-4 h-4" />
                   </a>
                 </div>
-
-                {/* Holographic overlay */}
-                <div className="absolute inset-0 bg-gradient-to-br from-transparent via-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
               </div>
             ))}
           </div>
