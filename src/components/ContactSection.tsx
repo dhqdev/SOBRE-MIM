@@ -77,7 +77,7 @@ const ContactSection = () => {
               {submitSuccess && (
                 <div className="mb-6 p-4 bg-green-500/10 border-2 border-green-500/30 rounded-lg animate-pulse">
                   <p className="text-green-500 text-center font-semibold">
-                    ✅ Cadastro enviado! Entrarei em contato em breve.
+                    ✅ Cadastro enviado! Até breve!
                   </p>
                 </div>
               )}
