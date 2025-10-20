@@ -95,7 +95,7 @@ const ContactSection = () => {
                     value={formData.name}
                     onChange={handleChange}
                     placeholder="Seu nome completo"
-                    className="h-12 text-base"
+                    className="cursor-target h-12 text-base"
                   />
                 </div>
                 
@@ -111,7 +111,7 @@ const ContactSection = () => {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="seu@email.com"
-                    className="h-12 text-base"
+                    className="cursor-target h-12 text-base"
                   />
                 </div>
                 
@@ -129,7 +129,7 @@ const ContactSection = () => {
                     placeholder="5519995378302"
                     pattern="[0-9]{13}"
                     maxLength={13}
-                    className="h-12 text-base font-mono"
+                    className="cursor-target h-12 text-base font-mono"
                   />
                   <p className="text-xs text-muted-foreground mt-2">
                     Formato: 5519995378302 (código do país + DDD + número)
@@ -139,7 +139,7 @@ const ContactSection = () => {
                 <Button 
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full h-14 bg-primary hover:bg-primary/90 text-base font-semibold shadow-lg hover:shadow-primary/50 transition-all duration-300"
+                  className="cursor-target w-full h-14 bg-primary hover:bg-primary/90 text-base font-semibold shadow-lg hover:shadow-primary/50 transition-all duration-300"
                 >
                   <Send className="w-5 h-5 mr-2" />
                   {isSubmitting ? 'Enviando...' : 'Enviar Contato'}

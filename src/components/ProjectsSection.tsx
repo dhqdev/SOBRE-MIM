@@ -64,7 +64,7 @@ const ProjectsSection = () => {
             {projects.map((project, index) => (
               <div 
                 key={index}
-                className="group rounded-lg bg-card border border-border overflow-hidden hover:border-primary transition-all duration-300 hover:shadow-lg"
+                className="cursor-target group rounded-lg bg-card border border-border overflow-hidden hover:border-primary transition-all duration-300 hover:shadow-lg"
               >
                 {/* Project Image */}
                 <div className="overflow-hidden">

@@ -1,0 +1,58 @@
+.target-cursor-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+  z-index: 9999;
+  will-change: transform;
+}
+
+.target-cursor-dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background-color: hsl(var(--primary));
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 10px hsl(var(--primary));
+}
+
+.target-cursor-corner {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 3px solid hsl(var(--primary));
+  pointer-events: none;
+}
+
+.corner-tl {
+  top: -18px;
+  left: -18px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.corner-tr {
+  top: -18px;
+  right: -18px;
+  border-left: none;
+  border-bottom: none;
+}
+
+.corner-br {
+  bottom: -18px;
+  right: -18px;
+  border-left: none;
+  border-top: none;
+}
+
+.corner-bl {
+  bottom: -18px;
+  left: -18px;
+  border-right: none;
+  border-top: none;
+}

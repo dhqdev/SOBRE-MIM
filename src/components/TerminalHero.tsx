@@ -50,7 +50,7 @@ const TerminalHero = () => {
           <div className="flex flex-wrap justify-center gap-4 pt-8">
             <a 
               href="#contato"
-              className="px-8 py-4 bg-primary text-primary-foreground rounded-lg font-semibold hover:shadow-lg hover:shadow-primary/50 transition-all duration-300 hover:-translate-y-1"
+              className="cursor-target px-8 py-4 bg-primary text-primary-foreground rounded-lg font-semibold hover:shadow-lg hover:shadow-primary/50 transition-all duration-300 hover:-translate-y-1"
             >
               Ver Portfólio
             </a>
@@ -59,7 +59,7 @@ const TerminalHero = () => {
               href="https://www.linkedin.com/in/david-fernandes-77a663229/" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="px-8 py-4 border-2 border-primary text-primary rounded-lg font-semibold hover:bg-primary hover:text-primary-foreground transition-all duration-300 flex items-center gap-2"
+              className="cursor-target px-8 py-4 border-2 border-primary text-primary rounded-lg font-semibold hover:bg-primary hover:text-primary-foreground transition-all duration-300 flex items-center gap-2"
             >
               <Linkedin className="w-5 h-5" />
               LinkedIn
@@ -69,7 +69,7 @@ const TerminalHero = () => {
               href="https://github.com/dhqdev" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="px-8 py-4 border-2 border-accent text-accent rounded-lg font-semibold hover:bg-accent hover:text-accent-foreground transition-all duration-300 flex items-center gap-2"
+              className="cursor-target px-8 py-4 border-2 border-accent text-accent rounded-lg font-semibold hover:bg-accent hover:text-accent-foreground transition-all duration-300 flex items-center gap-2"
             >
               <Github className="w-5 h-5" />
               GitHub

@@ -34,7 +34,7 @@ const TechStackSection = () => {
             {technologies.map((tech, index) => (
               <div 
                 key={index}
-                className="flex flex-col items-center justify-center p-6 rounded-lg bg-card border border-border hover:border-primary transition-all duration-300 hover:shadow-lg group"
+                className="cursor-target flex flex-col items-center justify-center p-6 rounded-lg bg-card border border-border hover:border-primary transition-all duration-300 hover:shadow-lg group"
               >
                 <span className="text-5xl mb-3 group-hover:scale-110 transition-transform duration-300">
                   {tech.icon}
