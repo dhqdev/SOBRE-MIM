@@ -30,18 +30,16 @@ const ProjectsSection = () => {
       title: "BCI-ON1 - Automação Servopa",
       description: "O BCI-ON1 é um sistema de automação desenvolvido para simplificar e automatizar processos de licitação no portal Servopa. O sistema realiza login automático, extrai protocolos do Todoist, envia lances e notifica clientes via WhatsApp nos dias 8 e 16 de cada mês.",
       icon: Bot,
-      color: "neon-violet",
       link: "https://github.com/dhqdev/bci-on1?tab=readme-ov-file",
-      type: "Automação",
+      tags: ["Automação", "Python", "Selenium"],
       image: "/lovable-uploads/bci-on1-dashboard.png"
     },
     {
       title: "OX Cash - Investimentos",
       description: "Bem-vindo ao site-ox-cash! Este repositório contém o código-fonte para o site Ox Cash, um site criado para a empresa ox-ca$h com o intuito de oferecer um design inovador e robusto para eles.",
       icon: DollarSign,
-      color: "neon-yellow",
       link: "https://oxcash-sigma.vercel.app/",
-      type: "Site Corporativo",
+      tags: ["Site", "Design", "Corporativo"],
       image: "/lovable-uploads/oxcash-site.png"
     }
   ];
