@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Github, Linkedin } from 'lucide-react';
+import ContactSection from './ContactSection';
+import LinkedInTooltip from './LinkedInTooltip';
+import GitHubTooltip from './GitHubTooltip';
 
 const TerminalHero = () => {
   const [displayedText, setDisplayedText] = useState('');
@@ -20,60 +22,46 @@ const TerminalHero = () => {
   }, []);
 
   return (
-    <section className="min-h-[85vh] flex items-center justify-center relative overflow-hidden pt-20">
+    <section className="min-h-[90vh] flex items-center justify-center relative overflow-hidden pt-20 pb-10">
       {/* Subtle background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-card/30" />
       
-      <div className="container mx-auto px-6 text-center relative z-10">
-        <div className="max-w-4xl mx-auto space-y-8">
-          {/* Main Content */}
-          <div className="space-y-6">
-            <h1 className="text-5xl md:text-7xl font-bold">
-              <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-                David Fernandes
-              </span>
-            </h1>
-            
-            <div className="h-12 flex items-center justify-center">
-              <p className="text-2xl md:text-3xl text-muted-foreground font-mono">
-                {displayedText}
-                <span className="animate-pulse">|</span>
+      <div className="container mx-auto px-6 relative z-10">
+        {/* Layout em grid: conteúdo à esquerda, formulário à direita (desktop) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center max-w-7xl mx-auto">
+          {/* Coluna Esquerda: Conteúdo Principal */}
+          <div className="text-center lg:text-left space-y-10">
+            {/* Main Content */}
+            <div className="space-y-8">
+              <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold">
+                <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+                  David Fernandes
+                </span>
+              </h1>
+              
+              <div className="h-16 flex items-center justify-center lg:justify-start">
+                <p className="text-2xl md:text-3xl lg:text-4xl text-muted-foreground font-mono">
+                  {displayedText}
+                  <span className="animate-pulse">|</span>
+                </p>
+              </div>
+
+              <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                💻 Transformando ideias em código.
               </p>
             </div>
 
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              💻 Transformando ideias em código.
-            </p>
+            {/* Social Buttons */}
+            <div className="flex flex-wrap justify-center lg:justify-start gap-12 pt-12 items-center">
+              <LinkedInTooltip />
+              
+              <GitHubTooltip />
+            </div>
           </div>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-wrap justify-center gap-4 pt-8">
-            <a 
-              href="#contato"
-              className="cursor-target px-8 py-4 bg-primary text-primary-foreground rounded-lg font-semibold hover:shadow-lg hover:shadow-primary/50 transition-all duration-300 hover:-translate-y-1"
-            >
-              Ver Portfólio
-            </a>
-            
-            <a 
-              href="https://www.linkedin.com/in/david-fernandes-77a663229/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="cursor-target px-8 py-4 border-2 border-primary text-primary rounded-lg font-semibold hover:bg-primary hover:text-primary-foreground transition-all duration-300 flex items-center gap-2"
-            >
-              <Linkedin className="w-5 h-5" />
-              LinkedIn
-            </a>
-            
-            <a 
-              href="https://github.com/dhqdev" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="cursor-target px-8 py-4 border-2 border-accent text-accent rounded-lg font-semibold hover:bg-accent hover:text-accent-foreground transition-all duration-300 flex items-center gap-2"
-            >
-              <Github className="w-5 h-5" />
-              GitHub
-            </a>
+          {/* Coluna Direita: Formulário (visível apenas no desktop) */}
+          <div className="hidden lg:block">
+            <ContactSection isInHero={true} />
           </div>
         </div>
       </div>

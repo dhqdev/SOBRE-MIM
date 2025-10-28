@@ -35,11 +35,13 @@ const Index = () => {
           <TerminalHero />
         </div>
         
-        {/* Formulário de contato logo após o Hero */}
+        {/* Formulário de contato separado (apenas mobile) */}
         <ContactSection />
         
-        {/* Projetos logo após o cadastro */}
-        <ProjectsSection />
+        {/* Projetos */}
+        <div id="projetos">
+          <ProjectsSection />
+        </div>
         
         <AboutSection />
         <TechStackSection />
