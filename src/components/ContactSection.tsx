@@ -87,7 +87,7 @@ const ContactSection = ({ isInHero = false }: ContactSectionProps) => {
             <ul className="wrapper">
               <li style={{ '--i': 4 } as React.CSSProperties}>
                 <input 
-                  className="input" 
+                  className="input cursor-target" 
                   type="text" 
                   placeholder="Nome completo" 
                   required 
@@ -98,7 +98,7 @@ const ContactSection = ({ isInHero = false }: ContactSectionProps) => {
               </li>
               <li style={{ '--i': 3 } as React.CSSProperties}>
                 <input 
-                  className="input" 
+                  className="input cursor-target" 
                   placeholder="Insira seu WhatsApp com DDD" 
                   required 
                   name="phone"
@@ -111,7 +111,7 @@ const ContactSection = ({ isInHero = false }: ContactSectionProps) => {
               </li>
               <li style={{ '--i': 2 } as React.CSSProperties}>
                 <input 
-                  className="input" 
+                  className="input cursor-target" 
                   type="email" 
                   placeholder="seu@email.com" 
                   required 
@@ -121,6 +121,7 @@ const ContactSection = ({ isInHero = false }: ContactSectionProps) => {
                 />
               </li>
               <button 
+                className="cursor-target"
                 style={{ '--i': 1 } as React.CSSProperties} 
                 type="submit"
                 disabled={isSubmitting}
@@ -162,7 +163,7 @@ const ContactSection = ({ isInHero = false }: ContactSectionProps) => {
                 <ul className="wrapper">
                   <li style={{ '--i': 4 } as React.CSSProperties}>
                     <input 
-                      className="input" 
+                      className="input cursor-target" 
                       type="text" 
                       placeholder="Nome completo" 
                       required 
@@ -173,7 +174,7 @@ const ContactSection = ({ isInHero = false }: ContactSectionProps) => {
                   </li>
                   <li style={{ '--i': 3 } as React.CSSProperties}>
                     <input 
-                      className="input" 
+                      className="input cursor-target" 
                       placeholder="Insira seu WhatsApp com DDD" 
                       required 
                       name="phone"
@@ -186,7 +187,7 @@ const ContactSection = ({ isInHero = false }: ContactSectionProps) => {
                   </li>
                   <li style={{ '--i': 2 } as React.CSSProperties}>
                     <input 
-                      className="input" 
+                      className="input cursor-target" 
                       type="email" 
                       placeholder="seu@email.com" 
                       required 
@@ -196,6 +197,7 @@ const ContactSection = ({ isInHero = false }: ContactSectionProps) => {
                     />
                   </li>
                   <button 
+                    className="cursor-target"
                     style={{ '--i': 1 } as React.CSSProperties} 
                     type="submit"
                     disabled={isSubmitting}
@@ -259,6 +261,12 @@ const StyledWrapper = styled.div`
     z-index: var(--i);
     transition: 0.3s;
     color: white;
+    pointer-events: none;
+  }
+
+  .wrapper li .input,
+  .wrapper button {
+    pointer-events: auto;
   }
 
   .wrapper li::before, button::before {
@@ -302,12 +310,18 @@ const StyledWrapper = styled.div`
   li .input {
     outline: none;
     border: none;
-    color: black;
+    color: #000;
     cursor: text;
+    caret-color: #000;
   }
 
   li .input::placeholder {
-    color: #333;
+    color: #555;
+  }
+
+  li .input::selection {
+    background: #575cb5;
+    color: white;
   }
 
   li:nth-child(1) .input {
