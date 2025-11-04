@@ -6,6 +6,7 @@ import TechStackSection from '@/components/TechStackSection';
 import ContactSection from '@/components/ContactSection';
 import Footer from '@/components/Footer';
 import TargetCursor from '@/components/TargetCursor';
+import Header from '@/components/Header';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 const Index = () => {
@@ -22,6 +23,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background relative">
       <TargetCursor spinDuration={2} hideDefaultCursor={true} />
+      <Header />
       
       {/* Subtle background effects */}
       <div className="fixed inset-0 -z-10">
