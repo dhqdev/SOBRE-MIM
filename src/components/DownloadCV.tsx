@@ -1,21 +1,47 @@
 import styled from 'styled-components';
+import { useState } from 'react';
 
 const DownloadCV = () => {
+  const [isAnimating, setIsAnimating] = useState(false);
+
   const handleDownload = () => {
-    // Cria um link temporário para download
-    const link = document.createElement('a');
-    link.href = '/CV-David.pdf';
-    link.download = 'CV-David-Fernandes.pdf';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    if (isAnimating) return;
+    
+    setIsAnimating(true);
+    
+    // Detecta se é mobile
+    const isMobile = window.innerWidth <= 768;
+    // Delay no mobile (1.5s) para permitir ver um pouco da animação
+    // No desktop (4s) para ver a animação completa
+    const delay = isMobile ? 1500 : 4000;
+    
+    setTimeout(() => {
+      // Cria um link temporário para download
+      const link = document.createElement('a');
+      link.href = '/CV-David.pdf';
+      link.download = 'CV-David-Fernandes.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Reset após mais um tempo para completar a animação
+      setTimeout(() => {
+        setIsAnimating(false);
+      }, isMobile ? 500 : 1000);
+    }, delay);
   };
 
   return (
     <StyledWrapper>
       <div className="container">
         <label className="label cursor-target">
-          <input type="checkbox" className="input" onClick={handleDownload} />
+          <input 
+            type="checkbox" 
+            className="input" 
+            onClick={handleDownload}
+            checked={isAnimating}
+            readOnly
+          />
           <span className="circle">
             <svg className="icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 19V5m0 14-4-4m4 4 4-4" />
@@ -31,6 +57,16 @@ const DownloadCV = () => {
 }
 
 const StyledWrapper = styled.div`
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 50;
+  
+  @media (max-width: 768px) {
+    bottom: 1.5rem;
+    right: 1.5rem;
+  }
+
   .container {
     padding: 0;
     margin: 0;
