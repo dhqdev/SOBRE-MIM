@@ -7,6 +7,7 @@ import ContactSection from '@/components/ContactSection';
 import Footer from '@/components/Footer';
 import TargetCursor from '@/components/TargetCursor';
 import DownloadCV from '@/components/DownloadCV';
+import Iridescence from '@/components/Iridescence';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 const Index = () => {
@@ -21,18 +22,24 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background relative">
+    <div className="min-h-screen bg-background relative overflow-x-hidden">
       <TargetCursor spinDuration={2} hideDefaultCursor={true} />
       <DownloadCV />
       
-      {/* Subtle background effects */}
-      <div className="fixed inset-0 -z-10">
-        <div className="absolute top-0 left-0 w-full h-screen bg-gradient-to-br from-primary/5 to-transparent"></div>
-        <div className="absolute top-1/4 right-0 w-96 h-96 bg-accent/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/4 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
+      {/* Iridescence animated background */}
+      <div className="fixed inset-0 w-screen h-screen" style={{ zIndex: 0 }}>
+        <Iridescence
+          color={[0.3, 0.95, 0.95]}
+          mouseReact={true}
+          amplitude={0.2}
+          speed={0.6}
+        />
       </div>
       
-      <main>
+      {/* Overlay gradient for better readability - ajustado para mobile */}
+      <div className="fixed inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background/80 md:from-background/70 md:via-background/50 md:to-background/70 pointer-events-none" style={{ zIndex: 1 }}></div>
+      
+      <main className="relative" style={{ zIndex: 2 }}>
         <div id="home">
           <TerminalHero />
         </div>
