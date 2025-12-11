@@ -20,10 +20,10 @@ const AboutSection = () => {
           
           {/* Section Header */}
           <div className="text-center mb-16 scroll-reveal">
-            <span className="inline-block text-primary font-mono text-sm mb-4 px-4 py-1 rounded-full border border-primary/30 bg-primary/5">
+            <span className="inline-block text-primary font-mono text-base mb-4 px-5 py-2 rounded-full border border-primary/30 bg-primary/5">
               &lt;sobre-mim /&gt;
             </span>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            <h2 className="text-5xl md:text-6xl font-bold mb-4">
               Conheça minha <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">jornada</span>
             </h2>
             <div className="w-24 h-1 bg-gradient-to-r from-primary to-accent mx-auto rounded-full"></div>
@@ -76,8 +76,8 @@ const AboutSection = () => {
 
             {/* Right: Skills Grid */}
             <div className="lg:col-span-2 space-y-4 scroll-reveal">
-              <h3 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
-                <Zap className="w-5 h-5 text-primary" />
+              <h3 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
+                <Zap className="w-6 h-6 text-primary" />
                 Especialidades
               </h3>
               
@@ -85,17 +85,17 @@ const AboutSection = () => {
                 {skills.map((skill, index) => (
                   <div 
                     key={index}
-                    className="group p-4 rounded-xl bg-card/50 border border-border/50 hover:border-primary/50 transition-all duration-300 cursor-target hover:shadow-lg hover:shadow-primary/5"
+                    className="group p-5 rounded-xl bg-card/50 border border-border/50 hover:border-primary/50 transition-all duration-300 cursor-target hover:shadow-lg hover:shadow-primary/5"
                   >
                     <div className="flex items-center gap-2 mb-3">
                       <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                        <skill.icon className="w-4 h-4" />
+                        <skill.icon className="w-5 h-5" />
                       </div>
-                      <span className="font-semibold text-foreground text-sm">{skill.title}</span>
+                      <span className="font-semibold text-foreground text-base">{skill.title}</span>
                     </div>
-                    <ul className="space-y-1">
+                    <ul className="space-y-1.5">
                       {skill.items.map((item, idx) => (
-                        <li key={idx} className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        <li key={idx} className="text-sm text-muted-foreground flex items-center gap-1.5">
                           <span className="w-1 h-1 rounded-full bg-primary/50" />
                           {item}
                         </li>
@@ -106,23 +106,23 @@ const AboutSection = () => {
               </div>
 
               {/* Quick Facts */}
-              <div className="mt-8 p-5 rounded-xl bg-gradient-to-br from-primary/10 to-accent/5 border border-primary/20">
-                <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                  <Bot className="w-4 h-4 text-primary" />
+              <div className="mt-8 p-6 rounded-xl bg-gradient-to-br from-primary/10 to-accent/5 border border-primary/20">
+                <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2 text-lg">
+                  <Bot className="w-5 h-5 text-primary" />
                   Foco Atual
                 </h4>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
-                    <Globe className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Frappe Framework & ERPNext</span>
+                    <Globe className="w-5 h-5 text-muted-foreground" />
+                    <span className="text-base text-muted-foreground">Frappe Framework & ERPNext</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Zap className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Automação de processos</span>
+                    <Zap className="w-5 h-5 text-muted-foreground" />
+                    <span className="text-base text-muted-foreground">Automação de processos</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <BarChart3 className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Dashboards & Analytics</span>
+                    <BarChart3 className="w-5 h-5 text-muted-foreground" />
+                    <span className="text-base text-muted-foreground">Dashboards & Analytics</span>
                   </div>
                 </div>
               </div>
@@ -184,7 +184,7 @@ const StyledWrapper = styled.div`
     color: var(--color);
     padding: 1.5rem 1.25rem 1rem 1.5rem;
     font-weight: 700;
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     transition: transform 300ms ease;
     z-index: 5;
     display: flex;
@@ -199,7 +199,8 @@ const StyledWrapper = styled.div`
   .notibody {
     color: #a1a1aa;
     padding: 0 1.5rem 1.5rem 1.5rem;
-    line-height: 1.7;
+    line-height: 1.8;
+    font-size: 1.05rem;
     transition: transform 300ms ease;
     z-index: 5;
   }
@@ -228,7 +229,7 @@ const StyledWrapper = styled.div`
   .quote-text {
     color: #d4d4d8;
     font-style: italic;
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     line-height: 1.6;
     margin-bottom: 0.5rem !important;
   }
@@ -236,7 +237,7 @@ const StyledWrapper = styled.div`
   .quote-author {
     color: var(--color);
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.95rem;
   }
 
   .notiglow,

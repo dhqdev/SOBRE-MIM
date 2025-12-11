@@ -9,7 +9,8 @@ const ContactSection = ({ isInHero = false }: ContactSectionProps) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: ''
+    phone: '',
+    message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -36,7 +37,7 @@ const ContactSection = ({ isInHero = false }: ContactSectionProps) => {
 
       if (response.ok) {
         setSubmitSuccess(true);
-        setFormData({ name: '', email: '', phone: '' });
+        setFormData({ name: '', email: '', phone: '', message: '' });
         setTimeout(() => setSubmitSuccess(false), 5000);
       } else {
         alert('Erro ao enviar cadastro. Tente novamente.');
@@ -49,7 +50,7 @@ const ContactSection = ({ isInHero = false }: ContactSectionProps) => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
     if (name === 'phone') {
@@ -77,15 +78,6 @@ const ContactSection = ({ isInHero = false }: ContactSectionProps) => {
   if (isInHero) {
     return (
       <div>
-        <div className="text-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold mb-3">
-            <span className="text-primary">Entre em Contato</span>
-          </h2>
-          <p className="text-sm md:text-base text-muted-foreground">
-            Preencha o formulário e receba meu contato via WhatsApp
-          </p>
-        </div>
-
         {submitSuccess && (
           <div className="mb-6 p-4 bg-green-500/10 border-2 border-green-500/30 rounded-lg animate-pulse">
             <p className="text-green-500 text-center font-semibold">
@@ -96,34 +88,29 @@ const ContactSection = ({ isInHero = false }: ContactSectionProps) => {
 
         <StyledWrapper>
           <form className="form" onSubmit={handleSubmit}>
-            <ul className="wrapper">
-              <li style={{ '--i': 4 } as React.CSSProperties}>
+            <div className="form-header">
+              <h3 className="form-title">Entre em Contato</h3>
+              <p className="form-subtitle">Preencha o formulário e receba meu contato via WhatsApp</p>
+            </div>
+
+            <div className="form-grid">
+              <div className="input-group">
+                <label className="label-text">Nome *</label>
                 <input 
-                  className="input cursor-target" 
+                  className="input" 
                   type="text" 
-                  placeholder="Nome completo" 
+                  placeholder="Seu nome completo" 
                   required 
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
                 />
-              </li>
-              <li style={{ '--i': 3 } as React.CSSProperties}>
+              </div>
+              
+              <div className="input-group">
+                <label className="label-text">Email *</label>
                 <input 
-                  className="input cursor-target" 
-                  placeholder="(DDD) 99999-9999" 
-                  required 
-                  name="phone"
-                  type="tel"
-                  minLength={12}
-                  maxLength={13}
-                  value={formData.phone}
-                  onChange={handleChange}
-                />
-              </li>
-              <li style={{ '--i': 2 } as React.CSSProperties}>
-                <input 
-                  className="input cursor-target" 
+                  className="input" 
                   type="email" 
                   placeholder="seu@email.com" 
                   required 
@@ -131,16 +118,46 @@ const ContactSection = ({ isInHero = false }: ContactSectionProps) => {
                   value={formData.email}
                   onChange={handleChange}
                 />
-              </li>
-              <button 
-                className="cursor-target"
-                style={{ '--i': 1 } as React.CSSProperties} 
-                type="submit"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Enviando...' : 'Enviar Contato'}
-              </button>
-            </ul>
+              </div>
+            </div>
+            
+            <div className="input-group">
+              <label className="label-text">WhatsApp *</label>
+              <input 
+                className="input" 
+                type="tel" 
+                placeholder="(DDD) 99999-9999" 
+                required 
+                name="phone"
+                minLength={12}
+                maxLength={13}
+                value={formData.phone}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="input-group">
+              <label className="label-text">Sobre o projeto</label>
+              <textarea 
+                className="input textarea" 
+                placeholder="Conte-me sobre seu projeto..."
+                name="message"
+                rows={4}
+                value={formData.message}
+                onChange={handleChange}
+              />
+            </div>
+            
+            <button 
+              className="submit"
+              type="submit"
+              disabled={isSubmitting}
+            >
+              <svg className="send-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+              </svg>
+              {isSubmitting ? 'Enviando...' : 'Enviar Mensagem'}
+            </button>
           </form>
         </StyledWrapper>
       </div>
@@ -153,15 +170,6 @@ const ContactSection = ({ isInHero = false }: ContactSectionProps) => {
       <div className="container mx-auto px-6">
         <div className="max-w-2xl mx-auto">
           <div className="scroll-reveal">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-3">
-                <span className="text-primary">Entre em Contato</span>
-              </h2>
-              <p className="text-lg text-muted-foreground">
-                Preencha o formulário e receba meu contato via WhatsApp
-              </p>
-            </div>
-
             {submitSuccess && (
               <div className="mb-6 p-4 bg-green-500/10 border-2 border-green-500/30 rounded-lg animate-pulse">
                 <p className="text-green-500 text-center font-semibold">
@@ -172,34 +180,29 @@ const ContactSection = ({ isInHero = false }: ContactSectionProps) => {
 
             <StyledWrapper>
               <form className="form" onSubmit={handleSubmit}>
-                <ul className="wrapper">
-                  <li style={{ '--i': 4 } as React.CSSProperties}>
+                <div className="form-header">
+                  <h3 className="form-title">Entre em Contato</h3>
+                  <p className="form-subtitle">Preencha o formulário e receba meu contato via WhatsApp</p>
+                </div>
+
+                <div className="form-grid">
+                  <div className="input-group">
+                    <label className="label-text">Nome *</label>
                     <input 
-                      className="input cursor-target" 
+                      className="input" 
                       type="text" 
-                      placeholder="Nome completo" 
+                      placeholder="Seu nome completo" 
                       required 
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
                     />
-                  </li>
-                  <li style={{ '--i': 3 } as React.CSSProperties}>
+                  </div>
+                  
+                  <div className="input-group">
+                    <label className="label-text">Email *</label>
                     <input 
-                      className="input cursor-target" 
-                      placeholder="(DDD) 99999-9999" 
-                      required 
-                      name="phone"
-                      type="tel"
-                      minLength={12}
-                      maxLength={13}
-                      value={formData.phone}
-                      onChange={handleChange}
-                    />
-                  </li>
-                  <li style={{ '--i': 2 } as React.CSSProperties}>
-                    <input 
-                      className="input cursor-target" 
+                      className="input" 
                       type="email" 
                       placeholder="seu@email.com" 
                       required 
@@ -207,16 +210,46 @@ const ContactSection = ({ isInHero = false }: ContactSectionProps) => {
                       value={formData.email}
                       onChange={handleChange}
                     />
-                  </li>
-                  <button 
-                    className="cursor-target"
-                    style={{ '--i': 1 } as React.CSSProperties} 
-                    type="submit"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Enviando...' : 'Enviar Contato'}
-                  </button>
-                </ul>
+                  </div>
+                </div>
+                
+                <div className="input-group">
+                  <label className="label-text">WhatsApp *</label>
+                  <input 
+                    className="input" 
+                    type="tel" 
+                    placeholder="(DDD) 99999-9999" 
+                    required 
+                    name="phone"
+                    minLength={12}
+                    maxLength={13}
+                    value={formData.phone}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label className="label-text">Sobre o projeto</label>
+                  <textarea 
+                    className="input textarea" 
+                    placeholder="Conte-me sobre seu projeto..."
+                    name="message"
+                    rows={4}
+                    value={formData.message}
+                    onChange={handleChange}
+                  />
+                </div>
+                
+                <button 
+                  className="submit"
+                  type="submit"
+                  disabled={isSubmitting}
+                >
+                  <svg className="send-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                  </svg>
+                  {isSubmitting ? 'Enviando...' : 'Enviar Mensagem'}
+                </button>
               </form>
             </StyledWrapper>
           </div>
@@ -230,185 +263,199 @@ const StyledWrapper = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 400px;
 
   .form {
-    padding: 0;
-  }
-
-  .input, button {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 650px;
     width: 100%;
-    height: 50px;
+    padding: 40px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(26, 26, 46, 0.7) 0%, rgba(22, 33, 62, 0.7) 100%);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(168, 144, 255, 0.2);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(168, 144, 255, 0.1) inset,
+      0 0 60px rgba(168, 144, 255, 0.1);
     position: relative;
-    padding: 15px;
-    border: 0.1px solid #575cb5;
-    font-size: 16px;
-    background: transparent;
+    overflow: hidden;
   }
 
-  button {
-    background: #6d74e3;
-    border: none;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s;
-  }
-
-  button:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-
-  .wrapper {
-    position: relative;
-    transform: skewY(-14deg);
-    padding: 0;
-    margin: 0;
-  }
-
-  .wrapper li, button {
-    position: relative;
-    list-style: none;
-    width: 300px;
-    z-index: var(--i);
-    transition: 0.3s;
-    color: white;
-    pointer-events: none;
-  }
-
-  .wrapper li .input,
-  .wrapper button {
-    pointer-events: auto;
-  }
-
-  .wrapper li::before, button::before {
-    position: absolute;
+  .form::before {
     content: '';
-    background: #6d74e3;
+    position: absolute;
     top: 0;
-    left: -50px;
-    width: 50px;
-    height: 50px;
-    transform-origin: right;
-    transform: skewY(45deg);
-    transition: 0.3s;
-  }
-
-  .wrapper li::after, button::after {
-    position: absolute;
-    content: '';
-    background: #6d74e3;
-    width: 300px;
-    height: 50px;
-    top: -50px;
     left: 0;
-    transform-origin: bottom;
-    transform: skewX(45deg);
-    transition: 0.3s;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(168, 144, 255, 0.5) 50%, 
+      transparent);
   }
 
-  .wrapper li:nth-child(1)::after, .wrapper li:nth-child(1)::before {
-    background-color: #d8daf7;
+  .form-header {
+    text-align: center;
+    margin-bottom: 8px;
   }
 
-  .wrapper li:nth-child(2)::after, .wrapper li:nth-child(2)::before {
-    background-color: #c2c5f3;
+  .form-title {
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #ffffff 0%, #a890ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
   }
 
-  .wrapper li:nth-child(3)::after, .wrapper li:nth-child(3)::before {
-    background-color: #989deb;
+  .form-subtitle {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 400;
   }
 
-  li .input {
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .label-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+
+  .input {
+    width: 100%;
+    padding: 14px 16px;
+    background: rgba(15, 15, 30, 0.6);
+    border: 1px solid rgba(168, 144, 255, 0.15);
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 15px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     outline: none;
+    font-family: inherit;
+  }
+
+  .input::placeholder {
+    color: rgba(255, 255, 255, 0.25);
+  }
+
+  .input:hover {
+    border-color: rgba(168, 144, 255, 0.3);
+    background: rgba(15, 15, 30, 0.8);
+  }
+
+  .input:focus {
+    border-color: rgba(168, 144, 255, 0.6);
+    background: rgba(15, 15, 30, 0.9);
+    box-shadow: 
+      0 0 0 4px rgba(168, 144, 255, 0.1),
+      0 0 20px rgba(168, 144, 255, 0.2);
+    transform: translateY(-1px);
+  }
+
+  .textarea {
+    resize: vertical;
+    min-height: 100px;
+    font-family: inherit;
+  }
+
+  .submit {
+    margin-top: 8px;
+    padding: 16px 32px;
+    background: linear-gradient(135deg, #a890ff 0%, #7b68ee 100%);
     border: none;
-    color: #000;
-    cursor: text;
-    caret-color: #000;
-  }
-
-  li .input::placeholder {
-    color: #555;
-  }
-
-  li .input::selection {
-    background: #575cb5;
+    border-radius: 10px;
     color: white;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 14px;
   }
 
-  li:nth-child(1) .input {
-    background: #d8daf7;
+  .submit::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(255, 255, 255, 0.2), 
+      transparent);
+    transition: left 0.5s;
   }
 
-  li:nth-child(2) .input {
-    background: #c2c5f3;
+  .submit:hover::before {
+    left: 100%;
   }
 
-  li:nth-child(3) .input {
-    background: #989deb;
+  .submit:hover {
+    transform: translateY(-3px);
+    box-shadow: 
+      0 10px 30px rgba(168, 144, 255, 0.4),
+      0 0 40px rgba(168, 144, 255, 0.2);
+    background: linear-gradient(135deg, #b89fff 0%, #8b75e8 100%);
   }
 
-  li:nth-child(1) .input:focus {
-    outline: none;
-    border: 3.5px solid #d8daf7;
+  .submit:active {
+    transform: translateY(-1px);
   }
 
-  li:nth-child(2) .input:focus {
-    outline: none;
-    border: 3.5px solid #c2c5f3;
+  .submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
   }
 
-  li:nth-child(3) .input:focus {
-    outline: none;
-    border: 3.5px solid #989deb;
+  .send-icon {
+    width: 18px;
+    height: 18px;
+    transition: transform 0.3s;
   }
 
-  .wrapper li:hover, button:hover {
-    transform: translateX(-20px);
-  }
-
-  button:hover, button:hover::before, button:hover::after {
-    background: #575cb5;
-  }
-
-  button:active {
-    transform: translateX(0px);
+  .submit:hover .send-icon {
+    transform: translateX(3px) translateY(-3px);
   }
 
   @media (max-width: 768px) {
-    .wrapper li, button {
-      width: 250px;
+    .form {
+      max-width: 100%;
+      padding: 28px 20px;
     }
 
-    .wrapper li::before, button::before {
-      width: 40px;
-      height: 50px;
-      left: -40px;
+    .form-grid {
+      grid-template-columns: 1fr;
     }
 
-    .wrapper li::after, button::after {
-      width: 250px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .wrapper li, button {
-      width: 200px;
-    }
-
-    .wrapper li::before, button::before {
-      width: 30px;
-      height: 50px;
-      left: -30px;
-    }
-
-    .wrapper li::after, button::after {
-      width: 200px;
-    }
-
-    .input, button {
-      font-size: 14px;
-      padding: 12px;
+    .form-title {
+      font-size: 24px;
     }
   }
 `;
