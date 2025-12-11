@@ -12,20 +12,20 @@ const ProjectsSection = () => {
       image: "/lovable-uploads/79117ada-5cfd-4c0b-920e-80810bd9a0d6.png"
     },
     {
-      title: "Mesa Fácil",
-      description: "SaaS para gestão de pedidos e mesas em restaurantes com painel responsivo.",
-      icon: Utensils,
-      link: "https://mesa-facil-gestao-saas-1.onrender.com/",
-      tags: ["SaaS", "React", "Node.js"],
-      image: "/lovable-uploads/97ee0758-207f-4450-9388-cdc6a5df76ad.png"
+      title: "Encontro com Deus",
+      description: "Site oficial do retiro espiritual Encontro com Deus - Um ministério de transformação dedicado a promover experiências profundas de renovação espiritual, cura e reconexão com Deus. TypeScript e React, com inteligência artificial que conversa e aconselha a pessoa.",
+      icon: Calendar,
+      link: "https://encontro-com-deus.vercel.app/",
+      tags: ["React", "TypeScript", "IA"],
+      image: "/lovable-uploads/encontro-com-deus.png"
     },
     {
-      title: "Agenda Online",
-      description: "Sistema completo de agendamentos com back-end e front-end integrados.",
-      icon: Calendar,
-      link: "https://agenda-6f9x.onrender.com/",
-      tags: ["Full-Stack", "Sistema"],
-      image: "/lovable-uploads/d95001ff-46a0-4fb6-b6df-1f4b22ce8bee.png"
+      title: "Prato Flash",
+      description: "Sistema completo de gestão para restaurantes, desenvolvido com React, TypeScript e shadcn/ui. Uma solução moderna e intuitiva para gerenciar todos os aspectos do seu estabelecimento.",
+      icon: Utensils,
+      link: "https://github.com/dhqdev/prato-flash",
+      tags: ["React", "TypeScript", "shadcn/ui"],
+      image: "/lovable-uploads/prato-flash.png"
     },
     {
       title: "BCI-ON1 - Automação Servopa",
