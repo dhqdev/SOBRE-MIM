@@ -53,9 +53,21 @@ const ContactSection = ({ isInHero = false }: ContactSectionProps) => {
     const { name, value } = e.target;
     
     if (name === 'phone') {
-      const numbersOnly = value.replace(/\D/g, '');
-      const limitedNumbers = numbersOnly.slice(0, 13);
-      setFormData({ ...formData, [name]: limitedNumbers });
+      // Remove tudo que não é número
+      let numbersOnly = value.replace(/\D/g, '');
+      
+      // Se o usuário digitou 55 no início, remove para evitar duplicação
+      if (numbersOnly.startsWith('55')) {
+        numbersOnly = numbersOnly.slice(2);
+      }
+      
+      // Limita a 11 dígitos (DDD + número)
+      const limitedNumbers = numbersOnly.slice(0, 11);
+      
+      // Adiciona o +55 automaticamente
+      const formattedPhone = limitedNumbers ? `55${limitedNumbers}` : '';
+      
+      setFormData({ ...formData, [name]: formattedPhone });
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -99,11 +111,11 @@ const ContactSection = ({ isInHero = false }: ContactSectionProps) => {
               <li style={{ '--i': 3 } as React.CSSProperties}>
                 <input 
                   className="input cursor-target" 
-                  placeholder="Insira seu WhatsApp com DDD" 
+                  placeholder="(DDD) 99999-9999" 
                   required 
                   name="phone"
                   type="tel"
-                  pattern="[0-9]{13}"
+                  minLength={12}
                   maxLength={13}
                   value={formData.phone}
                   onChange={handleChange}
@@ -175,11 +187,11 @@ const ContactSection = ({ isInHero = false }: ContactSectionProps) => {
                   <li style={{ '--i': 3 } as React.CSSProperties}>
                     <input 
                       className="input cursor-target" 
-                      placeholder="Insira seu WhatsApp com DDD" 
+                      placeholder="(DDD) 99999-9999" 
                       required 
                       name="phone"
                       type="tel"
-                      pattern="[0-9]{13}"
+                      minLength={12}
                       maxLength={13}
                       value={formData.phone}
                       onChange={handleChange}
