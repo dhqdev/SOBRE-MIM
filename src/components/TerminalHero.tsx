@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import ContactSection from './ContactSection';
 import LinkedInTooltip from './LinkedInTooltip';
 import GitHubTooltip from './GitHubTooltip';
-import { Code2, Briefcase, Rocket, Terminal, ChevronDown } from 'lucide-react';
+import { Code2, Briefcase, Rocket, Terminal } from 'lucide-react';
 import davidProfile from '@/assets/david-profile.jpg';
 
 const TerminalHero = () => {
@@ -55,21 +55,35 @@ const TerminalHero = () => {
   };
 
   return (
-    <section className="min-h-screen flex items-center justify-center relative overflow-visible">
-      {/* Decorative elements */}
-      <div className="absolute top-20 left-10 w-32 h-32 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-20 right-10 w-40 h-40 bg-accent/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-      <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-neon-green/5 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '0.5s' }} />
+    <section className="min-h-screen flex items-center justify-center relative overflow-hidden">
+      {/* Sophisticated background */}
+      <div className="absolute inset-0">
+        {/* Mesh gradient orbs */}
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[150px] animate-pulse" />
+        <div className="absolute top-1/3 right-0 w-[600px] h-[600px] bg-accent/15 rounded-full blur-[180px] animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-neon-green/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '0.5s' }} />
+        <div className="absolute top-1/2 right-1/4 w-[300px] h-[300px] bg-primary/15 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1.5s' }} />
+        
+        {/* Subtle grid pattern */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{
+          backgroundImage: `linear-gradient(hsl(var(--primary)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px)`,
+          backgroundSize: '60px 60px'
+        }} />
+        
+        {/* Radial vignette */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,hsl(var(--background))_70%)]" />
+        
+        {/* Scan lines effect */}
+        <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{
+          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, hsl(var(--foreground)) 2px, hsl(var(--foreground)) 4px)',
+        }} />
+      </div>
       
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-card/30" />
-      <div className="absolute left-0 right-0 -bottom-80 h-[32rem] bg-gradient-to-b from-card/30 via-card/15 to-transparent" />
-      
-      <div className="container mx-auto px-4 md:px-6 relative z-10 py-20 lg:py-0">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center max-w-7xl mx-auto">
+      <div className="container mx-auto px-4 md:px-6 relative z-10 py-16 sm:py-20 lg:py-0">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-16 items-center max-w-7xl mx-auto">
           
           {/* Left Column: Main Content */}
-          <div className="text-center lg:text-left space-y-8">
+          <div className="text-center lg:text-left space-y-5 sm:space-y-6 lg:space-y-8">
             {/* Status Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/5 backdrop-blur-sm">
               <span className="relative flex h-2 w-2">
@@ -82,8 +96,8 @@ const TerminalHero = () => {
             {/* Profile Photo - Mobile Only */}
             <div className="lg:hidden flex justify-center">
               <div className="relative group">
-                <div className="absolute -inset-1 bg-gradient-to-r from-primary via-accent to-primary rounded-full blur-md opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
-                <div className="relative w-32 h-32 rounded-full overflow-hidden border-2 border-primary/50">
+                <div className="absolute -inset-2 bg-gradient-to-r from-primary via-accent to-primary rounded-full blur-xl opacity-50" />
+                <div className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-full overflow-hidden border-2 border-primary/50 shadow-2xl">
                   <img
                     src={davidProfile}
                     alt="David Fernandes"
@@ -103,8 +117,8 @@ const TerminalHero = () => {
             </div>
 
             {/* Main Heading */}
-            <div className="space-y-4">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight tracking-tight">
+            <div className="space-y-3 sm:space-y-4">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight tracking-tight">
                 <span className="block text-foreground">Olá, eu sou</span>
                 <span className="block bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
                   David Fernandes
@@ -112,9 +126,9 @@ const TerminalHero = () => {
               </h1>
               
               {/* Typing Animation */}
-              <div className="h-10 md:h-12 flex items-center justify-center lg:justify-start">
-                <Terminal className="w-5 h-5 text-primary mr-2 hidden sm:block" />
-                <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground font-mono">
+              <div className="h-8 sm:h-10 md:h-12 flex items-center justify-center lg:justify-start">
+                <Terminal className="w-4 h-4 sm:w-5 sm:h-5 text-primary mr-2 hidden sm:block" />
+                <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground font-mono">
                   {displayedText}
                   <span className="animate-pulse text-primary">|</span>
                 </p>
@@ -122,26 +136,26 @@ const TerminalHero = () => {
             </div>
 
             {/* Description */}
-            <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0 leading-relaxed">
+            <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0 leading-relaxed px-2 sm:px-0">
               Transformando <span className="text-primary font-medium">ideias</span> em soluções digitais. 
               Especializado em criar aplicações web modernas, 
               sistemas de automação e integrações que fazem a diferença.
             </p>
 
             {/* Stats */}
-            <div className="flex justify-center lg:justify-start gap-6 md:gap-10 pt-4">
+            <div className="flex justify-center lg:justify-start gap-4 sm:gap-6 md:gap-8 pt-2 sm:pt-4">
               {stats.map((stat, index) => (
                 <div 
                   key={index}
                   className="text-center group cursor-default"
                 >
-                  <div className="flex items-center justify-center mb-2">
-                    <stat.icon className="w-5 h-5 text-primary mr-2 opacity-60 group-hover:opacity-100 transition-opacity" />
-                    <span className="text-2xl md:text-3xl font-bold text-foreground group-hover:text-primary transition-colors">
+                  <div className="flex items-center justify-center mb-1 sm:mb-2">
+                    <stat.icon className="w-4 h-4 sm:w-5 sm:h-5 text-primary mr-1 sm:mr-2 opacity-60 group-hover:opacity-100 transition-opacity" />
+                    <span className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground group-hover:text-primary transition-colors">
                       {stat.value}
                     </span>
                   </div>
-                  <span className="text-xs md:text-sm text-muted-foreground font-medium">
+                  <span className="text-[10px] sm:text-xs md:text-sm text-muted-foreground font-medium">
                     {stat.label}
                   </span>
                 </div>
@@ -149,20 +163,9 @@ const TerminalHero = () => {
             </div>
 
             {/* Social Buttons */}
-            <div className="flex flex-wrap justify-center lg:justify-start gap-6 pt-6 items-center">
+            <div className="flex flex-wrap justify-center lg:justify-start gap-4 sm:gap-6 pt-4 sm:pt-6 items-center">
               <LinkedInTooltip />
               <GitHubTooltip />
-            </div>
-
-            {/* Scroll indicator - desktop only */}
-            <div className="hidden lg:flex justify-start pt-8">
-              <button 
-                onClick={scrollToProjects}
-                className="flex flex-col items-center gap-2 text-muted-foreground hover:text-primary transition-colors cursor-target"
-              >
-                <span className="text-sm font-mono">Ver projetos</span>
-                <ChevronDown className="w-5 h-5 animate-bounce" />
-              </button>
             </div>
           </div>
 
