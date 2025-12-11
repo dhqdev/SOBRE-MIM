@@ -7,6 +7,23 @@
 /* David Fernandes Portfolio Design System - Futuristic Dark Theme with Neon Accents */
 
 @layer base {
+  /* Previne zoom no mobile */
+  * {
+    touch-action: pan-x pan-y;
+  }
+  
+  html {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    touch-action: manipulation;
+  }
+  
+  body {
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   :root {
     /* Dark base colors */
     --background: 220 20% 8%;
