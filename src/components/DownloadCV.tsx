@@ -1,7 +1,11 @@
 import styled from 'styled-components';
 import { useState } from 'react';
 
-const DownloadCV = () => {
+interface DownloadCVProps {
+  isMenuOpen?: boolean;
+}
+
+const DownloadCV = ({ isMenuOpen = false }: DownloadCVProps) => {
   const [isAnimating, setIsAnimating] = useState(false);
 
   const handleDownload = () => {
@@ -32,7 +36,7 @@ const DownloadCV = () => {
   };
 
   return (
-    <StyledWrapper>
+    <StyledWrapper style={{ display: isMenuOpen ? 'none' : 'block' }}>
       <div className="container">
         <label className="label cursor-target">
           <input 

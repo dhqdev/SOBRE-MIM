@@ -10,7 +10,11 @@ import DownloadCV from '@/components/DownloadCV';
 import Iridescence from '@/components/Iridescence';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 
-const Index = () => {
+interface IndexProps {
+  isMenuOpen?: boolean;
+}
+
+const Index = ({ isMenuOpen = false }: IndexProps) => {
   useScrollReveal();
 
   useEffect(() => {
@@ -24,7 +28,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background relative overflow-x-hidden">
       <TargetCursor spinDuration={2} hideDefaultCursor={true} />
-      <DownloadCV />
+      <DownloadCV isMenuOpen={isMenuOpen} />
       
       {/* Iridescence animated background */}
       <div className="fixed inset-0 w-screen h-screen" style={{ zIndex: 0 }}>
