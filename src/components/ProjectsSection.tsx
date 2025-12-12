@@ -1,8 +1,26 @@
-import { ExternalLink, MessageCircle, Calendar, Utensils, Bot, DollarSign } from 'lucide-react';
+import { ExternalLink, MessageCircle, Calendar, Utensils, Bot, DollarSign, Gamepad2 } from 'lucide-react';
 import ScrollStack, { ScrollStackItem } from './ScrollStack';
 
+interface Project {
+  title: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  link: string;
+  tags: string[];
+  image?: string;
+  video?: string;
+}
+
 const ProjectsSection = () => {
-  const projects = [
+  const projects: Project[] = [
+    {
+      title: "Flappy Bird IA",
+      description: "🤖 Ensinei uma IA a zerar o Flappy Bird — e ela aprendeu sozinha! Criei um experimento em Python onde 50 passarinhos-IA jogam Flappy Bird ao mesmo tempo. Eles evoluem, cruzam genes, sofrem mutação e ficam cada vez mais inteligentes. Depois de algumas gerações, começam a dominar o jogo com uma precisão absurda. Usei Algoritmo Genético, Rede Neural (4-5-1), Python + Pygame + NumPy. Resultado? Aprendizado 100% autônomo, zero jogadas humanas.",
+      icon: Gamepad2,
+      link: "https://github.com/dhqdev/Projeto_FlappyBird",
+      tags: ["Python", "IA", "Algoritmo Genético", "Rede Neural"],
+      video: "/lovable-uploads/flappy-bird-ai.mp4"
+    },
     {
       title: "ticket.tekvosoft.com", 
       description: "Chat corporativo com integração ao WhatsApp. Comunicação interna descomplicada e elegante.",
@@ -66,14 +84,25 @@ const ProjectsSection = () => {
               key={index}
               className="group rounded-2xl bg-card border border-border overflow-hidden"
             >
-              {/* Project Image */}
+              {/* Project Image/Video */}
               <div className="overflow-hidden">
-                <img 
-                  src={project.image}
-                  alt={project.title}
-                  className="w-full h-48 object-cover"
-                  loading="lazy"
-                />
+                {project.video ? (
+                  <video 
+                    src={project.video}
+                    className="w-full h-48 object-cover"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                  />
+                ) : (
+                  <img 
+                    src={project.image}
+                    alt={project.title}
+                    className="w-full h-48 object-cover"
+                    loading="lazy"
+                  />
+                )}
               </div>
 
               <div className="p-6">
@@ -126,13 +155,24 @@ const ProjectsSection = () => {
             {projects.map((project, index) => (
               <ScrollStackItem key={index}>
                 <div className="cursor-target group rounded-3xl bg-card border-2 border-border overflow-hidden hover:border-primary transition-all duration-300 hover:shadow-2xl">
-                  {/* Project Image */}
+                  {/* Project Image/Video */}
                   <div className="overflow-hidden">
-                    <img 
-                      src={project.image}
-                      alt={project.title}
-                      className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
+                    {project.video ? (
+                      <video 
+                        src={project.video}
+                        className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                      />
+                    ) : (
+                      <img 
+                        src={project.image}
+                        alt={project.title}
+                        className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                    )}
                   </div>
 
                   <div className="p-10">
