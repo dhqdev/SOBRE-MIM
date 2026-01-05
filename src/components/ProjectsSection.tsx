@@ -1,8 +1,26 @@
-import { ExternalLink, MessageCircle, Calendar, Utensils, Bot, DollarSign } from 'lucide-react';
+import { ExternalLink, MessageCircle, Calendar, Utensils, Bot, DollarSign, Gamepad2 } from 'lucide-react';
 import ScrollStack, { ScrollStackItem } from './ScrollStack';
 
+interface Project {
+  title: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  link: string;
+  tags: string[];
+  image?: string;
+  video?: string;
+}
+
 const ProjectsSection = () => {
-  const projects = [
+  const projects: Project[] = [
+    {
+      title: "Flappy Bird IA",
+      description: "🤖 Ensinei uma IA a zerar o Flappy Bird — e ela aprendeu sozinha! Criei um experimento em Python onde 50 passarinhos-IA jogam Flappy Bird ao mesmo tempo. Eles evoluem, cruzam genes, sofrem mutação e ficam cada vez mais inteligentes. Depois de algumas gerações, começam a dominar o jogo com uma precisão absurda. Usei Algoritmo Genético, Rede Neural (4-5-1), Python + Pygame + NumPy. Resultado? Aprendizado 100% autônomo, zero jogadas humanas.",
+      icon: Gamepad2,
+      link: "https://github.com/dhqdev/Projeto_FlappyBird",
+      tags: ["Python", "IA", "Algoritmo Genético", "Rede Neural"],
+      video: "/lovable-uploads/flappy-bird-ai.mp4"
+    },
     {
       title: "ticket.tekvosoft.com", 
       description: "Chat corporativo com integração ao WhatsApp. Comunicação interna descomplicada e elegante.",
@@ -12,20 +30,20 @@ const ProjectsSection = () => {
       image: "/lovable-uploads/79117ada-5cfd-4c0b-920e-80810bd9a0d6.png"
     },
     {
-      title: "Mesa Fácil",
-      description: "SaaS para gestão de pedidos e mesas em restaurantes com painel responsivo.",
-      icon: Utensils,
-      link: "https://mesa-facil-gestao-saas-1.onrender.com/",
-      tags: ["SaaS", "React", "Node.js"],
-      image: "/lovable-uploads/97ee0758-207f-4450-9388-cdc6a5df76ad.png"
+      title: "Encontro com Deus",
+      description: "Site oficial do retiro espiritual Encontro com Deus - Um ministério de transformação dedicado a promover experiências profundas de renovação espiritual, cura e reconexão com Deus. TypeScript e React, com inteligência artificial que conversa e aconselha a pessoa.",
+      icon: Calendar,
+      link: "https://encontro-com-deus.vercel.app/",
+      tags: ["React", "TypeScript", "IA"],
+      image: "/lovable-uploads/encontro-com-deus.png"
     },
     {
-      title: "Agenda Online",
-      description: "Sistema completo de agendamentos com back-end e front-end integrados.",
-      icon: Calendar,
-      link: "https://agenda-6f9x.onrender.com/",
-      tags: ["Full-Stack", "Sistema"],
-      image: "/lovable-uploads/d95001ff-46a0-4fb6-b6df-1f4b22ce8bee.png"
+      title: "Prato Flash",
+      description: "Sistema completo de gestão para restaurantes, desenvolvido com React, TypeScript e shadcn/ui. Uma solução moderna e intuitiva para gerenciar todos os aspectos do seu estabelecimento.",
+      icon: Utensils,
+      link: "https://github.com/dhqdev/prato-flash",
+      tags: ["React", "TypeScript", "shadcn/ui"],
+      image: "/lovable-uploads/prato-flash.png"
     },
     {
       title: "BCI-ON1 - Automação Servopa",
@@ -66,14 +84,25 @@ const ProjectsSection = () => {
               key={index}
               className="group rounded-2xl bg-card border border-border overflow-hidden"
             >
-              {/* Project Image */}
+              {/* Project Image/Video */}
               <div className="overflow-hidden">
-                <img 
-                  src={project.image}
-                  alt={project.title}
-                  className="w-full h-48 object-cover"
-                  loading="lazy"
-                />
+                {project.video ? (
+                  <video 
+                    src={project.video}
+                    className="w-full h-48 object-cover"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                  />
+                ) : (
+                  <img 
+                    src={project.image}
+                    alt={project.title}
+                    className="w-full h-48 object-cover"
+                    loading="lazy"
+                  />
+                )}
               </div>
 
               <div className="p-6">
@@ -126,13 +155,24 @@ const ProjectsSection = () => {
             {projects.map((project, index) => (
               <ScrollStackItem key={index}>
                 <div className="cursor-target group rounded-3xl bg-card border-2 border-border overflow-hidden hover:border-primary transition-all duration-300 hover:shadow-2xl">
-                  {/* Project Image */}
+                  {/* Project Image/Video */}
                   <div className="overflow-hidden">
-                    <img 
-                      src={project.image}
-                      alt={project.title}
-                      className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
+                    {project.video ? (
+                      <video 
+                        src={project.video}
+                        className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                      />
+                    ) : (
+                      <img 
+                        src={project.image}
+                        alt={project.title}
+                        className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                    )}
                   </div>
 
                   <div className="p-10">

@@ -90,8 +90,8 @@ const TargetCursor = ({ targetSelector = '.cursor-target', spinDuration = 2, hid
     const scrollHandler = () => {
       if (!activeTarget || !cursorRef.current) return;
 
-      const mouseX = gsap.getProperty(cursorRef.current, 'x');
-      const mouseY = gsap.getProperty(cursorRef.current, 'y');
+      const mouseX = gsap.getProperty(cursorRef.current, 'x') as number;
+      const mouseY = gsap.getProperty(cursorRef.current, 'y') as number;
 
       const elementUnderMouse = document.elementFromPoint(mouseX, mouseY);
       const isStillOverTarget =
@@ -149,7 +149,7 @@ const TargetCursor = ({ targetSelector = '.cursor-target', spinDuration = 2, hid
       }
 
       activeTarget = target;
-      const corners = Array.from(cornersRef.current);
+      const corners = Array.from(cornersRef.current) as HTMLElement[];
       corners.forEach(corner => {
         gsap.killTweensOf(corner);
       });
@@ -209,7 +209,7 @@ const TargetCursor = ({ targetSelector = '.cursor-target', spinDuration = 2, hid
 
         corners.forEach((corner, index) => {
           tl.to(
-            corner,
+            corner as gsap.TweenTarget,
             {
               x: offsets[index].x,
               y: offsets[index].y,
@@ -222,7 +222,7 @@ const TargetCursor = ({ targetSelector = '.cursor-target', spinDuration = 2, hid
       };
 
       isAnimatingToTarget = true;
-      updateCorners();
+      updateCorners(undefined, undefined);
 
       setTimeout(() => {
         isAnimatingToTarget = false;
@@ -243,7 +243,7 @@ const TargetCursor = ({ targetSelector = '.cursor-target', spinDuration = 2, hid
         isAnimatingToTarget = false;
 
         if (cornersRef.current) {
-          const corners = Array.from(cornersRef.current);
+          const corners = Array.from(cornersRef.current) as HTMLElement[];
           gsap.killTweensOf(corners);
 
           const { cornerSize } = constants;
@@ -257,7 +257,7 @@ const TargetCursor = ({ targetSelector = '.cursor-target', spinDuration = 2, hid
           const tl = gsap.timeline();
           corners.forEach((corner, index) => {
             tl.to(
-              corner,
+              corner as gsap.TweenTarget,
               {
                 x: positions[index].x,
                 y: positions[index].y,
@@ -271,7 +271,7 @@ const TargetCursor = ({ targetSelector = '.cursor-target', spinDuration = 2, hid
 
         resumeTimeout = setTimeout(() => {
           if (!activeTarget && cursorRef.current && spinTl.current) {
-            const currentRotation = gsap.getProperty(cursorRef.current, 'rotation');
+            const currentRotation = gsap.getProperty(cursorRef.current, 'rotation') as number;
             const normalizedRotation = currentRotation % 360;
 
             spinTl.current.kill();
