@@ -20,7 +20,7 @@ const ContactSection = ({ isInHero = false }: ContactSectionProps) => {
     setSubmitSuccess(false);
 
     try {
-      const response = await fetch('https://auto.tekvosoft.com/webhook/417bb6bb-4741-4356-ae24-ec04cfd66e54', {
+      const response = await fetch('https://auto.tekvosoft.com/webhook/portifólio', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
