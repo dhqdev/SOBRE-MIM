@@ -22,12 +22,12 @@ const ProjectsSection = () => {
       video: "/lovable-uploads/flappy-bird-ai.mp4"
     },
     {
-      title: "ticket.tekvosoft.com", 
-      description: "Chat corporativo com integração ao WhatsApp. Comunicação interna descomplicada e elegante.",
+      title: "Planejai - Gestão financeira", 
+      description: "Um software SaaS de gestão financeira desenvolvido para todo tipo de cliente que deseja ter um maior controle sobre o que gasta.",
       icon: MessageCircle,
-      link: "http://ticket.tekvosoft.com/",
+      link: "https://planejai.tekvosoft.com/",
       tags: ["WhatsApp", "Chat", "Real-time"],
-      image: "/lovable-uploads/79117ada-5cfd-4c0b-920e-80810bd9a0d6.png"
+      image: "/lovable-uploads/logoporconew.png"
     },
     {
       title: "Encontro com Deus",
@@ -54,12 +54,12 @@ const ProjectsSection = () => {
       image: "/lovable-uploads/bci-on1-dashboard.png"
     },
     {
-      title: "OX Cash - Investimentos",
-      description: "Bem-vindo ao site-ox-cash! Este repositório contém o código-fonte para o site Ox Cash, um site criado para a empresa ox-ca$h com o intuito de oferecer um design inovador e robusto para eles.",
+      title: "Vozerão - Gerador de vozes com IA",
+      description: "Vozerão é um saas desenvolvido para transcrever audio em texto, além de fazer um resumo do conteúdo e gerar uma voz artificial com base no texto. O sistema é construído com React, TypeScript e utiliza a API ElevenLabs para a geração de voz, oferecendo uma experiência completa de transcrição e síntese vocal.",
       icon: DollarSign,
-      link: "https://oxcash-sigma.vercel.app/",
+      link: "https://vozerao.vercel.app/",
       tags: ["Site", "Design", "Corporativo"],
-      image: "/lovable-uploads/oxcash-site.png"
+      image: "/lovable-uploads/vozerao.png"
     }
   ];
 
