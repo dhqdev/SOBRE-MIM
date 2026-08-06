@@ -142,13 +142,20 @@ const StyledWrapper = styled.div`
     position: relative;
     width: 100%;
     min-height: auto;
-    background: #29292c;
+    background: hsl(var(--border));
     border-radius: 1rem;
     overflow: hidden;
-    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    /* Herda a Inter do resto do site em vez de forçar uma fonte própria. */
+    font-family: inherit;
     font-size: 16px;
-    --gradient: linear-gradient(to bottom, #2eadff, #3d83ff, #7e61ff);
-    --color: #32a6ff;
+    /* Usa os tokens do design system (ciano/violeta) no lugar do azul fixo. */
+    --gradient: linear-gradient(
+      to bottom,
+      hsl(var(--primary)),
+      hsl(var(--neon-green)),
+      hsl(var(--neon-violet))
+    );
+    --color: hsl(var(--primary));
     transition: transform 300ms ease;
   }
 
@@ -161,7 +168,7 @@ const StyledWrapper = styled.div`
     content: "";
     inset: 0.0625rem;
     border-radius: 0.9375rem;
-    background: #18181b;
+    background: hsl(var(--card));
     z-index: 2;
   }
 
@@ -197,7 +204,7 @@ const StyledWrapper = styled.div`
   }
 
   .notibody {
-    color: #a1a1aa;
+    color: hsl(var(--muted-foreground));
     padding: 0 1.5rem 1.5rem 1.5rem;
     line-height: 1.8;
     font-size: 1.05rem;
@@ -222,12 +229,12 @@ const StyledWrapper = styled.div`
     margin-top: 1.5rem;
     padding: 1.2rem;
     border-left: 3px solid var(--color);
-    background: rgba(50, 166, 255, 0.08);
+    background: hsl(var(--primary) / 0.08);
     border-radius: 0 0.5rem 0.5rem 0;
   }
 
   .quote-text {
-    color: #d4d4d8;
+    color: hsl(var(--foreground) / 0.85);
     font-style: italic;
     font-size: 1.05rem;
     line-height: 1.6;

@@ -1,45 +1,120 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>David Fernandes - Desenvolvedor Full-Stack Cristão</title>
-    <meta name="description" content="Desenvolvedor Full-Stack cristão criando soluções digitais que fazem a diferença no Reino. Vue.js, React, Python, Frappe." />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f1419" />
+
+    <title>David Fernandes — Desenvolvedor Full-Stack | Vue, React, Python e Frappe</title>
+    <meta
+      name="description"
+      content="Desenvolvedor Full-Stack com foco em Vue.js, React, Python e Frappe Framework. Crio aplicações web, automações e integrações que resolvem problemas reais. Veja meus projetos e entre em contato."
+    />
     <meta name="author" content="David Fernandes" />
-    <meta name="keywords" content="desenvolvedor, full-stack, cristão, vue.js, react, python, frappe, brasil" />
+    <meta
+      name="keywords"
+      content="desenvolvedor full-stack, vue.js, react, typescript, python, frappe framework, erpnext, automação, n8n, docker, brasil"
+    />
+    <link rel="canonical" href="https://sobre-mim-nine-gold.vercel.app/" />
 
-    <meta property="og:title" content="David Fernandes - Desenvolvedor Full-Stack Cristão" />
-    <meta property="og:description" content="Código limpo, coração firme, soluções que importam. Desenvolvedor Full-Stack criando ferramentas digitais para o Reino." />
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="David Fernandes" />
+    <meta property="og:title" content="David Fernandes — Desenvolvedor Full-Stack" />
+    <meta
+      property="og:description"
+      content="Vue.js, React, Python e Frappe. Aplicações web modernas, automações e integrações que fazem a diferença."
+    />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:url" content="https://sobre-mim-nine-gold.vercel.app/" />
+    <meta
+      property="og:image"
+      content="https://sobre-mim-nine-gold.vercel.app/lovable-uploads/og-card.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="David Fernandes, desenvolvedor full-stack" />
 
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-    
-    <link rel="icon" href="/lovable-uploads/11f94cf5-0f35-4c0d-8043-2477c5ec3b7b.png" type="image/png">
+    <meta name="twitter:title" content="David Fernandes — Desenvolvedor Full-Stack" />
+    <meta
+      name="twitter:description"
+      content="Vue.js, React, Python e Frappe. Aplicações web modernas, automações e integrações que fazem a diferença."
+    />
+    <meta
+      name="twitter:image"
+      content="https://sobre-mim-nine-gold.vercel.app/lovable-uploads/og-card.png"
+    />
+
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/lovable-uploads/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/lovable-uploads/icon-192.png" />
+
+    <!-- Fontes: preconnect + carga não bloqueante (antes vinham de um @import dentro do CSS,
+         que bloqueia a renderização até o download terminar) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;800&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;800&display=swap"
+      />
+    </noscript>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": "David Fernandes",
+        "url": "https://sobre-mim-nine-gold.vercel.app/",
+        "jobTitle": "Desenvolvedor Full-Stack",
+        "worksFor": { "@type": "Organization", "name": "GRV Software" },
+        "sameAs": [
+          "https://github.com/dhqdev",
+          "https://www.linkedin.com/in/david-fernandes-77a663229/"
+        ],
+        "knowsAbout": [
+          "Vue.js",
+          "React",
+          "TypeScript",
+          "Python",
+          "Frappe Framework",
+          "ERPNext",
+          "Docker",
+          "n8n"
+        ]
+      }
+    </script>
   </head>
 
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    
-    <!-- Chatwoot Widget -->
+
+    <!-- Chatwoot: carregado só depois do load da página para não competir
+         com o bundle principal pelo tempo de conexão -->
     <script>
-      (function(d,t) {
-        var BASE_URL="https://app.tekvosoft.com";
-        var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
-        g.src=BASE_URL+"/packs/js/sdk.js";
+      window.addEventListener('load', function () {
+        var BASE_URL = 'https://app.tekvosoft.com';
+        var g = document.createElement('script');
+        var s = document.getElementsByTagName('script')[0];
+        g.src = BASE_URL + '/packs/js/sdk.js';
         g.async = true;
-        s.parentNode.insertBefore(g,s);
-        g.onload=function(){
+        s.parentNode.insertBefore(g, s);
+        g.onload = function () {
           window.chatwootSDK.run({
             websiteToken: 'Bp9hj9g8FfmYPnKRMtfoskiC',
-            baseUrl: BASE_URL
-          })
-        }
-      })(document,"script");
+            baseUrl: BASE_URL,
+          });
+        };
+      });
     </script>
   </body>
 </html>

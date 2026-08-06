@@ -19,4 +19,16 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    // Separa as bibliotecas pesadas do código da página: elas quase nunca mudam,
+    // então ficam em cache do navegador entre deploys.
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ["react", "react-dom", "react-router-dom"],
+          animation: ["gsap", "ogl", "lenis"],
+        },
+      },
+    },
+  },
 }));

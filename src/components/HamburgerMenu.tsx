@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ExternalLink, Heart } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ExternalLink, Heart, X } from 'lucide-react';
 import styled from 'styled-components';
 
 interface HamburgerMenuProps {
@@ -9,33 +9,58 @@ interface HamburgerMenuProps {
 export const HamburgerMenu = ({ onMenuStateChange }: HamburgerMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [key, setKey] = useState(0);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const toggleMenu = () => {
-    const newState = !isOpen;
-    setIsOpen(newState);
-    setKey(prev => prev + 1);
-    
-    // Previne scroll da página quando o modal está aberto
-    if (newState) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    
-    if (onMenuStateChange) {
-      onMenuStateChange(newState);
-    }
-  };
+  const setMenu = useCallback(
+    (open: boolean) => {
+      setIsOpen(open);
+      setKey((prev) => prev + 1);
+      // Trava o scroll da página enquanto o painel está aberto.
+      document.body.style.overflow = open ? 'hidden' : '';
+      onMenuStateChange?.(open);
+    },
+    [onMenuStateChange]
+  );
+
+  const toggleMenu = () => setMenu(!isOpen);
+
+  // Fecha com Esc e devolve o foco para o botão que abriu — sem isso o painel
+  // era intransponível para quem navega por teclado.
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenu(false);
+        triggerRef.current?.focus();
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    panelRef.current?.focus();
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, setMenu]);
+
+  // Garante que o scroll do body volte ao normal se o componente sair da tela
+  // com o menu aberto.
+  useEffect(() => () => {
+    document.body.style.overflow = '';
+  }, []);
 
   return (
     <>
       {/* Animated Button */}
       <StyledWrapper>
-        <button 
+        <button
           key={key}
+          ref={triggerRef}
+          type="button"
           className={`button type1 cursor-target ${isOpen ? 'active' : ''}`}
           onClick={toggleMenu}
-          aria-label="Experiências"
+          aria-label="Abrir minhas experiências"
+          aria-expanded={isOpen}
+          aria-controls="painel-experiencias"
         />
       </StyledWrapper>
 
@@ -45,18 +70,36 @@ export const HamburgerMenu = ({ onMenuStateChange }: HamburgerMenuProps) => {
           isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
         onClick={toggleMenu}
+        aria-hidden="true"
       />
 
       {/* Sliding Menu Panel */}
       <div
-        className={`fixed top-0 right-0 h-full w-full md:w-[500px] bg-gradient-to-br from-black/95 via-purple-950/30 to-black/95 backdrop-blur-xl border-l border-white/10 z-50 transition-transform duration-500 ease-out overflow-hidden ${
+        id="painel-experiencias"
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Experiências"
+        tabIndex={-1}
+        // `inert` tira o painel fechado da ordem de tabulação e do leitor de tela.
+        {...(!isOpen && { inert: '' })}
+        className={`fixed top-0 right-0 h-full w-full md:w-[500px] bg-gradient-to-br from-black/95 via-purple-950/30 to-black/95 backdrop-blur-xl border-l border-white/10 z-50 transition-transform duration-500 ease-out overflow-hidden outline-none ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
         onClick={(e) => e.stopPropagation()}
         onWheel={(e) => e.stopPropagation()}
       >
-        <div 
-          className="h-full overflow-y-auto overflow-x-hidden overscroll-contain scrollbar-thin scrollbar-thumb-purple-500/50 scrollbar-track-transparent" 
+        <button
+          type="button"
+          onClick={toggleMenu}
+          aria-label="Fechar experiências"
+          className="absolute top-5 left-5 z-10 p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-400"
+        >
+          <X className="w-5 h-5" aria-hidden="true" />
+        </button>
+
+        <div
+          className="h-full overflow-y-auto overflow-x-hidden overscroll-contain scrollbar-thin scrollbar-thumb-purple-500/50 scrollbar-track-transparent"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
           {/* Header */}
@@ -77,8 +120,10 @@ export const HamburgerMenu = ({ onMenuStateChange }: HamburgerMenuProps) => {
               {/* Large Logo at top */}
               <div className="relative w-full aspect-video bg-gradient-to-br from-purple-950/50 to-black/50 p-8 flex items-center justify-center overflow-hidden">
                 <img 
-                  src="/lovable-uploads/nubank.png" 
-                  alt="Nubank" 
+                  src="/lovable-uploads/nubank.webp"
+                  loading="lazy"
+                  decoding="async" 
+                  alt="Logotipo do Nubank" 
                   className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -125,8 +170,10 @@ export const HamburgerMenu = ({ onMenuStateChange }: HamburgerMenuProps) => {
               {/* Large Image at top */}
               <div className="relative w-full aspect-video bg-gradient-to-br from-blue-950/50 to-black/50 p-8 flex items-center justify-center overflow-hidden">
                 <img 
-                  src="/lovable-uploads/euexpo.png" 
-                  alt="EXPOMAFE" 
+                  src="/lovable-uploads/euexpo.webp"
+                  loading="lazy"
+                  decoding="async" 
+                  alt="David Fernandes na feira EXPOMAFE" 
                   className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />

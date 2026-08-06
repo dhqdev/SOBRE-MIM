@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;800&display=swap');
+/* As fontes são carregadas no index.html com preconnect — um @import aqui
+   bloqueia a renderização até o CSS externo terminar de baixar. */
 
 @tailwind base;
 @tailwind components;
@@ -7,21 +8,40 @@
 /* David Fernandes Portfolio Design System - Futuristic Dark Theme with Neon Accents */
 
 @layer base {
-  /* Previne zoom no mobile */
-  * {
-    touch-action: pan-x pan-y;
-  }
-  
   html {
     -webkit-text-size-adjust: 100%;
     -ms-text-size-adjust: 100%;
-    touch-action: manipulation;
+    scroll-behavior: smooth;
+    /* Informa ao navegador que a UI nativa (scrollbar, campos de formulário)
+       deve seguir o tema escuro. */
+    color-scheme: dark;
   }
-  
+
   body {
-    touch-action: manipulation;
-    -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Foco sempre visível: o cursor customizado esconde o cursor padrão, então
+     quem navega por teclado precisa de um indicador confiável. */
+  :focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+  }
+
+  /* Respeita a preferência de sistema por menos movimento. */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 
   :root {

@@ -94,18 +94,21 @@ const TechStackSection = () => {
                 >
                   <div className="tech-glow"></div>
                   <div className="tech-icon-wrapper">
-                    <img 
-                      src={tech.icon} 
-                      alt={tech.name}
+                    <img
+                      src={tech.icon}
+                      alt=""
+                      width={55}
+                      height={55}
                       className="tech-icon"
                       loading="lazy"
+                      decoding="async"
                     />
                   </div>
                   <h4 className="tech-name">{tech.name}</h4>
                   <p className="tech-category">{tech.category}</p>
-                  
+
                   {/* Particles effect */}
-                  <div className="particles">
+                  <div className="particles" aria-hidden="true">
                     <span className="particle"></span>
                     <span className="particle"></span>
                     <span className="particle"></span>

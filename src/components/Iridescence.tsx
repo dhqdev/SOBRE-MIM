@@ -1,5 +1,6 @@
 import { Renderer, Program, Mesh, Color, Triangle } from 'ogl';
 import { useEffect, useRef } from 'react';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 import './Iridescence.css';
 
@@ -61,42 +62,47 @@ export default function Iridescence({
 }: IridescenceProps) {
   const ctnDom = useRef<HTMLDivElement>(null);
   const mousePos = useRef({ x: 0.5, y: 0.5 });
+  const prefersReducedMotion = usePrefersReducedMotion();
+
+  // `color` chega como literal do componente pai, então um array novo a cada
+  // render. Depender do conteúdo evita recriar o contexto WebGL à toa.
+  const colorKey = color.join(',');
 
   useEffect(() => {
     if (!ctnDom.current) return;
+    // Quem pediu menos animação não recebe o shader — é o item mais pesado da
+    // página e roda em loop infinito.
+    if (prefersReducedMotion) return;
+
     const ctn = ctnDom.current;
-    
+    const [r, g, b] = colorKey.split(',').map(Number);
+
     // Detectar se é mobile para ajustar qualidade
     const isMobile = window.innerWidth < 768;
     const pixelRatio = isMobile ? 0.5 : 1;
-    
-    const renderer = new Renderer({ alpha: true, dpr: pixelRatio });
+
+    // Sem WebGL (GPU bloqueada, navegador antigo, modo de privacidade) o `new
+    // Renderer` lança e derrubaria a árvore React inteira — a página ficava em
+    // branco. Aqui a falha só significa "sem fundo animado": o gradiente
+    // estático por cima já garante o visual.
+    let renderer: Renderer;
+    try {
+      renderer = new Renderer({ alpha: true, dpr: pixelRatio });
+    } catch (error) {
+      console.warn('WebGL indisponível, seguindo sem o fundo animado:', error);
+      return;
+    }
+
     const gl = renderer.gl;
     gl.clearColor(0, 0, 0, 0);
 
-    let program!: Program;
-
-    function resize() {
-      const scale = isMobile ? 0.75 : 1;
-      renderer.setSize(ctn.offsetWidth * scale, ctn.offsetHeight * scale);
-      if (program) {
-        program.uniforms.uResolution.value = new Color(
-          gl.canvas.width,
-          gl.canvas.height,
-          gl.canvas.width / gl.canvas.height
-        );
-      }
-    }
-    window.addEventListener('resize', resize, false);
-    resize();
-
     const geometry = new Triangle(gl);
-    program = new Program(gl, {
+    const program = new Program(gl, {
       vertex: vertexShader,
       fragment: fragmentShader,
       uniforms: {
         uTime: { value: 0 },
-        uColor: { value: new Color(...color) },
+        uColor: { value: new Color(r, g, b) },
         uResolution: {
           value: new Color(gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height)
         },
@@ -105,6 +111,19 @@ export default function Iridescence({
         uSpeed: { value: speed }
       }
     });
+
+    // Definido depois do program para não precisar de declaração antecipada.
+    function resize() {
+      const scale = isMobile ? 0.75 : 1;
+      renderer.setSize(ctn.offsetWidth * scale, ctn.offsetHeight * scale);
+      program.uniforms.uResolution.value = new Color(
+        gl.canvas.width,
+        gl.canvas.height,
+        gl.canvas.width / gl.canvas.height
+      );
+    }
+    window.addEventListener('resize', resize, false);
+    resize();
 
     const mesh = new Mesh(gl, { geometry, program });
     let animateId: number;
@@ -116,6 +135,16 @@ export default function Iridescence({
     }
     animateId = requestAnimationFrame(update);
     ctn.appendChild(gl.canvas);
+
+    // Com a aba em segundo plano o navegador já reduz o rAF, mas parar de vez
+    // evita gastar GPU e bateria enquanto ninguém está olhando.
+    function handleVisibility() {
+      cancelAnimationFrame(animateId);
+      if (!document.hidden) {
+        animateId = requestAnimationFrame(update);
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility);
 
     function handleMouseMove(e: MouseEvent) {
       const rect = ctn.getBoundingClientRect();
@@ -132,6 +161,7 @@ export default function Iridescence({
     return () => {
       cancelAnimationFrame(animateId);
       window.removeEventListener('resize', resize);
+      document.removeEventListener('visibilitychange', handleVisibility);
       if (mouseReact) {
         ctn.removeEventListener('mousemove', handleMouseMove);
       }
@@ -140,7 +170,7 @@ export default function Iridescence({
       }
       gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
-  }, [color, speed, amplitude, mouseReact]);
+  }, [colorKey, speed, amplitude, mouseReact, prefersReducedMotion]);
 
-  return <div ref={ctnDom} className="iridescence-container" />;
+  return <div ref={ctnDom} className="iridescence-container" aria-hidden="true" />;
 }

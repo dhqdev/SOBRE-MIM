@@ -6,6 +6,14 @@
   left: 0;
   z-index: 0;
   pointer-events: none;
+
+  /* Fundo estático de reserva: aparece quando o WebGL não está disponível ou
+     quando o usuário pediu menos movimento — nesses casos nenhum canvas é
+     inserido aqui e a página ficaria chapada. */
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 0%, hsl(var(--primary) / 0.18), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 85% 25%, hsl(var(--neon-violet) / 0.16), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 40% 90%, hsl(var(--neon-green) / 0.12), transparent 65%);
 }
 
 .iridescence-container canvas {
