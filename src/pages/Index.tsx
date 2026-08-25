@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import TerminalHero from '@/components/TerminalHero';
 import AboutSection from '@/components/AboutSection';
 import ProjectsSection from '@/components/ProjectsSection';
@@ -7,7 +7,8 @@ import Footer from '@/components/Footer';
 import TargetCursor from '@/components/TargetCursor';
 import DownloadCV from '@/components/DownloadCV';
 import Iridescence from '@/components/Iridescence';
-import { HamburgerMenu } from '@/components/HamburgerMenu';
+import Navbar from '@/components/Navbar';
+import ExperiencesPanel from '@/components/ExperiencesPanel';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
@@ -17,10 +18,13 @@ import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 const IRIDESCENCE_COLOR: [number, number, number] = [0.3, 0.95, 0.95];
 
 const Index = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isExperiencesOpen, setIsExperiencesOpen] = useState(false);
   const prefersReducedMotion = usePrefersReducedMotion();
 
   useScrollReveal();
+
+  const openExperiences = useCallback(() => setIsExperiencesOpen(true), []);
+  const closeExperiences = useCallback(() => setIsExperiencesOpen(false), []);
 
   return (
     <div className="min-h-screen bg-background relative overflow-x-hidden">
@@ -36,8 +40,9 @@ const Index = () => {
         {!prefersReducedMotion && <TargetCursor spinDuration={2} hideDefaultCursor={true} />}
       </ErrorBoundary>
 
-      <HamburgerMenu onMenuStateChange={setIsMenuOpen} />
-      <DownloadCV isMenuOpen={isMenuOpen} />
+      <Navbar onOpenExperiences={openExperiences} />
+      <ExperiencesPanel isOpen={isExperiencesOpen} onClose={closeExperiences} />
+      <DownloadCV isHidden={isExperiencesOpen} />
 
       {/* Fundo animado (WebGL). Sem GPU disponível ou com "reduzir movimento"
           ativo, o gradiente estático do CSS assume sozinho. */}
@@ -54,7 +59,7 @@ const Index = () => {
 
       {/* Camada de contraste, para o texto continuar legível sobre o fundo */}
       <div
-        className="fixed inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background/80 md:from-background/70 md:via-background/50 md:to-background/70 pointer-events-none"
+        className="fixed inset-0 bg-gradient-to-b from-background/85 via-background/70 to-background/85 md:from-background/80 md:via-background/60 md:to-background/80 pointer-events-none"
         style={{ zIndex: 1 }}
       />
 

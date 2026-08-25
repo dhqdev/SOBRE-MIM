@@ -34,11 +34,13 @@ npm run lint     # ESLint
 ```
 src/
 ├── components/          # seções da página e componentes visuais
+│   ├── Navbar           # barra fixa: navegação, experiências e CTA
 │   ├── TerminalHero     # topo: apresentação, stats, CTAs e card de terminal
 │   ├── ProjectsSection  # cards de projeto (grid no mobile, stack no desktop)
 │   ├── AboutSection     # história e especialidades
 │   ├── TechStackSection # grade de tecnologias
-│   ├── HamburgerMenu    # painel lateral de experiências
+│   ├── ExperiencesPanel # painel lateral de experiências (aberto pela Navbar)
+│   ├── SectionHeading   # cabeçalho padrão das seções
 │   ├── Iridescence      # fundo WebGL
 │   ├── TargetCursor     # cursor customizado (desktop, sem touch)
 │   └── ui/              # primitivos do shadcn/ui
@@ -56,11 +58,13 @@ src/
 | Tecnologias               | `src/components/TechStackSection.tsx`  |
 | Texto "Sobre" / skills    | `src/components/AboutSection.tsx`      |
 | Frases do efeito de digitação e stats | `src/components/TerminalHero.tsx` |
-| Experiências (painel)     | `src/components/HamburgerMenu.tsx`     |
+| Experiências (painel)     | `src/components/ExperiencesPanel.tsx`  |
 | Links sociais             | `src/components/Footer.tsx`            |
+| Itens da navegação        | `src/components/Navbar.tsx`            |
 | Número do WhatsApp        | `src/lib/contact.ts`                   |
 | Currículo em PDF          | `public/CV-David.pdf`                  |
 | Meta tags / SEO           | `index.html`                           |
+| Favicon / ícones          | `public/favicon.svg` e `public/icon-*.png` |
 
 O contato acontece por link direto do WhatsApp. Número e mensagem padrão ficam
 em `src/lib/contact.ts` — mudar ali atualiza o botão do hero e o rodapé de uma vez.
@@ -69,13 +73,15 @@ em `src/lib/contact.ts` — mudar ali atualiza o botão do hero e o rodapé de u
 
 - `prefers-reduced-motion` desliga o fundo WebGL, o cursor customizado e o
   efeito de digitação.
+- Navegação por teclado: barra fixa, menu mobile e painel de experiências
+  fecham com `Esc`.
 - Imagens em WebP e vídeo carregado só quando entra na viewport.
 - Fontes com `preconnect` e carga não bloqueante.
 - Foco visível em toda a navegação por teclado; painel lateral fecha com `Esc`.
 
 ## Otimizando novos assets
 
-Imagens e vídeos entram em `public/lovable-uploads/`. Antes de commitar:
+Imagens e vídeos entram em `public/media/`. Antes de commitar:
 
 ```bash
 # imagem → WebP (máx. 1280px de largura)

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ExternalLink, Calendar, Utensils, Bot, Wallet, Mic, Gamepad2 } from 'lucide-react';
 import ScrollStack, { ScrollStackItem } from './ScrollStack';
+import SectionHeading from './SectionHeading';
 
 interface Project {
   title: string;
@@ -21,8 +22,8 @@ const projects: Project[] = [
     icon: Gamepad2,
     link: 'https://github.com/dhqdev/Projeto_FlappyBird',
     tags: ['Python', 'IA', 'Algoritmo Genético', 'Rede Neural'],
-    video: '/lovable-uploads/flappy-bird-ai.mp4',
-    poster: '/lovable-uploads/flappy-bird-poster.webp',
+    video: '/media/flappy-bird-ai.mp4',
+    poster: '/media/flappy-bird-poster.webp',
   },
   {
     title: 'Planejai - Gestão financeira',
@@ -31,7 +32,7 @@ const projects: Project[] = [
     icon: Wallet,
     link: 'https://planejai.tekvosoft.com/',
     tags: ['SaaS', 'Gestão Financeira', 'Web App'],
-    image: '/lovable-uploads/logoporconew.webp',
+    image: '/media/logoporconew.webp',
   },
   {
     title: 'Encontro com Deus',
@@ -40,7 +41,7 @@ const projects: Project[] = [
     icon: Calendar,
     link: 'https://encontro-com-deus.vercel.app/',
     tags: ['React', 'TypeScript', 'IA'],
-    image: '/lovable-uploads/encontro-com-deus.webp',
+    image: '/media/encontro-com-deus.webp',
   },
   {
     title: 'Prato Flash',
@@ -49,7 +50,7 @@ const projects: Project[] = [
     icon: Utensils,
     link: 'https://github.com/dhqdev/prato-flash',
     tags: ['React', 'TypeScript', 'shadcn/ui'],
-    image: '/lovable-uploads/prato-flash.webp',
+    image: '/media/prato-flash.webp',
   },
   {
     title: 'BCI-ON1 - Automação Servopa',
@@ -58,7 +59,7 @@ const projects: Project[] = [
     icon: Bot,
     link: 'https://github.com/dhqdev/bci-on1?tab=readme-ov-file',
     tags: ['Automação', 'Python', 'Selenium'],
-    image: '/lovable-uploads/bci-on1-dashboard.webp',
+    image: '/media/bci-on1-dashboard.webp',
   },
   {
     title: 'Vozerão - Gerador de vozes com IA',
@@ -67,7 +68,7 @@ const projects: Project[] = [
     icon: Mic,
     link: 'https://vozerao.vercel.app/',
     tags: ['React', 'TypeScript', 'ElevenLabs'],
-    image: '/lovable-uploads/vozerao.webp',
+    image: '/media/vozerao.webp',
   },
 ];
 
@@ -197,15 +198,14 @@ const ProjectCard = ({ project, variant }: { project: Project; variant: 'mobile'
 };
 
 const ProjectsSection = () => (
-  <section id="projetos" className="py-20 relative overflow-hidden">
+  <section id="projetos" className="py-24 scroll-mt-16 relative overflow-hidden">
     <div className="container mx-auto px-6">
-      <div className="text-center mb-16 scroll-reveal">
-        <h2 className="text-4xl md:text-5xl font-bold mb-4">
-          <span className="text-primary">Projetos</span>
-        </h2>
-        <div className="w-20 h-1 bg-gradient-to-r from-primary to-accent mx-auto mb-6" />
-        <p className="text-xl text-muted-foreground">Feitos por mim</p>
-      </div>
+      <SectionHeading
+        eyebrow="projetos"
+        title="O que eu"
+        highlight="construí"
+        subtitle="Sistemas, automações e experimentos que saíram do papel."
+      />
 
       {/* Mobile: grid simples */}
       <div className="md:hidden grid gap-6">

@@ -1,5 +1,6 @@
 import { Code } from 'lucide-react';
 import styled from 'styled-components';
+import SectionHeading from './SectionHeading';
 
 const TechStackSection = () => {
   const technologies = [
@@ -66,19 +67,15 @@ const TechStackSection = () => {
   ];
 
   return (
-    <section id="tecnologias" className="py-20 relative">
+    <section id="tecnologias" className="py-24 scroll-mt-16 relative">
       <div className="container mx-auto px-6">
         <div className="max-w-6xl mx-auto">
-          {/* Section Header */}
-          <div className="text-center mb-16 scroll-reveal">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              <span className="text-primary">Habilidades</span>
-            </h2>
-            <div className="w-20 h-1 bg-gradient-to-r from-primary to-accent mx-auto mb-6"></div>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Tecnologias que domino:
-            </p>
-          </div>
+          <SectionHeading
+            eyebrow="habilidades"
+            title="Tecnologias que eu"
+            highlight="domino"
+            subtitle="A caixa de ferramentas que uso no dia a dia."
+          />
 
           {/* Tech Grid */}
           <StyledWrapper>

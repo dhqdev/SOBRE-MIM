@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import { Code2, Database, Zap, Globe, Bot, BarChart3 } from 'lucide-react';
+import SectionHeading from './SectionHeading';
 
 const AboutSection = () => {
   const skills = [
@@ -10,7 +11,7 @@ const AboutSection = () => {
   ];
 
   return (
-    <section id="sobre" className="py-24 relative overflow-hidden">
+    <section id="sobre" className="py-24 scroll-mt-16 relative overflow-hidden">
       {/* Background decorations */}
       <div className="absolute top-0 left-1/4 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
       <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-accent/5 rounded-full blur-3xl" />
@@ -18,16 +19,12 @@ const AboutSection = () => {
       <div className="container mx-auto px-6 relative z-10">
         <div className="max-w-6xl mx-auto">
           
-          {/* Section Header */}
-          <div className="text-center mb-16 scroll-reveal">
-            <span className="inline-block text-primary font-mono text-base mb-4 px-5 py-2 rounded-full border border-primary/30 bg-primary/5">
-              &lt;sobre-mim /&gt;
-            </span>
-            <h2 className="text-5xl md:text-6xl font-bold mb-4">
-              Conheça minha <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">jornada</span>
-            </h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-primary to-accent mx-auto rounded-full"></div>
-          </div>
+          <SectionHeading
+            eyebrow="sobre-mim"
+            title="Conheça minha"
+            highlight="jornada"
+            subtitle="De onde eu venho, no que trabalho hoje e para onde estou indo."
+          />
 
           {/* Main Content Grid */}
           <div className="grid lg:grid-cols-5 gap-12 items-start">

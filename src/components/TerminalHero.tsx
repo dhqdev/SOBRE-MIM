@@ -18,6 +18,40 @@ const TYPE_MS = 80;
 const ERASE_MS = 50;
 const HOLD_MS = 2000;
 
+/**
+ * Chips que orbitam a foto. Substituem os emojis (💻⚡🚀✨🎯) que davam um tom
+ * infantil ao topo — mesma ideia de movimento, agora dizendo algo sobre a stack.
+ * As posições são diferentes no mobile e no desktop, por isso vêm de fora.
+ */
+const orbitChips = [
+  { label: 'Vue', color: '#42B883', animation: 'animate-orbit-1' },
+  { label: 'React', color: '#61DAFB', animation: 'animate-orbit-2' },
+  { label: 'Python', color: '#FFD343', animation: 'animate-orbit-3' },
+  { label: 'Frappe', color: '#7575FF', animation: 'animate-orbit-4' },
+];
+
+const OrbitChip = ({
+  label,
+  color,
+  animation,
+  className,
+}: {
+  label: string;
+  color: string;
+  animation: string;
+  className: string;
+}) => (
+  <div
+    className={`absolute ${className} ${animation} pointer-events-none select-none`}
+    aria-hidden="true"
+  >
+    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-white/10 bg-background/80 backdrop-blur-md shadow-lg font-mono text-[11px] text-foreground/90 whitespace-nowrap">
+      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
+      {label}
+    </span>
+  </div>
+);
+
 const stats = [
   { icon: Code2, value: '2+', label: 'Anos de XP' },
   { icon: Briefcase, value: '10+', label: 'Projetos' },
@@ -150,27 +184,22 @@ const TerminalHero = () => {
 
   return (
     <section className="min-h-screen flex items-center justify-center relative overflow-hidden">
-      {/* Sophisticated background */}
-      <div className="absolute inset-0">
-        {/* Mesh gradient orbs */}
-        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[150px] animate-pulse" />
-        <div className="absolute top-1/3 right-0 w-[600px] h-[600px] bg-accent/15 rounded-full blur-[180px] animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-neon-green/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '0.5s' }} />
-        <div className="absolute top-1/2 right-1/4 w-[300px] h-[300px] bg-primary/15 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1.5s' }} />
-
-        {/* Subtle grid pattern */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{
-          backgroundImage: `linear-gradient(hsl(var(--primary)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px)`,
-          backgroundSize: '60px 60px'
-        }} />
-
-        {/* Radial vignette */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,hsl(var(--background))_70%)]" />
-
-        {/* Scan lines effect */}
-        <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{
-          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, hsl(var(--foreground)) 2px, hsl(var(--foreground)) 4px)',
-        }} />
+      {/* Fundo: o shader iridescente da página já ocupa esta área. Aqui ficam
+          só a grade fina, que dá escala, e a vinheta, que puxa o olho para o
+          centro. As quatro orbs desfocadas e as scan lines saíram — somadas ao
+          WebGL viravam borrão colorido e ainda custavam repaint. */}
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage:
+              'linear-gradient(hsl(var(--primary)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px)',
+            backgroundSize: '64px 64px',
+            maskImage: 'radial-gradient(ellipse at center, black 20%, transparent 75%)',
+            WebkitMaskImage: 'radial-gradient(ellipse at center, black 20%, transparent 75%)',
+          }}
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_25%,hsl(var(--background)/0.85)_85%)]" />
       </div>
 
       <div className="container mx-auto px-4 md:px-6 relative z-10 py-20 sm:py-24 lg:py-20 xl:py-24">
@@ -194,11 +223,10 @@ const TerminalHero = () => {
               <div className="relative">
                 <div className="absolute -inset-2 bg-gradient-to-r from-primary via-accent to-primary rounded-full blur-xl opacity-50" />
 
-                <div className="absolute -left-6 top-2 text-2xl animate-emoji-float-1" aria-hidden="true">💻</div>
-                <div className="absolute -right-6 top-4 text-xl animate-emoji-float-2" aria-hidden="true">⚡</div>
-                <div className="absolute -left-5 bottom-8 text-xl animate-emoji-float-3" aria-hidden="true">🚀</div>
-                <div className="absolute -right-5 bottom-10 text-2xl animate-emoji-float-4" aria-hidden="true">✨</div>
-                <div className="absolute left-2 -top-2 text-xl animate-emoji-float-5" aria-hidden="true">🎯</div>
+                {/* Só dois no mobile: a foto é pequena e quatro chips
+                    se sobrepõem a ela. */}
+                <OrbitChip {...orbitChips[0]} className="-left-16 top-10" />
+                <OrbitChip {...orbitChips[1]} className="-right-16 bottom-6" />
 
                 <div className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-full overflow-hidden border-2 border-primary/50 shadow-2xl">
                   <img
@@ -305,11 +333,12 @@ const TerminalHero = () => {
               <div className="relative group">
                 <div className="absolute -inset-2 bg-gradient-to-r from-primary via-accent to-primary rounded-2xl blur-lg opacity-40 group-hover:opacity-70 transition-opacity duration-500 animate-pulse" />
 
-                <div className="absolute -left-8 top-4 text-3xl animate-emoji-float-1 hover:scale-125 transition-transform" aria-hidden="true">💻</div>
-                <div className="absolute -right-8 top-8 text-2xl animate-emoji-float-2 hover:scale-125 transition-transform" aria-hidden="true">⚡</div>
-                <div className="absolute -left-6 bottom-12 text-2xl animate-emoji-float-3 hover:scale-125 transition-transform" aria-hidden="true">🚀</div>
-                <div className="absolute -right-6 bottom-16 text-3xl animate-emoji-float-4 hover:scale-125 transition-transform" aria-hidden="true">✨</div>
-                <div className="absolute left-4 -top-4 text-2xl animate-emoji-float-5 hover:scale-125 transition-transform" aria-hidden="true">🎯</div>
+                {/* O canto inferior direito é do selo "GRV Software" — os
+                    chips contornam essa área. */}
+                <OrbitChip {...orbitChips[0]} className="-left-20 top-4" />
+                <OrbitChip {...orbitChips[1]} className="-right-20 top-2" />
+                <OrbitChip {...orbitChips[2]} className="-left-16 -bottom-4" />
+                <OrbitChip {...orbitChips[3]} className="-right-24 bottom-16" />
 
                 <div className="relative">
                   <div className="w-52 h-52 xl:w-56 xl:h-56 rounded-2xl overflow-hidden border-2 border-primary/30 shadow-2xl transform rotate-3 group-hover:rotate-0 transition-transform duration-500">

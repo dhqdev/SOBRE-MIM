@@ -47,14 +47,16 @@
   :root {
     /* Dark base colors */
     --background: 220 20% 8%;
-    --foreground: 180 100% 95%;
+    /* Branco levemente frio em vez de ciano-claro: títulos e corpo de texto
+       ganham contraste sem puxar a página inteira para o verde-água. */
+    --foreground: 210 30% 97%;
 
     /* Card system */
     --card: 220 20% 12%;
-    --card-foreground: 180 100% 95%;
+    --card-foreground: 210 30% 97%;
 
     --popover: 220 20% 15%;
-    --popover-foreground: 180 100% 95%;
+    --popover-foreground: 210 30% 97%;
 
     /* Neon color palette */
     --primary: 180 100% 50%; /* Neon cyan */
@@ -66,10 +68,12 @@
     --neon-green: 160 100% 45%; /* Aqua green */
 
     --secondary: 220 20% 15%;
-    --secondary-foreground: 180 100% 95%;
+    --secondary-foreground: 210 30% 97%;
 
     --muted: 220 15% 20%;
-    --muted-foreground: 180 50% 70%;
+    /* Cinza frio neutro: o antigo (180 50% 70%) era ciano saturado e deixava
+       parágrafos inteiros parecendo link. */
+    --muted-foreground: 215 16% 74%;
 
     --accent: 270 100% 70%; /* Neon violet */
     --accent-foreground: 220 20% 8%;
@@ -98,61 +102,8 @@
     --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
 }
 
 @layer base {
@@ -492,7 +443,7 @@
   50% { transform: translateY(-20px); }
 }
 
-@keyframes emoji-float-1 {
+@keyframes orbit-1 {
   0%, 100% { 
     transform: translate(0, 0) rotate(0deg) scale(1);
   }
@@ -507,7 +458,7 @@
   }
 }
 
-@keyframes emoji-float-2 {
+@keyframes orbit-2 {
   0%, 100% { 
     transform: translate(0, 0) rotate(0deg) scale(1);
   }
@@ -522,7 +473,7 @@
   }
 }
 
-@keyframes emoji-float-3 {
+@keyframes orbit-3 {
   0%, 100% { 
     transform: translate(0, 0) rotate(0deg) scale(1);
   }
@@ -537,7 +488,7 @@
   }
 }
 
-@keyframes emoji-float-4 {
+@keyframes orbit-4 {
   0%, 100% { 
     transform: translate(0, 0) rotate(0deg) scale(1);
   }
@@ -551,22 +502,6 @@
     transform: translate(15px, -12px) rotate(10deg) scale(1.1);
   }
 }
-
-@keyframes emoji-float-5 {
-  0%, 100% { 
-    transform: translate(0, 0) rotate(0deg) scale(1);
-  }
-  25% { 
-    transform: translate(-8px, -25px) rotate(-25deg) scale(1.1);
-  }
-  50% { 
-    transform: translate(15px, -18px) rotate(20deg) scale(1.15);
-  }
-  75% { 
-    transform: translate(-10px, -30px) rotate(-12deg) scale(1.2);
-  }
-}
-
 @keyframes float-3d {
   0%, 100% { transform: translateY(0px) rotateX(0deg); }
   50% { transform: translateY(-20px) rotateX(2deg); }
