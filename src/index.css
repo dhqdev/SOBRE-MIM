@@ -5,7 +5,7 @@
 @tailwind utilities;
 
 /* Design system minimalista: fundo quase preto, tons de cinza neutros e um
-   único acento (verde-menta) usado com parcimônia — status, links e foco. */
+   acento roxo usado com parcimônia — destaques, números e foco. */
 
 @layer base {
   :root {
@@ -28,8 +28,10 @@
     --muted: 0 0% 12%;
     --muted-foreground: 0 0% 62%;
 
-    /* Acento único da página. */
-    --accent: 158 64% 62%;
+    /* Acento da página: um roxo-lavanda suave. O verde fica só para o
+       indicador de "online". */
+    --accent: 258 90% 76%;
+    --online: 152 69% 55%;
     --accent-foreground: 0 0% 6%;
 
     --destructive: 0 84% 62%;
@@ -37,7 +39,7 @@
 
     --border: 0 0% 14%;
     --input: 0 0% 14%;
-    --ring: 158 64% 62%;
+    --ring: 258 90% 76%;
 
     --radius: 0.75rem;
   }
@@ -122,6 +124,22 @@
     animation: shine 4s linear infinite;
   }
 
+  /* Degradê roxo animado (GradientText). */
+  .text-gradient-violet {
+    background-image: linear-gradient(
+      90deg,
+      hsl(258 90% 76%),
+      hsl(285 85% 82%),
+      hsl(0 0% 96%),
+      hsl(258 90% 76%)
+    );
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient-x 8s ease infinite;
+  }
+
   /* Faixa infinita de logos (LogoLoop). */
   .logo-loop {
     mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
@@ -140,6 +158,11 @@
 @keyframes shine {
   from { background-position: 150% 0, 0 0; }
   to { background-position: -50% 0, 0 0; }
+}
+
+@keyframes gradient-x {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 @keyframes logo-loop {

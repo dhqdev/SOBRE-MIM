@@ -7,6 +7,7 @@ const NAV_LINKS = [
   { href: '#projetos', label: 'Projetos' },
   { href: '#sobre', label: 'Sobre' },
   { href: '#tecnologias', label: 'Stack' },
+  { href: '#github', label: 'GitHub' },
 ];
 
 /** A partir daqui a barra ganha fundo — antes disso ela flutua sobre o hero. */

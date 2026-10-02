@@ -1,4 +1,5 @@
 import BlurText from './effects/BlurText';
+import DecryptedText from './effects/DecryptedText';
 
 interface SectionHeadingProps {
   /** Número da seção, ex.: "01". */
@@ -21,7 +22,7 @@ const SectionHeading = ({ index, eyebrow, title, highlight, subtitle }: SectionH
     <p className="scroll-reveal flex items-center gap-3 font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
       <span className="text-accent">{index}</span>
       <span className="h-px w-8 bg-border" aria-hidden="true" />
-      {eyebrow}
+      <DecryptedText text={eyebrow} />
     </p>
 
     <h2 className="mt-5 text-4xl md:text-5xl font-semibold tracking-[-0.03em] leading-[1.1]">

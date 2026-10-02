@@ -20,6 +20,7 @@ export default {
 		extend: {
 			colors: {
 				border: 'hsl(var(--border))',
+				online: 'hsl(var(--online))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
 				background: 'hsl(var(--background))',
@@ -81,11 +82,22 @@ export default {
 				'accordion-up': {
 					from: { height: 'var(--radix-accordion-content-height)' },
 					to: { height: '0' }
+				},
+				'star-bottom': {
+					'0%': { transform: 'translateX(0)', opacity: '1' },
+					'100%': { transform: 'translateX(-100%)', opacity: '0' }
+				},
+				'star-top': {
+					'0%': { transform: 'translateX(0)', opacity: '1' },
+					'100%': { transform: 'translateX(100%)', opacity: '0' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'spin-slow': 'spin 22s linear infinite',
+				'star-bottom': 'star-bottom 5s linear infinite alternate',
+				'star-top': 'star-top 5s linear infinite alternate'
 			}
 		}
 	},

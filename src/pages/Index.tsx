@@ -3,11 +3,14 @@ import TerminalHero from '@/components/TerminalHero';
 import AboutSection from '@/components/AboutSection';
 import ProjectsSection from '@/components/ProjectsSection';
 import TechStackSection from '@/components/TechStackSection';
+import GitHubSection from '@/components/GitHubSection';
 import Footer from '@/components/Footer';
 import Navbar from '@/components/Navbar';
 import ExperiencesPanel from '@/components/ExperiencesPanel';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import DotGrid from '@/components/effects/DotGrid';
+import ClickSpark from '@/components/effects/ClickSpark';
+import ScrollVelocity from '@/components/effects/ScrollVelocity';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 const Index = () => {
@@ -27,8 +30,7 @@ const Index = () => {
         Pular para o conteúdo
       </a>
 
-      {/* Fundo: grade de pontos que acende perto do cursor, sumindo nas
-          bordas. Se quebrar, a página continua de pé sem ela. */}
+      {/* Enfeites: se algum quebrar, a página continua de pé sem eles. */}
       <div
         className="pointer-events-none fixed inset-0 z-0 [mask-image:radial-gradient(ellipse_at_top,black_10%,transparent_70%)]"
         aria-hidden="true"
@@ -37,9 +39,13 @@ const Index = () => {
           <DotGrid />
         </ErrorBoundary>
       </div>
-      {/* Luz suave no topo */}
+      <ErrorBoundary>
+        <ClickSpark />
+      </ErrorBoundary>
+
+      {/* Luz roxa suave no topo */}
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[600px] bg-[radial-gradient(ellipse_60%_50%_at_50%_-10%,rgba(110,231,183,0.08),transparent)]"
+        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[700px] bg-[radial-gradient(ellipse_60%_50%_at_50%_-10%,rgba(167,139,250,0.14),transparent)]"
         aria-hidden="true"
       />
 
@@ -51,9 +57,15 @@ const Index = () => {
           <TerminalHero />
         </div>
 
+        <ScrollVelocity
+          text="Full-Stack · Vue & React · Python · Automação · IA"
+          className="border-y border-border py-5 text-2xl font-semibold tracking-tight text-muted-foreground/40 sm:text-4xl"
+        />
+
         <ProjectsSection />
         <AboutSection />
         <TechStackSection />
+        <GitHubSection />
       </main>
 
       <Footer />

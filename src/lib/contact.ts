@@ -9,3 +9,6 @@ export const buildWhatsAppUrl = (message: string = DEFAULT_MESSAGE) =>
   `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 
 export const WHATSAPP_URL = buildWhatsAppUrl();
+
+export const INSTAGRAM_HANDLE = 'david_hqvf';
+export const INSTAGRAM_URL = `https://www.instagram.com/${INSTAGRAM_HANDLE}/`;

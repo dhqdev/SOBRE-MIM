@@ -1,6 +1,9 @@
 import { Code2, Database, Zap, BarChart3 } from 'lucide-react';
 import SectionHeading from './SectionHeading';
 import SpotlightCard from './effects/SpotlightCard';
+import CircularText from './effects/CircularText';
+import TiltedCard from './effects/TiltedCard';
+import davidProfile from '@/assets/david-profile.webp';
 
 const skills = [
   { icon: Code2, title: 'Frontend', items: ['Vue.js', 'React', 'TypeScript'] },
@@ -53,8 +56,29 @@ const AboutSection = () => (
           </figure>
         </div>
 
-        {/* Especialidades + foco */}
+        {/* Foto + especialidades + foco */}
         <div className="scroll-reveal space-y-4">
+          <div className="flex justify-center py-4 lg:justify-start lg:pl-4">
+            <div className="relative grid h-[200px] w-[200px] place-items-center text-accent/80">
+              <CircularText
+                text="full-stack • automação • ia • disponível •"
+                size={200}
+                className="absolute inset-0"
+              />
+              <TiltedCard className="h-[136px] w-[136px] rounded-full" maxTilt={12}>
+                <img
+                  src={davidProfile}
+                  alt="Foto de David Fernandes"
+                  width={524}
+                  height={530}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full rounded-full object-cover ring-1 ring-white/10"
+                />
+              </TiltedCard>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             {skills.map((skill) => (
               <SpotlightCard key={skill.title} className="p-5">
@@ -74,8 +98,8 @@ const AboutSection = () => (
           <SpotlightCard className="p-5">
             <h3 className="flex items-center gap-2 text-sm font-medium text-foreground">
               <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-online opacity-60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-online" />
               </span>
               Foco atual
             </h3>

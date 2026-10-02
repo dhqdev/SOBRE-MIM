@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, Calendar, Bot, Wallet, Gamepad2, MessagesSquare, CandlestickChart, Github } from 'lucide-react';
 import SectionHeading from './SectionHeading';
 import SpotlightCard from './effects/SpotlightCard';
+import TiltedCard from './effects/TiltedCard';
 
 interface Project {
   title: string;
@@ -136,19 +137,20 @@ const ProjectCard = ({ project, featured }: { project: Project; featured: boolea
   return (
     <SpotlightCard
       className={`group scroll-reveal ${featured ? 'md:col-span-2' : ''}`}
-      spotlightColor="rgba(110, 231, 183, 0.07)"
+      spotlightColor="rgba(167, 139, 250, 0.08)"
     >
       <article className={`flex h-full flex-col ${featured ? 'lg:flex-row' : ''}`}>
         {/* Mídia emoldurada */}
         <div className={`p-3 pb-0 ${featured ? 'lg:w-[55%] lg:shrink-0 lg:pb-3' : ''}`}>
-          <div
-            className={`relative overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.02] ${
+          <TiltedCard
+            maxTilt={5}
+            className={`overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.02] ${
               featured ? 'aspect-[16/10] lg:aspect-auto lg:h-full lg:min-h-[340px]' : 'aspect-[16/10]'
             }`}
           >
             {project.badge && (
               <span className="absolute z-10 top-3 left-3 inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-background/70 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-md">
-                <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />
+                <span className="h-1.5 w-1.5 rounded-full bg-online" aria-hidden="true" />
                 {project.badge}
               </span>
             )}
@@ -163,12 +165,12 @@ const ProjectCard = ({ project, featured }: { project: Project; featured: boolea
                 decoding="async"
               />
             )}
-          </div>
+          </TiltedCard>
         </div>
 
         <div className={`flex flex-1 flex-col p-6 ${featured ? 'md:p-8' : ''}`}>
           <div className="flex items-center gap-2.5 text-muted-foreground">
-            <project.icon className="h-4 w-4" />
+            <project.icon className="h-4 w-4 text-accent" />
             {caption && <span className="text-sm">{caption}</span>}
           </div>
 

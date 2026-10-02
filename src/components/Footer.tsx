@@ -1,13 +1,15 @@
-import { ArrowUpRight, Github, Linkedin, Mail } from 'lucide-react';
+import { ArrowUpRight, Github, Instagram, Linkedin, Mail } from 'lucide-react';
 import WhatsAppIcon from './WhatsAppIcon';
 import BlurText from './effects/BlurText';
 import Magnet from './effects/Magnet';
-import { WHATSAPP_URL } from '@/lib/contact';
+import StarBorder from './effects/StarBorder';
+import { INSTAGRAM_HANDLE, INSTAGRAM_URL, WHATSAPP_URL } from '@/lib/contact';
 
 const socialLinks = [
   { icon: WhatsAppIcon, url: WHATSAPP_URL, label: 'WhatsApp' },
   { icon: Github, url: 'https://github.com/dhqdev', label: 'GitHub' },
   { icon: Linkedin, url: 'https://www.linkedin.com/in/david-fernandes-77a663229/', label: 'LinkedIn' },
+  { icon: Instagram, url: INSTAGRAM_URL, label: 'Instagram' },
   { icon: Mail, url: 'mailto:david@tekvosoft.dev', label: 'Email' },
 ];
 
@@ -19,29 +21,42 @@ const Footer = () => {
       {/* Chamada final */}
       <div className="mx-auto max-w-5xl px-6 py-20 md:py-28">
         <p className="scroll-reveal flex items-center gap-3 font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
-          <span className="text-accent">04</span>
+          <span className="text-accent">05</span>
           <span className="h-px w-8 bg-border" aria-hidden="true" />
           Contato
         </p>
         <h2 className="mt-5 text-4xl font-semibold leading-[1.05] tracking-[-0.04em] sm:text-6xl md:text-7xl">
           <BlurText text="Vamos construir" className="block text-foreground" />
-          <BlurText text="algo juntos?" className="block text-muted-foreground/60" delay={200} />
+          <span className="block text-muted-foreground/60">
+            <BlurText text="algo" delay={200} />{' '}
+            <BlurText text="juntos?" delay={290} wordClassName="text-gradient-violet pb-[0.08em]" />
+          </span>
         </h2>
         <p className="scroll-reveal mt-6 max-w-md text-lg text-muted-foreground">
           Disponível para projetos freelance e oportunidades full-time.
         </p>
-        <div className="scroll-reveal mt-10">
+        <div className="scroll-reveal mt-10 flex flex-wrap items-center gap-3">
           <Magnet>
-            <a
-              href={WHATSAPP_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-12 items-center gap-2.5 rounded-xl bg-foreground px-6 text-[15px] font-medium text-background transition-opacity hover:opacity-90"
-            >
-              <WhatsAppIcon className="h-4 w-4" />
-              Falar comigo no WhatsApp
-            </a>
+            <StarBorder>
+              <a
+                href={WHATSAPP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-12 items-center gap-2.5 rounded-[11px] bg-foreground px-6 text-[15px] font-medium text-background transition-opacity hover:opacity-90"
+              >
+                <WhatsAppIcon className="h-4 w-4" />
+                Falar comigo no WhatsApp
+              </a>
+            </StarBorder>
           </Magnet>
+          <a
+            href={INSTAGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-12 items-center gap-2 rounded-xl border border-white/10 px-5 text-[15px] font-medium text-foreground transition-colors hover:bg-white/[0.04]"
+          >
+            <Instagram className="h-4 w-4 text-accent" aria-hidden="true" />@{INSTAGRAM_HANDLE}
+          </a>
         </div>
       </div>
 

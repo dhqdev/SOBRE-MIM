@@ -8,6 +8,8 @@ interface BlurTextProps {
   stagger?: number;
   /** Atraso antes da primeira palavra, em ms. */
   delay?: number;
+  /** Classe aplicada a cada palavra (ex.: um degradê no texto). */
+  wordClassName?: string;
 }
 
 /**
@@ -15,7 +17,7 @@ interface BlurTextProps {
  * para o lugar quando o texto entra na tela. O texto completo continua no DOM
  * desde o início, então leitores de tela e buscadores não perdem nada.
  */
-const BlurText = ({ text, className = '', stagger = 90, delay = 0 }: BlurTextProps) => {
+const BlurText = ({ text, className = '', stagger = 90, delay = 0, wordClassName = '' }: BlurTextProps) => {
   const ref = useRef<HTMLSpanElement>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
   const [visible, setVisible] = useState(false);
@@ -48,7 +50,7 @@ const BlurText = ({ text, className = '', stagger = 90, delay = 0 }: BlurTextPro
       {words.map((word, index) => (
         <span
           key={`${word}-${index}`}
-          className="inline-block will-change-[transform,filter,opacity]"
+          className={`inline-block will-change-[transform,filter,opacity] ${wordClassName}`}
           style={{
             opacity: visible ? 1 : 0,
             filter: visible ? 'blur(0)' : 'blur(10px)',

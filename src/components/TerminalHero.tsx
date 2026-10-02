@@ -1,11 +1,12 @@
-import { ArrowDown, ArrowUpRight, Download, Github, Linkedin } from 'lucide-react';
+import { ArrowDown, ArrowUpRight, Download, Github, Instagram, Linkedin } from 'lucide-react';
 import BlurText from './effects/BlurText';
 import RotatingText from './effects/RotatingText';
 import CountUp from './effects/CountUp';
 import Magnet from './effects/Magnet';
+import StarBorder from './effects/StarBorder';
 import WhatsAppIcon from './WhatsAppIcon';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import { WHATSAPP_URL } from '@/lib/contact';
+import { INSTAGRAM_URL, WHATSAPP_URL } from '@/lib/contact';
 import davidProfile from '@/assets/david-profile.webp';
 
 const PHRASES = ['Vue & React', 'Automação & Integração', 'Frappe Framework', 'Python & IA'];
@@ -19,6 +20,7 @@ const stats = [
 const socials = [
   { icon: Github, url: 'https://github.com/dhqdev', label: 'GitHub' },
   { icon: Linkedin, url: 'https://www.linkedin.com/in/david-fernandes-77a663229/', label: 'LinkedIn' },
+  { icon: Instagram, url: INSTAGRAM_URL, label: 'Instagram' },
 ];
 
 const TerminalHero = () => {
@@ -42,10 +44,10 @@ const TerminalHero = () => {
               width={524}
               height={530}
               {...{ fetchpriority: 'high' }}
-              className="w-14 h-14 rounded-full object-cover ring-1 ring-white/10"
+              className="w-14 h-14 rounded-full object-cover ring-1 ring-accent/40"
             />
             <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-background">
-              <span className="h-2 w-2 rounded-full bg-accent" />
+              <span className="h-2 w-2 rounded-full bg-online" />
             </span>
           </div>
           <div className="leading-tight">
@@ -59,7 +61,10 @@ const TerminalHero = () => {
         <h1 className="text-[2.6rem] leading-[1.05] sm:text-6xl md:text-7xl font-semibold tracking-[-0.04em]">
           <span className="sr-only">David Fernandes, desenvolvedor full-stack. </span>
           <span aria-hidden="true">
-            <BlurText text="Olá, eu sou David." className="block text-foreground" />
+            <span className="block text-foreground">
+              <BlurText text="Olá, eu sou" />{' '}
+              <BlurText text="David." delay={270} wordClassName="text-gradient-violet pb-[0.08em]" />
+            </span>
           </span>
           <span className="block text-muted-foreground/60" aria-hidden="true">
             <BlurText text="Especialista em" delay={300} />{' '}
@@ -79,15 +84,17 @@ const TerminalHero = () => {
           style={{ '--reveal-delay': '500ms' } as React.CSSProperties}
         >
           <Magnet>
-            <a
-              href={WHATSAPP_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-12 items-center gap-2.5 rounded-xl bg-foreground px-6 text-[15px] font-medium text-background transition-opacity hover:opacity-90"
-            >
-              <WhatsAppIcon className="w-4 h-4" />
-              Falar comigo
-            </a>
+            <StarBorder>
+              <a
+                href={WHATSAPP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-12 items-center gap-2.5 rounded-[11px] bg-foreground px-6 text-[15px] font-medium text-background transition-opacity hover:opacity-90"
+              >
+                <WhatsAppIcon className="w-4 h-4" />
+                Falar comigo
+              </a>
+            </StarBorder>
           </Magnet>
 
           <button
@@ -125,7 +132,7 @@ const TerminalHero = () => {
             ))}
           </dl>
 
-          <ul className="flex items-center gap-2 list-none p-0">
+          <ul className="flex flex-wrap items-center gap-1 list-none p-0 -ml-3 sm:ml-0">
             {socials.map((social) => (
               <li key={social.label}>
                 <a

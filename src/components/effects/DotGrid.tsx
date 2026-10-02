@@ -14,7 +14,7 @@ interface DotGridProps {
 // Fora do componente: um array literal como default seria recriado a cada
 // render e faria o efeito reiniciar o canvas.
 const WHITE: [number, number, number] = [255, 255, 255];
-const MINT: [number, number, number] = [110, 231, 183];
+const VIOLET: [number, number, number] = [167, 139, 250];
 
 /**
  * Inspirado no "Dot Grid" do React Bits: uma grade de pontos discreta que
@@ -25,7 +25,7 @@ const DotGrid = ({
   gap = 28,
   proximity = 160,
   baseColor = WHITE,
-  activeColor = MINT,
+  activeColor = VIOLET,
 }: DotGridProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
