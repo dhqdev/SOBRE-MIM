@@ -115,7 +115,7 @@ const GitHubSection = () => {
 
   return (
     <section id="github" className="relative scroll-mt-20 py-20 md:py-28">
-      <div className="mx-auto max-w-5xl px-6">
+      <div className="mx-auto max-w-7xl px-6 lg:px-10">
         <SectionHeading
           index="04"
           eyebrow="GitHub"
@@ -141,7 +141,7 @@ const GitHubSection = () => {
         {!data && !failed && (
           <div className="space-y-4" aria-busy="true" aria-label="Carregando dados do GitHub">
             <Skeleton className="h-44" />
-            <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
               <Skeleton className="h-80" />
               <Skeleton className="h-80" />
             </div>
@@ -206,7 +206,7 @@ const GitHubSection = () => {
               )}
             </SpotlightCard>
 
-            <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
               {/* Repositórios */}
               <div>
                 <div className="mb-3 flex items-baseline justify-between px-1">
@@ -220,7 +220,7 @@ const GitHubSection = () => {
                     Ver todos <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
                   </a>
                 </div>
-                <AnimatedList className="grid gap-3 sm:grid-cols-2">
+                <AnimatedList className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {data.repos.slice(0, REPOS_SHOWN).map((repo) => (
                     <SpotlightCard key={repo.name} className="h-full" spotlightColor="rgba(167, 139, 250, 0.08)">
                       <a

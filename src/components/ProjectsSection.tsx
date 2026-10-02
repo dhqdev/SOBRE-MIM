@@ -227,7 +227,7 @@ const ProjectCard = ({ project, featured }: { project: Project; featured: boolea
 
 const ProjectsSection = () => (
   <section id="projetos" className="relative scroll-mt-20 py-20 md:py-28">
-    <div className="mx-auto max-w-5xl px-6">
+    <div className="mx-auto max-w-7xl px-6 lg:px-10">
       <SectionHeading
         index="01"
         eyebrow="Projetos"
@@ -236,7 +236,7 @@ const ProjectsSection = () => (
         subtitle="Sistemas, automações e experimentos que saíram do papel."
       />
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {projects.map((project) => (
           <ProjectCard key={project.title} project={project} featured={Boolean(project.badge)} />
         ))}

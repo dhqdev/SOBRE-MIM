@@ -20,7 +20,7 @@ const half = Math.ceil(technologies.length / 2);
 
 const TechStackSection = () => (
   <section id="tecnologias" className="relative scroll-mt-20 py-20 md:py-28">
-    <div className="mx-auto max-w-5xl px-6">
+    <div className="mx-auto max-w-7xl px-6 lg:px-10">
       <SectionHeading
         index="03"
         eyebrow="Stack"
@@ -39,12 +39,12 @@ const TechStackSection = () => (
       ))}
     </ul>
 
-    <div className="scroll-reveal mx-auto max-w-6xl space-y-4">
+    <div className="scroll-reveal space-y-4">
       <LogoLoop items={technologies.slice(0, half)} duration={60} />
       <LogoLoop items={technologies.slice(half)} duration={60} reverse />
     </div>
 
-    <figure className="scroll-reveal mx-auto mt-20 max-w-5xl px-6">
+    <figure className="scroll-reveal mx-auto mt-20 max-w-7xl px-6 lg:px-10">
       <blockquote className="text-xl text-muted-foreground md:text-2xl">
         “Clean code always looks like it was written by someone who cares.”
       </blockquote>

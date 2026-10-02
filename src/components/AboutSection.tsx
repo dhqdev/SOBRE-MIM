@@ -16,7 +16,7 @@ const focus = ['Frappe Framework & ERPNext', 'Automação de processos', 'Dashbo
 
 const AboutSection = () => (
   <section id="sobre" className="relative scroll-mt-20 py-20 md:py-28">
-    <div className="mx-auto max-w-5xl px-6">
+    <div className="mx-auto max-w-7xl px-6 lg:px-10">
       <SectionHeading
         index="02"
         eyebrow="Sobre mim"
@@ -25,7 +25,7 @@ const AboutSection = () => (
         subtitle="De onde eu venho, no que trabalho hoje e para onde estou indo."
       />
 
-      <div className="grid gap-12 lg:grid-cols-[1.4fr_1fr] lg:gap-16">
+      <div className="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-16">
         {/* História */}
         <div className="scroll-reveal space-y-6 text-lg leading-relaxed text-muted-foreground">
           <p>

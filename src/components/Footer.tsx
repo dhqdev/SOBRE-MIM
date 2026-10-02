@@ -19,7 +19,7 @@ const Footer = () => {
   return (
     <footer id="contato" className="relative z-10">
       {/* Chamada final */}
-      <div className="mx-auto max-w-5xl px-6 py-20 md:py-28">
+      <div className="mx-auto max-w-7xl px-6 lg:px-10 py-20 md:py-28">
         <p className="scroll-reveal flex items-center gap-3 font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
           <span className="text-accent">05</span>
           <span className="h-px w-8 bg-border" aria-hidden="true" />
@@ -61,7 +61,7 @@ const Footer = () => {
       </div>
 
       <div className="border-t border-border">
-        <div className="mx-auto flex max-w-5xl flex-col-reverse gap-6 px-6 py-8 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto flex max-w-7xl flex-col-reverse gap-6 px-6 lg:px-10 py-8 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
             © {currentYear} David Fernandes. Feito com React, TypeScript e bastante café.
           </p>

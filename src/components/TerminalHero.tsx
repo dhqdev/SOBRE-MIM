@@ -39,8 +39,8 @@ const TerminalHero = () => {
 
   return (
     <section className="relative min-h-[100svh] flex items-center">
-      <div className="mx-auto w-full max-w-5xl px-6 pt-32 pb-20">
-        <div className="grid items-center gap-14 lg:grid-cols-[1.08fr_1fr] lg:gap-10">
+      <div className="mx-auto w-full max-w-7xl px-6 lg:px-10 pt-32 pb-20">
+        <div className="grid grid-cols-1 items-center gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-14 xl:gap-20">
           <div>
             {/* Foto + status */}
             <div className="flex items-center gap-4 mb-10">
@@ -65,7 +65,7 @@ const TerminalHero = () => {
               </div>
             </div>
 
-            <h1 className="text-[2.6rem] leading-[1.05] sm:text-6xl md:text-7xl lg:text-[3.4rem] xl:text-[3.6rem] font-semibold tracking-[-0.04em]">
+            <h1 className="text-[2.6rem] leading-[1.05] sm:text-6xl md:text-7xl lg:text-5xl xl:text-[3.75rem] font-semibold tracking-[-0.04em]">
               <span className="sr-only">David Fernandes, desenvolvedor full-stack. </span>
               <span aria-hidden="true">
                 <span className="block text-foreground">

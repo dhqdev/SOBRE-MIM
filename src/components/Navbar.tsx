@@ -76,7 +76,7 @@ const Navbar = ({ onOpenExperiences }: NavbarProps) => {
 
   return (
     <header className="fixed top-0 inset-x-0 z-[60] px-4 pt-4">
-      <div className={`mx-auto max-w-5xl rounded-2xl border transition-all duration-500 ${surface}`}>
+      <div className={`mx-auto max-w-[78rem] rounded-2xl border transition-all duration-500 ${surface}`}>
         <nav
           aria-label="Navegação principal"
           className="h-14 pl-6 pr-2 flex items-center justify-between gap-4"
