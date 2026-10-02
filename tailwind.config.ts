@@ -83,6 +83,10 @@ export default {
 					from: { height: 'var(--radix-accordion-content-height)' },
 					to: { height: '0' }
 				},
+				'float-soft': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-8px)' }
+				},
 				'star-bottom': {
 					'0%': { transform: 'translateX(0)', opacity: '1' },
 					'100%': { transform: 'translateX(-100%)', opacity: '0' }
@@ -96,6 +100,7 @@ export default {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'spin-slow': 'spin 22s linear infinite',
+				'float-soft': 'float-soft 5s ease-in-out infinite',
 				'star-bottom': 'star-bottom 5s linear infinite alternate',
 				'star-top': 'star-top 5s linear infinite alternate'
 			}

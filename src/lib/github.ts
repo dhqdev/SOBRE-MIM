@@ -134,7 +134,23 @@ const fetchContributions = async (): Promise<Contributions | null> => {
   }
 };
 
-export const fetchGitHubData = async (): Promise<GitHubData> => {
+let inFlight: Promise<GitHubData> | null = null;
+
+/**
+ * O hero e a seção do GitHub pedem os dados ao mesmo tempo; os dois recebem a
+ * mesma promessa, então a API é chamada uma vez só.
+ */
+export const fetchGitHubData = (): Promise<GitHubData> => {
+  if (!inFlight) {
+    inFlight = loadGitHubData().catch((error) => {
+      inFlight = null;
+      throw error;
+    });
+  }
+  return inFlight;
+};
+
+const loadGitHubData = async (): Promise<GitHubData> => {
   const cached = readCache();
   if (cached) return cached;
 
