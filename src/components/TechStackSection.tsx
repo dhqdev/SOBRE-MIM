@@ -6,61 +6,73 @@ const TechStackSection = () => {
   const technologies = [
     { 
       name: "Python", 
-      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg", 
+      icon: "/media/tech/python.svg", 
       category: "Backend",
       color: "#3776AB"
     },
     { 
       name: "Java", 
-      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg", 
+      icon: "/media/tech/java.svg", 
       category: "Backend",
       color: "#007396"
     },
     { 
+      name: "TypeScript", 
+      icon: "/media/tech/typescript.svg", 
+      category: "Frontend",
+      color: "#3178C6"
+    },
+    { 
+      name: "FastAPI", 
+      icon: "/media/tech/fastapi.svg", 
+      category: "Backend",
+      color: "#009688"
+    },
+    { 
       name: "React", 
-      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg", 
+      icon: "/media/tech/react.svg", 
       category: "Frontend",
       color: "#61DAFB"
     },
     { 
       name: "Vue.js", 
-      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vuejs/vuejs-original.svg", 
+      icon: "/media/tech/vuejs.svg", 
       category: "Frontend",
       color: "#42B883"
     },
     { 
       name: "Node.js", 
-      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg", 
+      icon: "/media/tech/nodejs.svg", 
       category: "Backend",
       color: "#339933"
     },
     { 
       name: "MySQL", 
-      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg", 
+      icon: "/media/tech/mysql.svg", 
       category: "Database",
       color: "#4479A1"
     },
     { 
       name: "Docker", 
-      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg", 
+      icon: "/media/tech/docker.svg", 
       category: "DevOps",
       color: "#2496ED"
     },
     { 
       name: "Git", 
-      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg", 
+      icon: "/media/tech/git.svg", 
       category: "Tools",
       color: "#F05032"
     },
     { 
       name: "n8n", 
-      icon: "https://avatars.githubusercontent.com/u/45487711?s=200&v=4", 
+      icon: "/media/tech/n8n.webp", 
       category: "Automation",
       color: "#EA4B71"
     },
     { 
       name: "Tailwind", 
-      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/tailwindcss/tailwindcss-original.svg", 
+      icon: "/media/tech/tailwindcss.svg", 
       category: "Frontend",
       color: "#06B6D4"
     }

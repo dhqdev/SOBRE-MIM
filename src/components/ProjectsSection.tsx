@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ExternalLink, Calendar, Utensils, Bot, Wallet, Mic, Gamepad2 } from 'lucide-react';
+import { ExternalLink, Calendar, Bot, Wallet, Gamepad2, MessagesSquare, CandlestickChart, Github } from 'lucide-react';
 import ScrollStack, { ScrollStackItem } from './ScrollStack';
 import SectionHeading from './SectionHeading';
 
@@ -8,6 +8,10 @@ interface Project {
   description: string;
   icon: React.ComponentType<{ className?: string }>;
   link: string;
+  /** Repositório do código, quando o link principal é o produto no ar. */
+  repo?: string;
+  /** Selo no canto da imagem, ex.: "Novo". */
+  badge?: string;
   tags: string[];
   image?: string;
   video?: string;
@@ -15,6 +19,27 @@ interface Project {
 }
 
 const projects: Project[] = [
+  {
+    title: 'Meta-Bot - Escritório de trading com IA',
+    description:
+      'Um escritório de trading em pixel-art onde 8 agentes de IA trabalham juntos: a Nina lê as notícias, a Rita vigia o risco, a Estela testa estratégias, o Gustavo gerencia o plano e o Caio executa as ordens no MetaTrader 5. Eles conversam entre si, fazem reunião diária às 19h e aprendem com os próprios resultados. São 18 estratégias, backtest honesto (com slippage e comissão), conta simulada com preços reais e app PWA para acompanhar pelo celular.',
+    icon: CandlestickChart,
+    link: 'https://github.com/dhqdev/meta-bot',
+    tags: ['Python', 'FastAPI', 'React', 'Agentes de IA', 'MetaTrader 5'],
+    image: '/media/meta-bot.webp',
+    badge: 'Novo',
+  },
+  {
+    title: 'Tekvosoft Chat - Atendimento via WhatsApp',
+    description:
+      'Plataforma de atendimento com CRM e helpdesk: vários atendentes no mesmo número de WhatsApp, filas, chatbot com pipeline de IA, kanban, campanhas e agendamentos, tudo em tempo real. É multiempresa, roda em Docker e já está em produção.',
+    icon: MessagesSquare,
+    link: 'https://chat.tekvosoft.com/',
+    repo: 'https://github.com/tekvosoft-chat/tekvosoft',
+    tags: ['Node.js', 'TypeScript', 'React', 'WhatsApp', 'Socket.IO'],
+    image: '/media/tekvosoft-chat.webp',
+    badge: 'Em produção',
+  },
   {
     title: 'Flappy Bird IA',
     description:
@@ -44,15 +69,6 @@ const projects: Project[] = [
     image: '/media/encontro-com-deus.webp',
   },
   {
-    title: 'Prato Flash',
-    description:
-      'Sistema completo de gestão para restaurantes, desenvolvido com React, TypeScript e shadcn/ui. Uma solução moderna e intuitiva para gerenciar todos os aspectos do seu estabelecimento.',
-    icon: Utensils,
-    link: 'https://github.com/dhqdev/prato-flash',
-    tags: ['React', 'TypeScript', 'shadcn/ui'],
-    image: '/media/prato-flash.webp',
-  },
-  {
     title: 'BCI-ON1 - Automação Servopa',
     description:
       'O BCI-ON1 é um sistema de automação desenvolvido para simplificar e automatizar processos de licitação no portal Servopa. O sistema realiza login automático, extrai protocolos do Todoist, envia lances e notifica clientes via WhatsApp nos dias 8 e 16 de cada mês.',
@@ -60,15 +76,6 @@ const projects: Project[] = [
     link: 'https://github.com/dhqdev/bci-on1?tab=readme-ov-file',
     tags: ['Automação', 'Python', 'Selenium'],
     image: '/media/bci-on1-dashboard.webp',
-  },
-  {
-    title: 'Vozerão - Gerador de vozes com IA',
-    description:
-      'Vozerão é um saas desenvolvido para transcrever audio em texto, além de fazer um resumo do conteúdo e gerar uma voz artificial com base no texto. O sistema é construído com React, TypeScript e utiliza a API ElevenLabs para a geração de voz, oferecendo uma experiência completa de transcrição e síntese vocal.',
-    icon: Mic,
-    link: 'https://vozerao.vercel.app/',
-    tags: ['React', 'TypeScript', 'ElevenLabs'],
-    image: '/media/vozerao.webp',
   },
 ];
 
@@ -118,8 +125,8 @@ const LazyVideo = ({ src, poster, className }: { src: string; poster?: string; c
 const ProjectCard = ({ project, variant }: { project: Project; variant: 'mobile' | 'desktop' }) => {
   const isDesktop = variant === 'desktop';
   const mediaClass = isDesktop
-    ? 'w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500'
-    : 'w-full h-48 object-cover';
+    ? 'w-full h-80 object-cover object-top group-hover:scale-105 transition-transform duration-700'
+    : 'w-full h-48 object-cover object-top';
 
   return (
     <div
@@ -129,7 +136,17 @@ const ProjectCard = ({ project, variant }: { project: Project; variant: 'mobile'
           : 'group rounded-2xl bg-card border border-border overflow-hidden'
       }
     >
-      <div className="overflow-hidden">
+      <div className="relative overflow-hidden">
+        {project.badge && (
+          <span
+            className={`absolute z-10 top-4 right-4 inline-flex items-center gap-1.5 rounded-full bg-background/80 backdrop-blur-md border border-primary/40 text-primary font-semibold ${
+              isDesktop ? 'px-3.5 py-1.5 text-sm' : 'px-2.5 py-1 text-xs'
+            }`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" aria-hidden="true" />
+            {project.badge}
+          </span>
+        )}
         {project.video ? (
           <LazyVideo src={project.video} poster={project.poster} className={mediaClass} />
         ) : (
@@ -141,6 +158,8 @@ const ProjectCard = ({ project, variant }: { project: Project; variant: 'mobile'
             decoding="async"
           />
         )}
+        {/* Fade da imagem para o corpo do card */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card to-transparent" />
       </div>
 
       <div className={isDesktop ? 'p-10' : 'p-6'}>
@@ -180,18 +199,35 @@ const ProjectCard = ({ project, variant }: { project: Project; variant: 'mobile'
           ))}
         </ul>
 
-        <a
-          href={project.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors duration-300 ${
-            isDesktop ? 'text-lg font-semibold' : 'text-sm font-medium'
-          }`}
-        >
-          Ver projeto
-          <span className="sr-only"> {project.title} (abre em nova aba)</span>
-          <ExternalLink className={isDesktop ? 'w-5 h-5' : 'w-4 h-4'} aria-hidden="true" />
-        </a>
+        <div className={`flex flex-wrap items-center ${isDesktop ? 'gap-6' : 'gap-4'}`}>
+          <a
+            href={project.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors duration-300 ${
+              isDesktop ? 'text-lg font-semibold' : 'text-sm font-medium'
+            }`}
+          >
+            Ver projeto
+            <span className="sr-only"> {project.title} (abre em nova aba)</span>
+            <ExternalLink className={isDesktop ? 'w-5 h-5' : 'w-4 h-4'} aria-hidden="true" />
+          </a>
+
+          {project.repo && (
+            <a
+              href={project.repo}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors duration-300 ${
+                isDesktop ? 'text-lg font-semibold' : 'text-sm font-medium'
+              }`}
+            >
+              <Github className={isDesktop ? 'w-5 h-5' : 'w-4 h-4'} aria-hidden="true" />
+              Código
+              <span className="sr-only"> de {project.title} no GitHub (abre em nova aba)</span>
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );
