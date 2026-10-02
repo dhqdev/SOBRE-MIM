@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Play, RotateCcw } from 'lucide-react';
+import { CornerDownLeft, Play, RotateCcw } from 'lucide-react';
 import TiltedCard from './effects/TiltedCard';
 import { useInView } from '@/hooks/useInView';
 import { burstConfetti } from '@/lib/confetti';
@@ -11,6 +11,7 @@ import {
   type ContributionDay,
   type GitHubData,
 } from '@/lib/github';
+import { MESSAGE_MAX, NAME_MAX, sendPush, type VisitorPush } from '@/lib/guestbook';
 
 const COMMAND = 'git log --oneline -5';
 const TYPE_MS = 45;
@@ -25,15 +26,36 @@ const LEVEL_COLORS = [
   'rgba(196,181,253,1)',
 ];
 
+type Tone = 'muted' | 'ok' | 'accent' | 'error';
+/** Resposta do mural: o push salvo ou o motivo de não ter salvado. */
+type PushResult = { push?: VisitorPush; error?: string };
+
 /** As falas do "git push" — a parte divertida do terminal. */
-const PUSH_LINES = [
+const PUSH_LINES: { text: string; tone: Tone }[] = [
   { text: 'Enumerating objects: 42, done.', tone: 'muted' },
   { text: 'Compressing objects: 100% (42/42), done.', tone: 'muted' },
   { text: 'Writing objects: 100% (42/42), café ☕ incluso', tone: 'muted' },
-  { text: `To github.com/${GITHUB_USER}/portfolio.git`, tone: 'muted' },
-  { text: '   main -> main  ✓ deploy feito!', tone: 'ok' },
-  { text: 'Obrigado pela visita 💜 bora conversar?', tone: 'accent' },
-] as const;
+  { text: `To github.com/${GITHUB_USER}/mural.git`, tone: 'muted' },
+];
+
+/** O final do push depende de a mensagem ter sido salva no mural. */
+const resultLines = (result: PushResult): { text: string; tone: Tone }[] =>
+  result.push
+    ? [
+        { text: `   main -> main  ✓ ${result.push.name}, seu push está no mural!`, tone: 'ok' },
+        { text: 'Obrigado pela visita 💜 bora conversar?', tone: 'accent' },
+      ]
+    : [
+        { text: `   ✗ ${result.error}`, tone: 'error' },
+        { text: 'Obrigado pela visita 💜 tenta de novo daqui a pouco?', tone: 'accent' },
+      ];
+
+const TONE_CLASS: Record<Tone, string> = {
+  muted: 'text-muted-foreground',
+  ok: 'text-online',
+  accent: 'text-accent',
+  error: 'text-red-400',
+};
 
 const lastWeeks = (days: ContributionDay[]) => {
   // Mantém só as semanas mais recentes, em colunas de 7 dias.
@@ -50,6 +72,13 @@ const HeroTerminal = () => {
   const [typed, setTyped] = useState(0);
   const [linesShown, setLinesShown] = useState(0);
   const [pushStep, setPushStep] = useState(-1);
+  const [formOpen, setFormOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [message, setMessage] = useState('');
+  const [website, setWebsite] = useState('');
+  const [sent, setSent] = useState<{ name: string; message: string } | null>(null);
+  const [result, setResult] = useState<PushResult | null>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
   const pushButtonRef = useRef<HTMLButtonElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
 
@@ -91,14 +120,16 @@ const HeroTerminal = () => {
     return () => window.clearTimeout(id);
   }, [commits.length, linesShown, reduced, typed]);
 
-  // 3) o "git push": uma linha por vez e confete no final
+  // 3) o "git push": uma linha por vez; o final espera a resposta do mural
+  const pushLines = result ? [...PUSH_LINES, ...resultLines(result)] : PUSH_LINES;
+  const totalLines = PUSH_LINES.length + 2;
   useEffect(() => {
-    if (pushStep < 0 || pushStep >= PUSH_LINES.length) return;
+    if (pushStep < 0 || pushStep >= pushLines.length - 1) return;
     const id = window.setTimeout(
       () => {
         const next = pushStep + 1;
         setPushStep(next);
-        if (next === PUSH_LINES.length - 1 && pushButtonRef.current) {
+        if (next === PUSH_LINES.length && result?.push && pushButtonRef.current) {
           const rect = pushButtonRef.current.getBoundingClientRect();
           burstConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2);
         }
@@ -106,16 +137,41 @@ const HeroTerminal = () => {
       reduced ? 0 : 380,
     );
     return () => window.clearTimeout(id);
-  }, [pushStep, reduced]);
+  }, [pushStep, pushLines.length, result, reduced]);
 
   // Mantém a última linha à vista quando o push adiciona texto.
   useEffect(() => {
     const body = bodyRef.current;
     if (body) body.scrollTop = body.scrollHeight;
-  }, [pushStep, linesShown]);
+  }, [pushStep, linesShown, formOpen]);
 
-  const isPushing = pushStep >= 0 && pushStep < PUSH_LINES.length - 1;
-  const pushDone = pushStep >= PUSH_LINES.length - 1;
+  const isPushing = pushStep >= 0 && pushStep < totalLines - 1;
+  const pushDone = pushStep >= totalLines - 1;
+
+  const openForm = () => {
+    setFormOpen(true);
+    setPushStep(-1);
+    setSent(null);
+    setResult(null);
+    window.setTimeout(() => nameRef.current?.focus({ preventScroll: true }), 0);
+  };
+
+  const submitPush = (event: React.FormEvent) => {
+    event.preventDefault();
+    const entry = { name: name.trim(), message: message.trim() };
+    if (!entry.name || !entry.message) return;
+    setFormOpen(false);
+    setSent(entry);
+    setResult(null);
+    setPushStep(0);
+    setMessage('');
+    sendPush({ ...entry, website })
+      .then((push) => setResult({ push }))
+      .catch((error: Error) => setResult({ error: error.message }));
+  };
+
+  const inputClass =
+    'min-w-0 flex-1 rounded-md border border-white/10 bg-white/[0.03] px-2 py-1 text-base text-foreground sm:text-[13px] placeholder:text-muted-foreground/50 outline-none transition-colors focus:border-accent/60';
   const ready = typed >= COMMAND.length && (linesShown >= commits.length || failed);
   const weeks = data?.contributions ? lastWeeks(data.contributions.days) : [];
   const lastCommit = data?.commits[0];
@@ -200,29 +256,83 @@ const HeroTerminal = () => {
               ))}
             </ul>
 
-            {pushStep >= 0 && (
+            {formOpen && (
+              <form id="push-form" onSubmit={submitPush} className="mt-3 space-y-2">
+                <p className="text-foreground">
+                  <span className="text-accent">❯</span> git commit -m{' '}
+                  <span className="text-muted-foreground">"deixe seu recado no mural"</span>
+                </p>
+                <label className="flex items-center gap-2">
+                  <span className="w-[4.5rem] shrink-0 text-muted-foreground">nome</span>
+                  <input
+                    ref={nameRef}
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    maxLength={NAME_MAX}
+                    required
+                    autoComplete="given-name"
+                    placeholder="seu nome"
+                    className={inputClass}
+                  />
+                </label>
+                <label className="flex items-center gap-2">
+                  <span className="w-[4.5rem] shrink-0 text-muted-foreground">mensagem</span>
+                  <input
+                    value={message}
+                    onChange={(event) => setMessage(event.target.value)}
+                    maxLength={MESSAGE_MAX}
+                    required
+                    placeholder="curti o site!"
+                    className={inputClass}
+                  />
+                </label>
+                {/* Armadilha para robôs: invisível para pessoas. */}
+                <input
+                  value={website}
+                  onChange={(event) => setWebsite(event.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                  className="hidden"
+                />
+                <p className="flex items-center gap-3 text-[11px] text-muted-foreground/70">
+                  <span>enter para enviar · fica público no mural</span>
+                  <button
+                    type="button"
+                    onClick={() => setFormOpen(false)}
+                    className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                  >
+                    cancelar
+                  </button>
+                </p>
+              </form>
+            )}
+
+            {pushStep >= 0 && sent && (
               <div className="mt-3">
+                <p className="break-words text-foreground">
+                  <span className="text-accent">❯</span> git commit -m "{sent.message}"
+                </p>
                 <p className="text-foreground">
                   <span className="text-accent">❯</span> git push origin main
                 </p>
-                {PUSH_LINES.slice(0, pushStep + 1).map((line) => (
+                {pushLines.slice(0, pushStep + 1).map((line, index) => (
                   <p
-                    key={line.text}
-                    className={`animate-in fade-in duration-300 ${
-                      line.tone === 'ok'
-                        ? 'text-online'
-                        : line.tone === 'accent'
-                          ? 'text-accent'
-                          : 'text-muted-foreground'
-                    }`}
+                    key={index}
+                    className={`animate-in fade-in break-words duration-300 ${TONE_CLASS[line.tone]}`}
                   >
                     {line.text}
                   </p>
                 ))}
+                {pushDone && result?.push && (
+                  <a href="#mural" className="text-accent underline-offset-2 hover:underline">
+                    ver o mural ↓
+                  </a>
+                )}
               </div>
             )}
 
-            {ready && !isPushing && (
+            {ready && !isPushing && !formOpen && (
               <p className="mt-3 text-foreground">
                 <span className="text-accent">❯</span> <span className="animate-pulse text-accent">▌</span>
               </p>
@@ -256,17 +366,20 @@ const HeroTerminal = () => {
 
             <button
               ref={pushButtonRef}
-              type="button"
+              type={formOpen ? 'submit' : 'button'}
+              form={formOpen ? 'push-form' : undefined}
               disabled={isPushing}
-              onClick={() => setPushStep(0)}
+              onClick={formOpen ? undefined : openForm}
               className="group inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-accent/30 bg-accent/10 px-3 py-1.5 font-mono text-xs text-accent transition-colors hover:bg-accent/20 disabled:opacity-50"
             >
-              {pushDone ? (
+              {formOpen ? (
+                <CornerDownLeft className="h-3 w-3" aria-hidden="true" />
+              ) : pushDone ? (
                 <RotateCcw className="h-3 w-3" aria-hidden="true" />
               ) : (
                 <Play className="h-3 w-3 fill-current" aria-hidden="true" />
               )}
-              {isPushing ? 'enviando…' : pushDone ? 'de novo' : 'git push'}
+              {formOpen ? 'enviar push' : isPushing ? 'enviando…' : pushDone ? 'outro push' : 'git push'}
             </button>
           </div>
         </div>

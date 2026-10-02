@@ -5,6 +5,7 @@ import SpotlightCard from './effects/SpotlightCard';
 import CountUp from './effects/CountUp';
 import AnimatedList from './effects/AnimatedList';
 import TiltedCard from './effects/TiltedCard';
+import VisitorWall from './VisitorWall';
 import {
   GITHUB_URL,
   GITHUB_USER,
@@ -307,6 +308,8 @@ const GitHubSection = () => {
             </div>
           </div>
         )}
+
+        <VisitorWall />
       </div>
     </section>
   );
