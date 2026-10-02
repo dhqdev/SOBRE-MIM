@@ -24,8 +24,12 @@ const RotatingText = ({ words, interval = 2400, className = '' }: RotatingTextPr
   }, [interval, prefersReducedMotion, words.length]);
 
   return (
-    <span className={`relative -mb-[0.15em] inline-grid overflow-hidden pb-[0.15em] align-bottom ${className}`}>
-      {/* Leitores de tela ouvem só a primeira palavra, sem anúncios a cada troca. */}
+    <span className={`relative -mb-[0.15em] inline-grid max-w-full overflow-hidden pb-[0.15em] align-bottom ${className}`}>
+      {/* Leitores de tela ouvem só a primeira palavra, sem anúncios a cada troca.
+          As frases podem quebrar linha: no celular "Automação & Integração"
+          não cabe numa linha só. A célula do grid fica com a altura da frase
+          mais alta, e cada frase estica até ela, então o translateY(100%)
+          sempre tira a frase de vista. */}
       <span className="sr-only">{words[0]}</span>
       {words.map((word, i) => {
         const offset = (i - index + words.length) % words.length;
@@ -34,7 +38,7 @@ const RotatingText = ({ words, interval = 2400, className = '' }: RotatingTextPr
           <span
             key={word}
             aria-hidden="true"
-            className="col-start-1 row-start-1 whitespace-nowrap transition-[transform,opacity,filter] duration-700 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]"
+            className="col-start-1 row-start-1 [text-wrap:balance] transition-[transform,opacity,filter] duration-700 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]"
             style={{
               transform:
                 state === 'current' ? 'translateY(0)' : state === 'previous' ? 'translateY(-100%)' : 'translateY(100%)',
