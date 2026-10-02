@@ -27,7 +27,7 @@ const projects: Project[] = [
     icon: CandlestickChart,
     link: 'https://github.com/dhqdev/meta-bot',
     tags: ['Python', 'FastAPI', 'React', 'Agentes de IA', 'MetaTrader 5'],
-    image: '/media/meta-bot.webp',
+    image: '/media/projects/meta-bot.webp',
     badge: 'Novo',
   },
   {
@@ -38,7 +38,7 @@ const projects: Project[] = [
     link: 'https://chat.tekvosoft.com/',
     repo: 'https://github.com/tekvosoft-chat/tekvosoft',
     tags: ['Node.js', 'TypeScript', 'React', 'WhatsApp', 'Socket.IO'],
-    image: '/media/tekvosoft-chat.webp',
+    image: '/media/projects/tekvosoft-chat.webp',
     badge: 'Em produção',
   },
   {
@@ -58,7 +58,7 @@ const projects: Project[] = [
     icon: Wallet,
     link: 'https://planejai.tekvosoft.com/',
     tags: ['SaaS', 'Gestão Financeira', 'Web App'],
-    image: '/media/logoporconew.webp',
+    image: '/media/projects/planejai.webp',
   },
   {
     title: 'Encontro com Deus',
@@ -67,7 +67,7 @@ const projects: Project[] = [
     icon: Calendar,
     link: 'https://encontro-com-deus.vercel.app/',
     tags: ['React', 'TypeScript', 'IA'],
-    image: '/media/encontro-com-deus.webp',
+    image: '/media/projects/encontro-com-deus.webp',
   },
   {
     title: 'BCI-ON1 - Automação Servopa',
@@ -76,7 +76,7 @@ const projects: Project[] = [
     icon: Bot,
     link: 'https://github.com/dhqdev/bci-on1?tab=readme-ov-file',
     tags: ['Automação', 'Python', 'Selenium'],
-    image: '/media/bci-on1-dashboard.webp',
+    image: '/media/projects/bci-on1.webp',
   },
 ];
 
@@ -141,12 +141,10 @@ const ProjectCard = ({ project, featured }: { project: Project; featured: boolea
     >
       <article className={`flex h-full flex-col ${featured ? 'lg:flex-row' : ''}`}>
         {/* Mídia emoldurada */}
-        <div className={`p-3 pb-0 ${featured ? 'lg:w-[55%] lg:shrink-0 lg:pb-3' : ''}`}>
+        <div className={`p-3 pb-0 ${featured ? 'lg:w-[55%] lg:shrink-0 lg:self-center lg:pb-3' : ''}`}>
           <TiltedCard
             maxTilt={5}
-            className={`overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.02] ${
-              featured ? 'aspect-[16/10] lg:aspect-auto lg:h-full lg:min-h-[340px]' : 'aspect-[16/10]'
-            }`}
+            className="aspect-[16/10] overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.02]"
           >
             {project.badge && (
               <span className="absolute z-10 top-3 left-3 inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-background/70 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-md">
@@ -160,6 +158,8 @@ const ProjectCard = ({ project, featured }: { project: Project; featured: boolea
               <img
                 src={project.image}
                 alt={`Captura de tela do projeto ${name}`}
+                width={1600}
+                height={1000}
                 className={mediaClass}
                 loading="lazy"
                 decoding="async"
