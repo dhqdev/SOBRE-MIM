@@ -85,8 +85,8 @@ const StyledWrapper = styled.div`
   }
   
   .layer {
-    width: 85px;
-    height: 85px;
+    width: 60px;
+    height: 60px;
     transition: transform 0.3s;
   }
   
@@ -101,18 +101,18 @@ const StyledWrapper = styled.div`
     height: 100%;
     width: 100%;
     border: 1px solid #fff;
-    border-radius: 5px;
+    border-radius: 16px;
     transition: all 0.3s;
   }
 
   .layer span,
   .text {
-    color: #0077b5;
-    border-color: #0077b5;
+    color: #3a9ee4;
+    border-color: #3a9ee4;
   }
 
   .icon:hover .layer span {
-    box-shadow: -1px 1px 3px #0077b5;
+    box-shadow: -1px 1px 3px #3a9ee4;
   }
   
   .icon .text {
@@ -155,11 +155,12 @@ const StyledWrapper = styled.div`
   }
 
   .layer span.fab {
-    font-size: 45px;
-    line-height: 85px;
+    font-size: 28px;
+    line-height: 60px;
     text-align: center;
-    fill: #0077b5;
-    background: #000;
+    fill: #3a9ee4;
+    background: rgba(10, 18, 26, 0.7);
+    backdrop-filter: blur(6px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -175,19 +176,19 @@ const StyledWrapper = styled.div`
     height: 50px;
     font-size: 20px;
     font-weight: 700;
-    border: 1px solid #0077b5;
+    border: 1px solid #3a9ee4;
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: #fff;
-    color: #0077b5;
+    color: #3a9ee4;
   }
   
   .name {
     font-size: 15px;
     font-weight: 700;
-    color: #0077b5;
+    color: #3a9ee4;
   }
   
   .details {
