@@ -12,14 +12,14 @@ const NotFound = () => {
   return (
     <main className="min-h-screen flex items-center justify-center bg-background px-6">
       <div className="text-center max-w-lg">
-        <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 rounded-full border border-primary/30 bg-primary/5 font-mono text-sm text-muted-foreground">
-          <Terminal className="w-4 h-4 text-primary" aria-hidden="true" />
+        <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 rounded-full border border-white/10 bg-white/[0.03] font-mono text-sm text-muted-foreground">
+          <Terminal className="w-4 h-4 text-accent" aria-hidden="true" />
           <span>
             cd {location.pathname} → <span className="text-destructive">no such file or directory</span>
           </span>
         </div>
 
-        <h1 className="text-7xl md:text-8xl font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+        <h1 className="text-7xl md:text-8xl font-semibold tracking-tight mb-4 text-foreground">
           404
         </h1>
 
@@ -31,7 +31,7 @@ const NotFound = () => {
 
         <Link
           to="/"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground font-semibold transition-transform duration-300 hover:-translate-y-0.5"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-medium transition-transform duration-300 hover:-translate-y-0.5"
         >
           <Home className="w-4 h-4" aria-hidden="true" />
           Voltar para o início

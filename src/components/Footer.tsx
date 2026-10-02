@@ -1,5 +1,7 @@
-import { Github, Linkedin, Mail } from 'lucide-react';
+import { ArrowUpRight, Github, Linkedin, Mail } from 'lucide-react';
 import WhatsAppIcon from './WhatsAppIcon';
+import BlurText from './effects/BlurText';
+import Magnet from './effects/Magnet';
 import { WHATSAPP_URL } from '@/lib/contact';
 
 const socialLinks = [
@@ -9,60 +11,62 @@ const socialLinks = [
   { icon: Mail, url: 'mailto:david@tekvosoft.dev', label: 'Email' },
 ];
 
-const navLinks = [
-  { href: '#projetos', label: 'Projetos' },
-  { href: '#sobre', label: 'Sobre' },
-  { href: '#tecnologias', label: 'Habilidades' },
-];
-
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="py-12 border-t border-border relative z-10">
-      <div className="container mx-auto px-6">
-        <div className="max-w-6xl mx-auto space-y-8 text-center">
-          <nav aria-label="Navegação do rodapé">
-            <ul className="flex flex-wrap justify-center gap-x-8 gap-y-3 list-none p-0">
-              {navLinks.map((link) => (
-                <li key={link.href}>
-                  <a
-                    href={link.href}
-                    className="text-muted-foreground hover:text-primary transition-colors duration-300"
-                  >
-                    {link.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
+    <footer id="contato" className="relative z-10">
+      {/* Chamada final */}
+      <div className="mx-auto max-w-5xl px-6 py-20 md:py-28">
+        <p className="scroll-reveal flex items-center gap-3 font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+          <span className="text-accent">04</span>
+          <span className="h-px w-8 bg-border" aria-hidden="true" />
+          Contato
+        </p>
+        <h2 className="mt-5 text-4xl font-semibold leading-[1.05] tracking-[-0.04em] sm:text-6xl md:text-7xl">
+          <BlurText text="Vamos construir" className="block text-foreground" />
+          <BlurText text="algo juntos?" className="block text-muted-foreground/60" delay={200} />
+        </h2>
+        <p className="scroll-reveal mt-6 max-w-md text-lg text-muted-foreground">
+          Disponível para projetos freelance e oportunidades full-time.
+        </p>
+        <div className="scroll-reveal mt-10">
+          <Magnet>
+            <a
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-12 items-center gap-2.5 rounded-xl bg-foreground px-6 text-[15px] font-medium text-background transition-opacity hover:opacity-90"
+            >
+              <WhatsAppIcon className="h-4 w-4" />
+              Falar comigo no WhatsApp
+            </a>
+          </Magnet>
+        </div>
+      </div>
 
-          <div className="flex justify-center gap-4">
+      <div className="border-t border-border">
+        <div className="mx-auto flex max-w-5xl flex-col-reverse gap-6 px-6 py-8 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            © {currentYear} David Fernandes. Feito com React, TypeScript e bastante café.
+          </p>
+
+          <ul className="flex flex-wrap gap-1 list-none p-0">
             {socialLinks.map((social) => (
-              <a
-                key={social.label}
-                href={social.url}
-                target={social.url.startsWith('mailto:') ? undefined : '_blank'}
-                rel="noopener noreferrer"
-                className="group p-3 rounded-lg bg-card border border-border hover:border-primary transition-colors duration-300"
-                aria-label={social.label}
-              >
-                <social.icon
-                  className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors"
-                  aria-hidden="true"
-                />
-              </a>
+              <li key={social.label}>
+                <a
+                  href={social.url}
+                  target={social.url.startsWith('mailto:') ? undefined : '_blank'}
+                  rel="noopener noreferrer"
+                  className="group inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground"
+                >
+                  <social.icon className="h-4 w-4" aria-hidden="true" />
+                  {social.label}
+                  <ArrowUpRight className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" aria-hidden="true" />
+                </a>
+              </li>
             ))}
-          </div>
-
-          <div className="pt-8 border-t border-border space-y-2">
-            <p className="text-sm text-muted-foreground">
-              © {currentYear} David Fernandes. Feito com React, TypeScript e bastante café.
-            </p>
-            <p className="text-xs text-muted-foreground/60 font-mono">
-              Disponível para projetos freelance e oportunidades full-time.
-            </p>
-          </div>
+          </ul>
         </div>
       </div>
     </footer>

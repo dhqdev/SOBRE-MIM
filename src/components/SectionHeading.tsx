@@ -1,35 +1,36 @@
+import BlurText from './effects/BlurText';
+
 interface SectionHeadingProps {
-  /** Etiqueta em mono acima do título, ex.: "projetos" vira `<projetos />`. */
+  /** Número da seção, ex.: "01". */
+  index: string;
+  /** Etiqueta pequena acima do título, ex.: "Projetos". */
   eyebrow: string;
   /** Parte do título em branco. */
   title: string;
-  /** Parte do título no gradiente ciano→violeta. */
+  /** Parte do título em cinza, completando a frase. */
   highlight: string;
   subtitle?: string;
 }
 
 /**
- * Cabeçalho padrão das seções. Antes cada seção inventava o seu — uma com
- * badge e gradiente, outra com texto ciano puro, com tamanhos e espessuras de
- * régua diferentes. Centralizar aqui mantém o ritmo da página.
+ * Cabeçalho padrão das seções: numeração discreta, título em duas tonalidades
+ * (branco + cinza) e um subtítulo curto. Alinhado à esquerda, como o hero.
  */
-const SectionHeading = ({ eyebrow, title, highlight, subtitle }: SectionHeadingProps) => (
-  <div className="text-center mb-16 scroll-reveal">
-    <span className="inline-block font-mono text-sm text-primary px-4 py-1.5 rounded-full border border-primary/25 bg-primary/5">
-      &lt;{eyebrow} /&gt;
-    </span>
+const SectionHeading = ({ index, eyebrow, title, highlight, subtitle }: SectionHeadingProps) => (
+  <div className="mb-14 md:mb-20">
+    <p className="scroll-reveal flex items-center gap-3 font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+      <span className="text-accent">{index}</span>
+      <span className="h-px w-8 bg-border" aria-hidden="true" />
+      {eyebrow}
+    </p>
 
-    <h2 className="mt-5 text-4xl md:text-5xl font-bold tracking-tight">
-      {title}{' '}
-      <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-        {highlight}
-      </span>
+    <h2 className="mt-5 text-4xl md:text-5xl font-semibold tracking-[-0.03em] leading-[1.1]">
+      <BlurText text={title} className="text-foreground" />{' '}
+      <BlurText text={highlight} className="text-muted-foreground/60" delay={150} />
     </h2>
 
-    <div className="mt-5 mx-auto h-px w-24 bg-gradient-to-r from-transparent via-primary to-transparent" />
-
     {subtitle && (
-      <p className="mt-5 text-lg text-muted-foreground max-w-2xl mx-auto">{subtitle}</p>
+      <p className="scroll-reveal mt-5 max-w-xl text-lg text-muted-foreground">{subtitle}</p>
     )}
   </div>
 );

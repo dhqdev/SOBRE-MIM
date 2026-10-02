@@ -1,291 +1,96 @@
-import styled from 'styled-components';
-import { Code2, Database, Zap, Globe, Bot, BarChart3 } from 'lucide-react';
+import { Code2, Database, Zap, BarChart3 } from 'lucide-react';
 import SectionHeading from './SectionHeading';
+import SpotlightCard from './effects/SpotlightCard';
 
-const AboutSection = () => {
-  const skills = [
-    { icon: Code2, title: "Frontend", items: ["Vue.js", "React", "TypeScript"] },
-    { icon: Database, title: "Backend", items: ["Python", "Frappe", "Node.js"] },
-    { icon: Zap, title: "Automação", items: ["n8n", "Docker", "APIs"] },
-    { icon: BarChart3, title: "Analytics", items: ["Dashboards", "ERP", "BI"] },
-  ];
+const skills = [
+  { icon: Code2, title: 'Frontend', items: ['Vue.js', 'React', 'TypeScript'] },
+  { icon: Database, title: 'Backend', items: ['Python', 'Frappe', 'Node.js'] },
+  { icon: Zap, title: 'Automação', items: ['n8n', 'Docker', 'APIs'] },
+  { icon: BarChart3, title: 'Analytics', items: ['Dashboards', 'ERP', 'BI'] },
+];
 
-  return (
-    <section id="sobre" className="py-24 scroll-mt-16 relative overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute top-0 left-1/4 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-accent/5 rounded-full blur-3xl" />
-      
-      <div className="container mx-auto px-6 relative z-10">
-        <div className="max-w-6xl mx-auto">
-          
-          <SectionHeading
-            eyebrow="sobre-mim"
-            title="Conheça minha"
-            highlight="jornada"
-            subtitle="De onde eu venho, no que trabalho hoje e para onde estou indo."
-          />
+const focus = ['Frappe Framework & ERPNext', 'Automação de processos', 'Dashboards & Analytics'];
 
-          {/* Main Content Grid */}
-          <div className="grid lg:grid-cols-5 gap-12 items-start">
-            
-            {/* Left: Story Card */}
-            <div className="lg:col-span-3 scroll-reveal">
-              <StyledWrapper>
-                <div className="notification cursor-target">
-                  <div className="notiglow" />
-                  <div className="notiborderglow" />
-                  
-                  <div className="notititle">
-                    <span className="text-primary">{'>'}</span> Minha História
-                  </div>
-                  
-                  <div className="notibody">
-                    <p className="mb-5 text-lg leading-relaxed">
-                      Sou desenvolvedor full-stack apaixonado por transformar desafios complexos em soluções elegantes. 
-                      Com <strong>mais de 2 anos</strong> de experiência, construí uma base sólida trabalhando com 
-                      tecnologias modernas e frameworks empresariais.
-                    </p>
+const AboutSection = () => (
+  <section id="sobre" className="relative scroll-mt-20 py-20 md:py-28">
+    <div className="mx-auto max-w-5xl px-6">
+      <SectionHeading
+        index="02"
+        eyebrow="Sobre mim"
+        title="Conheça minha"
+        highlight="jornada."
+        subtitle="De onde eu venho, no que trabalho hoje e para onde estou indo."
+      />
 
-                    <p className="mb-5 leading-relaxed">
-                      Atualmente na <strong>GRV Software</strong>, atuo no desenvolvimento com o 
-                      <strong> Frappe Framework</strong>, criando integrações robustas e sistemas personalizados. 
-                      Minha experiência inclui conhecimento profundo em <strong>ERP Protheus</strong> da TOTVS, 
-                      permitindo conectar diferentes mundos de tecnologia.
-                    </p>
+      <div className="grid gap-12 lg:grid-cols-[1.4fr_1fr] lg:gap-16">
+        {/* História */}
+        <div className="scroll-reveal space-y-6 text-lg leading-relaxed text-muted-foreground">
+          <p>
+            Sou desenvolvedor full-stack apaixonado por transformar desafios complexos em soluções
+            elegantes. Com <span className="text-foreground">mais de 2 anos</span> de experiência,
+            construí uma base sólida trabalhando com tecnologias modernas e frameworks empresariais.
+          </p>
+          <p>
+            Atualmente na <span className="text-foreground">GRV Software</span>, atuo no
+            desenvolvimento com o <span className="text-foreground">Frappe Framework</span>, criando
+            integrações robustas e sistemas personalizados. Minha experiência inclui conhecimento
+            profundo em <span className="text-foreground">ERP Protheus</span> da TOTVS, permitindo
+            conectar diferentes mundos de tecnologia.
+          </p>
+          <p>
+            Além do código, domino automação com{' '}
+            <span className="text-foreground">Docker e n8n</span>, construção de dashboards
+            analíticos e integração de APIs. Cada projeto é uma oportunidade de aprender algo novo e
+            entregar valor real.
+          </p>
 
-                    <p className="leading-relaxed">
-                      Além do código, domino automação com <strong>Docker e n8n</strong>, 
-                      construção de dashboards analíticos e integração de APIs. 
-                      Cada projeto é uma oportunidade de aprender algo novo e entregar valor real.
-                    </p>
+          <figure className="!mt-12 border-l border-accent/60 pl-6">
+            <blockquote className="text-xl leading-snug text-foreground md:text-2xl">
+              “As pessoas loucas o suficiente para pensar que podem mudar o mundo são as que o
+              fazem.”
+            </blockquote>
+            <figcaption className="mt-3 text-sm text-muted-foreground">Steve Jobs</figcaption>
+          </figure>
+        </div>
 
-                    <div className="quote-section">
-                      <p className="quote-text">
-                        "As pessoas loucas o suficiente para pensar que podem mudar o mundo são as que o fazem."
-                      </p>
-                      <span className="quote-author">— Steve Jobs</span>
-                    </div>
-                  </div>
-                </div>
-              </StyledWrapper>
-            </div>
-
-            {/* Right: Skills Grid */}
-            <div className="lg:col-span-2 space-y-4 scroll-reveal">
-              <h3 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
-                <Zap className="w-6 h-6 text-primary" />
-                Especialidades
-              </h3>
-              
-              <div className="grid grid-cols-2 gap-4">
-                {skills.map((skill, index) => (
-                  <div 
-                    key={index}
-                    className="group p-5 rounded-xl bg-card/50 border border-border/50 hover:border-primary/50 transition-all duration-300 cursor-target hover:shadow-lg hover:shadow-primary/5"
-                  >
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                        <skill.icon className="w-5 h-5" />
-                      </div>
-                      <span className="font-semibold text-foreground text-base">{skill.title}</span>
-                    </div>
-                    <ul className="space-y-1.5">
-                      {skill.items.map((item, idx) => (
-                        <li key={idx} className="text-sm text-muted-foreground flex items-center gap-1.5">
-                          <span className="w-1 h-1 rounded-full bg-primary/50" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-
-              {/* Quick Facts */}
-              <div className="mt-8 p-6 rounded-xl bg-gradient-to-br from-primary/10 to-accent/5 border border-primary/20">
-                <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2 text-lg">
-                  <Bot className="w-5 h-5 text-primary" />
-                  Foco Atual
-                </h4>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Globe className="w-5 h-5 text-muted-foreground" />
-                    <span className="text-base text-muted-foreground">Frappe Framework & ERPNext</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Zap className="w-5 h-5 text-muted-foreground" />
-                    <span className="text-base text-muted-foreground">Automação de processos</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <BarChart3 className="w-5 h-5 text-muted-foreground" />
-                    <span className="text-base text-muted-foreground">Dashboards & Analytics</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+        {/* Especialidades + foco */}
+        <div className="scroll-reveal space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            {skills.map((skill) => (
+              <SpotlightCard key={skill.title} className="p-5">
+                <skill.icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                <h3 className="mt-4 text-sm font-medium text-foreground">{skill.title}</h3>
+                <ul className="mt-2 space-y-1 list-none p-0">
+                  {skill.items.map((item) => (
+                    <li key={item} className="text-sm text-muted-foreground">
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </SpotlightCard>
+            ))}
           </div>
+
+          <SpotlightCard className="p-5">
+            <h3 className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
+              </span>
+              Foco atual
+            </h3>
+            <ul className="mt-4 divide-y divide-border list-none p-0">
+              {focus.map((item) => (
+                <li key={item} className="py-2.5 text-sm text-muted-foreground first:pt-0 last:pb-0">
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </SpotlightCard>
         </div>
       </div>
-    </section>
-  );
-};
-
-const StyledWrapper = styled.div`
-  .notification {
-    display: flex;
-    flex-direction: column;
-    isolation: isolate;
-    position: relative;
-    width: 100%;
-    min-height: auto;
-    background: hsl(var(--border));
-    border-radius: 1rem;
-    overflow: hidden;
-    /* Herda a Inter do resto do site em vez de forçar uma fonte própria. */
-    font-family: inherit;
-    font-size: 16px;
-    /* Usa os tokens do design system (ciano/violeta) no lugar do azul fixo. */
-    --gradient: linear-gradient(
-      to bottom,
-      hsl(var(--primary)),
-      hsl(var(--neon-green)),
-      hsl(var(--neon-violet))
-    );
-    --color: hsl(var(--primary));
-    transition: transform 300ms ease;
-  }
-
-  .notification:hover {
-    transform: translateY(-5px);
-  }
-
-  .notification:before {
-    position: absolute;
-    content: "";
-    inset: 0.0625rem;
-    border-radius: 0.9375rem;
-    background: hsl(var(--card));
-    z-index: 2;
-  }
-
-  .notification:after {
-    position: absolute;
-    content: "";
-    width: 0.25rem;
-    inset: 0.65rem auto 0.65rem 0.5rem;
-    border-radius: 0.125rem;
-    background: var(--gradient);
-    transition: transform 300ms ease;
-    z-index: 4;
-  }
-
-  .notification:hover:after {
-    transform: translateX(0.15rem);
-  }
-
-  .notititle {
-    color: var(--color);
-    padding: 1.5rem 1.25rem 1rem 1.5rem;
-    font-weight: 700;
-    font-size: 1.75rem;
-    transition: transform 300ms ease;
-    z-index: 5;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .notification:hover .notititle {
-    transform: translateX(0.15rem);
-  }
-
-  .notibody {
-    color: hsl(var(--muted-foreground));
-    padding: 0 1.5rem 1.5rem 1.5rem;
-    line-height: 1.8;
-    font-size: 1.05rem;
-    transition: transform 300ms ease;
-    z-index: 5;
-  }
-
-  .notibody p {
-    margin-bottom: 1rem;
-  }
-
-  .notibody strong {
-    color: var(--color);
-    font-weight: 600;
-  }
-
-  .notification:hover .notibody {
-    transform: translateX(0.25rem);
-  }
-
-  .quote-section {
-    margin-top: 1.5rem;
-    padding: 1.2rem;
-    border-left: 3px solid var(--color);
-    background: hsl(var(--primary) / 0.08);
-    border-radius: 0 0.5rem 0.5rem 0;
-  }
-
-  .quote-text {
-    color: hsl(var(--foreground) / 0.85);
-    font-style: italic;
-    font-size: 1.05rem;
-    line-height: 1.6;
-    margin-bottom: 0.5rem !important;
-  }
-
-  .quote-author {
-    color: var(--color);
-    font-weight: 600;
-    font-size: 0.95rem;
-  }
-
-  .notiglow,
-  .notiborderglow {
-    position: absolute;
-    width: 20rem;
-    height: 20rem;
-    transform: translate(-50%, -50%);
-    background: radial-gradient(circle closest-side at center, white, transparent);
-    opacity: 0;
-    transition: opacity 300ms ease;
-  }
-
-  .notiglow {
-    z-index: 3;
-  }
-
-  .notiborderglow {
-    z-index: 1;
-  }
-
-  .notification:hover .notiglow {
-    opacity: 0.1;
-  }
-
-  .notification:hover .notiborderglow {
-    opacity: 0.1;
-  }
-
-  @media (max-width: 768px) {
-    .notification {
-      max-width: 100%;
-    }
-
-    .notititle {
-      font-size: 1.25rem;
-      padding: 1.2rem 1rem 0.8rem 1.2rem;
-    }
-
-    .notibody {
-      font-size: 0.9rem;
-      padding: 0 1.2rem 1.2rem 1.2rem;
-    }
-  }
-`;
+    </div>
+  </section>
+);
 
 export default AboutSection;

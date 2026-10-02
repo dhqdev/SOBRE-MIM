@@ -1,34 +1,74 @@
-/* As fontes são carregadas no index.html com preconnect — um @import aqui
-   bloqueia a renderização até o CSS externo terminar de baixar. */
+/* As fontes (Geist) vêm do @fontsource, importadas no main.tsx. */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* David Fernandes Portfolio Design System - Futuristic Dark Theme with Neon Accents */
+/* Design system minimalista: fundo quase preto, tons de cinza neutros e um
+   único acento (verde-menta) usado com parcimônia — status, links e foco. */
 
 @layer base {
+  :root {
+    --background: 0 0% 4%;
+    --foreground: 0 0% 96%;
+
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 96%;
+
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 96%;
+
+    /* Primário é o próprio branco: botões sólidos claros sobre o fundo escuro. */
+    --primary: 0 0% 96%;
+    --primary-foreground: 0 0% 6%;
+
+    --secondary: 0 0% 11%;
+    --secondary-foreground: 0 0% 96%;
+
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 62%;
+
+    /* Acento único da página. */
+    --accent: 158 64% 62%;
+    --accent-foreground: 0 0% 6%;
+
+    --destructive: 0 84% 62%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 14%;
+    --input: 0 0% 14%;
+    --ring: 158 64% 62%;
+
+    --radius: 0.75rem;
+  }
+
   html {
     -webkit-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
     scroll-behavior: smooth;
-    /* Informa ao navegador que a UI nativa (scrollbar, campos de formulário)
-       deve seguir o tema escuro. */
     color-scheme: dark;
   }
 
+  * {
+    @apply border-border;
+  }
+
   body {
+    @apply bg-background text-foreground font-sans antialiased;
     -webkit-tap-highlight-color: transparent;
+    font-feature-settings: 'ss01', 'cv11';
   }
 
-  /* Foco sempre visível: o cursor customizado esconde o cursor padrão, então
-     quem navega por teclado precisa de um indicador confiável. */
+  ::selection {
+    background: hsl(var(--accent) / 0.3);
+    color: hsl(var(--foreground));
+  }
+
   :focus-visible {
-    outline: 2px solid hsl(var(--primary));
-    outline-offset: 2px;
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 3px;
+    border-radius: 6px;
   }
 
-  /* Respeita a preferência de sistema por menos movimento. */
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;
@@ -43,527 +83,66 @@
       scroll-behavior: auto !important;
     }
   }
-
-  :root {
-    /* Dark base colors */
-    --background: 220 20% 8%;
-    /* Branco levemente frio em vez de ciano-claro: títulos e corpo de texto
-       ganham contraste sem puxar a página inteira para o verde-água. */
-    --foreground: 210 30% 97%;
-
-    /* Card system */
-    --card: 220 20% 12%;
-    --card-foreground: 210 30% 97%;
-
-    --popover: 220 20% 15%;
-    --popover-foreground: 210 30% 97%;
-
-    /* Neon color palette */
-    --primary: 180 100% 50%; /* Neon cyan */
-    --primary-foreground: 220 20% 8%;
-    --primary-glow: 180 100% 70%; /* Lighter cyan for glow effects */
-    
-    --neon-violet: 270 100% 70%; /* Electric violet */
-    --neon-yellow: 45 100% 60%; /* Mustard yellow */
-    --neon-green: 160 100% 45%; /* Aqua green */
-
-    --secondary: 220 20% 15%;
-    --secondary-foreground: 210 30% 97%;
-
-    --muted: 220 15% 20%;
-    /* Cinza frio neutro: o antigo (180 50% 70%) era ciano saturado e deixava
-       parágrafos inteiros parecendo link. */
-    --muted-foreground: 215 16% 74%;
-
-    --accent: 270 100% 70%; /* Neon violet */
-    --accent-foreground: 220 20% 8%;
-
-    --destructive: 0 100% 65%;
-    --destructive-foreground: 220 20% 8%;
-
-    --border: 220 20% 20%;
-    --input: 220 20% 15%;
-    --ring: 180 100% 50%;
-    
-    /* Gradients */
-    --gradient-neon: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--neon-violet)));
-    --gradient-terminal: linear-gradient(45deg, hsl(var(--neon-green)), hsl(var(--primary)));
-    --gradient-dark: linear-gradient(180deg, hsl(var(--background)), hsl(var(--card)));
-    
-    /* Shadows and glows */
-    --shadow-neon: 0 0 20px hsl(var(--primary) / 0.5);
-    --shadow-violet: 0 0 20px hsl(var(--neon-violet) / 0.3);
-    --shadow-card: 0 10px 30px -10px hsl(var(--primary) / 0.2);
-    --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.3);
-    --shadow-glow: 0 0 40px hsl(var(--primary-glow) / 0.4);
-    
-    /* Animation timing */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-
-    --radius: 0.5rem;
-  }
-
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground font-inter;
-  }
 }
 
 @layer components {
-  /* Terminal/Console styles */
-  .terminal-text {
-    @apply font-mono text-primary;
-  }
-  
-  .terminal-prompt {
-    @apply text-neon-green font-mono;
-  }
-  
-  .terminal-output {
-    @apply text-neon-yellow font-mono;
-  }
-  
-  /* Neon glow effects */
-  .neon-glow {
-    @apply text-primary;
-    text-shadow: 0 0 10px hsl(var(--primary) / 0.8);
-  }
-  
-  .neon-glow-violet {
-    @apply text-accent;
-    text-shadow: 0 0 10px hsl(var(--neon-violet) / 0.8);
-  }
-  
-  .neon-border {
-    @apply border border-primary;
-    box-shadow: 0 0 10px hsl(var(--primary) / 0.3);
-  }
-  
-  /* Card styles */
-  .portfolio-card {
-    @apply bg-card/80 backdrop-blur-sm border border-border/50 rounded-lg p-6;
-    box-shadow: var(--shadow-card);
-    transition: var(--transition-smooth);
-  }
-  
-  .portfolio-card:hover {
-    @apply border-primary/50;
-    box-shadow: var(--shadow-neon);
-    transform: translateY(-4px);
-  }
-  
-  /* Button variants */
-  .btn-neon {
-    @apply bg-transparent border-2 border-primary text-primary px-6 py-3 rounded-lg font-medium;
-    transition: var(--transition-smooth);
-    box-shadow: 0 0 20px hsl(var(--primary) / 0.2);
-  }
-  
-  .btn-neon:hover {
-    @apply bg-primary text-primary-foreground;
-    box-shadow: var(--shadow-neon);
-  }
-  
-  .btn-violet {
-    @apply bg-transparent border-2 border-accent text-accent px-6 py-3 rounded-lg font-medium;
-    transition: var(--transition-smooth);
-  }
-  
-  .btn-violet:hover {
-    @apply bg-accent text-accent-foreground;
-    box-shadow: var(--shadow-violet);
-  }
-  
-  /* Typing animation */
-  .typing-animation {
-    border-right: 2px solid hsl(var(--primary));
-    animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
-  }
-  
-  /* Matrix rain background */
-  .matrix-rain {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(180deg, 
-      hsl(var(--primary) / 0.03) 0%, 
-      transparent 50%, 
-      hsl(var(--neon-violet) / 0.02) 100%);
-    pointer-events: none;
-    animation: matrix-flow 15s linear infinite;
-  }
-  
-  /* Glitch effect */
-  .glitch {
-    position: relative;
-    animation: glitch 2s infinite;
-  }
-  
-  .glitch::before,
-  .glitch::after {
-    content: attr(data-text);
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-  }
-  
-  .glitch::before {
-    animation: glitch-1 0.5s infinite linear alternate-reverse;
-    color: hsl(var(--neon-violet));
-    z-index: -1;
-  }
-  
-  .glitch::after {
-    animation: glitch-2 0.3s infinite linear alternate-reverse;
-    color: hsl(var(--neon-green));
-    z-index: -2;
-  }
-  
-  /* Cyber grid */
-  .cyber-grid {
-    background-image: 
-      linear-gradient(hsl(var(--primary) / 0.1) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--primary) / 0.1) 1px, transparent 1px);
-    background-size: 50px 50px;
-    animation: grid-move 20s linear infinite;
-  }
-  
-  /* Neon pulse border */
-  .neon-pulse-border {
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .neon-pulse-border::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: linear-gradient(45deg, 
-      hsl(var(--primary)), 
-      hsl(var(--neon-violet)), 
-      hsl(var(--neon-green)), 
-      hsl(var(--primary)));
-    border-radius: inherit;
-    z-index: -1;
-    animation: neon-border-rotate 3s linear infinite;
-  }
-  
-  /* Scroll reveal animations */
+  /* Revelação no scroll, no estilo "FadeContent" do React Bits:
+     sobe um pouco e sai do desfoque. */
   .scroll-reveal {
     opacity: 0;
-    transform: translateY(50px);
-    transition: all 0.6s ease-out;
+    transform: translateY(24px);
+    filter: blur(8px);
+    transition:
+      opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+      filter 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: var(--reveal-delay, 0ms);
   }
-  
+
   .scroll-reveal.revealed {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
+    filter: none;
   }
-  
-  /* Digital rain effect */
-  .digital-rain {
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .digital-rain::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: 
-      linear-gradient(90deg, transparent 98%, hsl(var(--primary) / 0.1) 100%),
-      linear-gradient(0deg, transparent 98%, hsl(var(--primary) / 0.1) 100%);
-    background-size: 20px 20px;
-    animation: digital-rain 20s linear infinite;
-    pointer-events: none;
-  }
-  
-  /* Hologram effect */
-  .hologram {
-    position: relative;
-  }
-  
-  .hologram::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+
+  /* Texto com brilho que atravessa (ShinyText). */
+  .shiny-text {
+    color: hsl(var(--muted-foreground));
     background: linear-gradient(
-      45deg,
-      transparent 30%, 
-      hsl(var(--primary) / 0.1) 50%, 
-      transparent 70%
-    );
-    animation: hologram-sweep 3s ease-in-out infinite;
-    pointer-events: none;
+        110deg,
+        transparent 40%,
+        hsl(0 0% 100% / 0.9) 50%,
+        transparent 60%
+      )
+      0 0 / 200% 100% no-repeat,
+      hsl(var(--muted-foreground));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 4s linear infinite;
   }
 
-  /* 3D Effects */
-  .card-3d {
-    transform-style: preserve-3d;
-    perspective: 1000px;
-    transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  /* Faixa infinita de logos (LogoLoop). */
+  .logo-loop {
+    mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
   }
 
-  .card-3d:hover {
-    transform: rotateY(5deg) rotateX(5deg) translateZ(20px);
+  .logo-loop-track {
+    animation: logo-loop var(--loop-duration, 40s) linear infinite;
   }
 
-  .floating-3d {
-    animation: float-3d 6s ease-in-out infinite;
-    transform-style: preserve-3d;
-  }
-
-  .project-image-3d {
-    transform-style: preserve-3d;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 
-      0 10px 30px -10px hsl(var(--primary) / 0.3),
-      0 0 50px -20px hsl(var(--accent) / 0.2);
-  }
-
-  .project-image-3d:hover {
-    transform: translateY(-10px) rotateX(5deg) scale(1.02);
-    box-shadow: 
-      0 25px 50px -10px hsl(var(--primary) / 0.4),
-      0 0 80px -20px hsl(var(--accent) / 0.3);
-  }
-
-  .profile-3d {
-    transform-style: preserve-3d;
-    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-
-  .profile-3d:hover {
-    transform: translateZ(30px) rotateY(5deg);
+  .logo-loop:hover .logo-loop-track {
+    animation-play-state: paused;
   }
 }
 
-@layer utilities {
-  /* Font families */
-  .font-mono {
-    font-family: 'JetBrains Mono', monospace;
-  }
-  
-  .font-inter {
-    font-family: 'Inter', sans-serif;
-  }
-  
-  /* Neon colors */
-  .text-neon-violet {
-    color: hsl(var(--neon-violet));
-  }
-  
-  .text-neon-yellow {
-    color: hsl(var(--neon-yellow));
-  }
-  
-  .text-neon-green {
-    color: hsl(var(--neon-green));
-  }
-  
-  .bg-neon-violet {
-    background-color: hsl(var(--neon-violet));
-  }
-  
-  .bg-neon-yellow {
-    background-color: hsl(var(--neon-yellow));
-  }
-  
-  .bg-neon-green {
-    background-color: hsl(var(--neon-green));
-  }
-  
-  .border-neon-violet {
-    border-color: hsl(var(--neon-violet));
-  }
-  
-  .border-neon-yellow {
-    border-color: hsl(var(--neon-yellow));
-  }
-  
-  .border-neon-green {
-    border-color: hsl(var(--neon-green));
-  }
-  
-  /* Shadow utilities */
-  .shadow-elegant {
-    box-shadow: var(--shadow-elegant);
-  }
-  
-  .shadow-glow {
-    box-shadow: var(--shadow-glow);
-  }
+@keyframes shine {
+  from { background-position: 150% 0, 0 0; }
+  to { background-position: -50% 0, 0 0; }
 }
 
-/* Keyframe animations */
-@keyframes typing {
-  from { width: 0 }
-  to { width: 100% }
-}
-
-@keyframes blink-caret {
-  from, to { border-color: transparent }
-  50% { border-color: hsl(var(--primary)) }
-}
-
-@keyframes digital-rain {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100%); }
-}
-
-@keyframes hologram-sweep {
-  0% { transform: translateX(-100%) skewX(-45deg); }
-  100% { transform: translateX(200%) skewX(-45deg); }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
-}
-
-@keyframes orbit-1 {
-  0%, 100% { 
-    transform: translate(0, 0) rotate(0deg) scale(1);
-  }
-  25% { 
-    transform: translate(-10px, -15px) rotate(-15deg) scale(1.1);
-  }
-  50% { 
-    transform: translate(5px, -25px) rotate(10deg) scale(1.05);
-  }
-  75% { 
-    transform: translate(-5px, -10px) rotate(-5deg) scale(1.15);
-  }
-}
-
-@keyframes orbit-2 {
-  0%, 100% { 
-    transform: translate(0, 0) rotate(0deg) scale(1);
-  }
-  25% { 
-    transform: translate(12px, -20px) rotate(20deg) scale(1.15);
-  }
-  50% { 
-    transform: translate(-8px, -30px) rotate(-10deg) scale(1.1);
-  }
-  75% { 
-    transform: translate(10px, -15px) rotate(15deg) scale(1.05);
-  }
-}
-
-@keyframes orbit-3 {
-  0%, 100% { 
-    transform: translate(0, 0) rotate(0deg) scale(1);
-  }
-  30% { 
-    transform: translate(-15px, -10px) rotate(-20deg) scale(1.2);
-  }
-  60% { 
-    transform: translate(10px, -25px) rotate(15deg) scale(1.1);
-  }
-  80% { 
-    transform: translate(-5px, -18px) rotate(-10deg) scale(1.05);
-  }
-}
-
-@keyframes orbit-4 {
-  0%, 100% { 
-    transform: translate(0, 0) rotate(0deg) scale(1);
-  }
-  20% { 
-    transform: translate(8px, -22px) rotate(25deg) scale(1.15);
-  }
-  50% { 
-    transform: translate(-12px, -28px) rotate(-15deg) scale(1.2);
-  }
-  70% { 
-    transform: translate(15px, -12px) rotate(10deg) scale(1.1);
-  }
-}
-@keyframes float-3d {
-  0%, 100% { transform: translateY(0px) rotateX(0deg); }
-  50% { transform: translateY(-20px) rotateX(2deg); }
-}
-
-@keyframes pulse-neon {
-  0%, 100% { 
-    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
-  }
-  50% { 
-    box-shadow: 0 0 40px hsl(var(--primary) / 0.8);
-  }
-}
-
-@keyframes matrix-flow {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100%); }
-}
-
-@keyframes glitch {
-  0% { transform: translate(0); }
-  20% { transform: translate(-2px, 2px); }
-  40% { transform: translate(-2px, -2px); }
-  60% { transform: translate(2px, 2px); }
-  80% { transform: translate(2px, -2px); }
-  100% { transform: translate(0); }
-}
-
-@keyframes glitch-1 {
-  0% { clip-path: inset(40% 0 61% 0); }
-  20% { clip-path: inset(92% 0 1% 0); }
-  40% { clip-path: inset(43% 0 1% 0); }
-  60% { clip-path: inset(25% 0 58% 0); }
-  80% { clip-path: inset(54% 0 7% 0); }
-  100% { clip-path: inset(58% 0 43% 0); }
-}
-
-@keyframes glitch-2 {
-  0% { clip-path: inset(25% 0 58% 0); }
-  20% { clip-path: inset(54% 0 7% 0); }
-  40% { clip-path: inset(58% 0 43% 0); }
-  60% { clip-path: inset(40% 0 61% 0); }
-  80% { clip-path: inset(92% 0 1% 0); }
-  100% { clip-path: inset(43% 0 1% 0); }
-}
-
-@keyframes gradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-.animate-gradient {
-  animation: gradient 4s ease infinite;
-}
-
-@keyframes grid-move {
-  0% { transform: translate(0, 0); }
-  100% { transform: translate(50px, 50px); }
-}
-
-@keyframes neon-border-rotate {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+@keyframes logo-loop {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }

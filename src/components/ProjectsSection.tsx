@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { ExternalLink, Calendar, Bot, Wallet, Gamepad2, MessagesSquare, CandlestickChart, Github } from 'lucide-react';
-import ScrollStack, { ScrollStackItem } from './ScrollStack';
+import { ArrowUpRight, Calendar, Bot, Wallet, Gamepad2, MessagesSquare, CandlestickChart, Github } from 'lucide-react';
 import SectionHeading from './SectionHeading';
+import SpotlightCard from './effects/SpotlightCard';
 
 interface Project {
   title: string;
@@ -122,151 +122,122 @@ const LazyVideo = ({ src, poster, className }: { src: string; poster?: string; c
   );
 };
 
-const ProjectCard = ({ project, variant }: { project: Project; variant: 'mobile' | 'desktop' }) => {
-  const isDesktop = variant === 'desktop';
-  const mediaClass = isDesktop
-    ? 'w-full h-80 object-cover object-top group-hover:scale-105 transition-transform duration-700'
-    : 'w-full h-48 object-cover object-top';
+/** "Meta-Bot - Escritório de trading com IA" vira nome + legenda. */
+const splitTitle = (title: string) => {
+  const [name, ...rest] = title.split(' - ');
+  return { name, caption: rest.join(' - ') };
+};
+
+const ProjectCard = ({ project, featured }: { project: Project; featured: boolean }) => {
+  const { name, caption } = splitTitle(project.title);
+  const mediaClass =
+    'h-full w-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-[1.03]';
 
   return (
-    <div
-      className={
-        isDesktop
-          ? 'cursor-target group rounded-3xl bg-card border-2 border-border overflow-hidden hover:border-primary transition-all duration-300 hover:shadow-2xl'
-          : 'group rounded-2xl bg-card border border-border overflow-hidden'
-      }
+    <SpotlightCard
+      className={`group scroll-reveal ${featured ? 'md:col-span-2' : ''}`}
+      spotlightColor="rgba(110, 231, 183, 0.07)"
     >
-      <div className="relative overflow-hidden">
-        {project.badge && (
-          <span
-            className={`absolute z-10 top-4 right-4 inline-flex items-center gap-1.5 rounded-full bg-background/80 backdrop-blur-md border border-primary/40 text-primary font-semibold ${
-              isDesktop ? 'px-3.5 py-1.5 text-sm' : 'px-2.5 py-1 text-xs'
-            }`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" aria-hidden="true" />
-            {project.badge}
-          </span>
-        )}
-        {project.video ? (
-          <LazyVideo src={project.video} poster={project.poster} className={mediaClass} />
-        ) : (
-          <img
-            src={project.image}
-            alt={`Captura de tela do projeto ${project.title}`}
-            className={mediaClass}
-            loading="lazy"
-            decoding="async"
-          />
-        )}
-        {/* Fade da imagem para o corpo do card */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card to-transparent" />
-      </div>
-
-      <div className={isDesktop ? 'p-10' : 'p-6'}>
-        <div className={`flex items-center mb-3 ${isDesktop ? 'gap-4 mb-4' : 'gap-3'}`}>
+      <article className={`flex h-full flex-col ${featured ? 'lg:flex-row' : ''}`}>
+        {/* Mídia emoldurada */}
+        <div className={`p-3 pb-0 ${featured ? 'lg:w-[55%] lg:shrink-0 lg:pb-3' : ''}`}>
           <div
-            className={`rounded-lg bg-primary/10 flex items-center justify-center shrink-0 ${
-              isDesktop ? 'w-14 h-14 rounded-xl' : 'w-10 h-10'
+            className={`relative overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.02] ${
+              featured ? 'aspect-[16/10] lg:aspect-auto lg:h-full lg:min-h-[340px]' : 'aspect-[16/10]'
             }`}
           >
-            <project.icon className={isDesktop ? 'w-7 h-7 text-primary' : 'w-5 h-5 text-primary'} />
+            {project.badge && (
+              <span className="absolute z-10 top-3 left-3 inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-background/70 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-md">
+                <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />
+                {project.badge}
+              </span>
+            )}
+            {project.video ? (
+              <LazyVideo src={project.video} poster={project.poster} className={mediaClass} />
+            ) : (
+              <img
+                src={project.image}
+                alt={`Captura de tela do projeto ${name}`}
+                className={mediaClass}
+                loading="lazy"
+                decoding="async"
+              />
+            )}
           </div>
-          <h3 className={isDesktop ? 'text-3xl font-bold' : 'text-lg font-semibold'}>{project.title}</h3>
         </div>
 
-        <p
-          className={
-            isDesktop
-              ? 'text-muted-foreground text-lg leading-relaxed mb-6'
-              : 'text-muted-foreground text-sm leading-relaxed mb-4'
-          }
-        >
-          {project.description}
-        </p>
+        <div className={`flex flex-1 flex-col p-6 ${featured ? 'md:p-8' : ''}`}>
+          <div className="flex items-center gap-2.5 text-muted-foreground">
+            <project.icon className="h-4 w-4" />
+            {caption && <span className="text-sm">{caption}</span>}
+          </div>
 
-        <ul className={`flex flex-wrap list-none p-0 ${isDesktop ? 'gap-3 mb-6' : 'gap-2 mb-4'}`}>
-          {project.tags.map((tag) => (
-            <li
-              key={tag}
-              className={
-                isDesktop
-                  ? 'px-4 py-2 text-sm rounded-full bg-primary/10 text-primary font-semibold'
-                  : 'px-2 py-1 text-xs rounded-full bg-primary/10 text-primary font-medium'
-              }
-            >
-              {tag}
-            </li>
-          ))}
-        </ul>
+          <h3 className={`mt-3 font-semibold tracking-tight text-foreground ${featured ? 'text-3xl' : 'text-2xl'}`}>
+            {name}
+          </h3>
 
-        <div className={`flex flex-wrap items-center ${isDesktop ? 'gap-6' : 'gap-4'}`}>
-          <a
-            href={project.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors duration-300 ${
-              isDesktop ? 'text-lg font-semibold' : 'text-sm font-medium'
-            }`}
-          >
-            Ver projeto
-            <span className="sr-only"> {project.title} (abre em nova aba)</span>
-            <ExternalLink className={isDesktop ? 'w-5 h-5' : 'w-4 h-4'} aria-hidden="true" />
-          </a>
+          <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">{project.description}</p>
 
-          {project.repo && (
+          <ul className="mt-5 flex flex-wrap gap-1.5 list-none p-0">
+            {project.tags.map((tag) => (
+              <li
+                key={tag}
+                className="rounded-md border border-white/[0.06] bg-white/[0.03] px-2 py-0.5 font-mono text-[11px] text-muted-foreground"
+              >
+                {tag}
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-auto flex flex-wrap items-center gap-5 pt-6">
             <a
-              href={project.repo}
+              href={project.link}
               target="_blank"
               rel="noopener noreferrer"
-              className={`inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors duration-300 ${
-                isDesktop ? 'text-lg font-semibold' : 'text-sm font-medium'
-              }`}
+              className="group/link inline-flex items-center gap-1 text-sm font-medium text-foreground"
             >
-              <Github className={isDesktop ? 'w-5 h-5' : 'w-4 h-4'} aria-hidden="true" />
-              Código
-              <span className="sr-only"> de {project.title} no GitHub (abre em nova aba)</span>
+              Ver projeto
+              <span className="sr-only"> {name} (abre em nova aba)</span>
+              <ArrowUpRight
+                className="h-4 w-4 transition-transform group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5"
+                aria-hidden="true"
+              />
             </a>
-          )}
+
+            {project.repo && (
+              <a
+                href={project.repo}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <Github className="h-4 w-4" aria-hidden="true" />
+                Código
+                <span className="sr-only"> de {name} no GitHub (abre em nova aba)</span>
+              </a>
+            )}
+          </div>
         </div>
-      </div>
-    </div>
+      </article>
+    </SpotlightCard>
   );
 };
 
 const ProjectsSection = () => (
-  <section id="projetos" className="py-24 scroll-mt-16 relative overflow-hidden">
-    <div className="container mx-auto px-6">
+  <section id="projetos" className="relative scroll-mt-20 py-20 md:py-28">
+    <div className="mx-auto max-w-5xl px-6">
       <SectionHeading
-        eyebrow="projetos"
+        index="01"
+        eyebrow="Projetos"
         title="O que eu"
-        highlight="construí"
+        highlight="construí."
         subtitle="Sistemas, automações e experimentos que saíram do papel."
       />
 
-      {/* Mobile: grid simples */}
-      <div className="md:hidden grid gap-6">
+      <div className="grid gap-4 md:grid-cols-2">
         {projects.map((project) => (
-          <ProjectCard key={project.title} project={project} variant="mobile" />
+          <ProjectCard key={project.title} project={project} featured={Boolean(project.badge)} />
         ))}
-      </div>
-
-      {/* Desktop: cards empilhados conforme o scroll */}
-      <div className="hidden md:block w-full max-w-7xl mx-auto">
-        <ScrollStack
-          itemDistance={120}
-          itemStackDistance={50}
-          stackPosition="20%"
-          baseScale={0.92}
-          rotationAmount={0}
-          blurAmount={0}
-          useWindowScroll={true}
-        >
-          {projects.map((project) => (
-            <ScrollStackItem key={project.title}>
-              <ProjectCard project={project} variant="desktop" />
-            </ScrollStackItem>
-          ))}
-        </ScrollStack>
       </div>
     </div>
   </section>

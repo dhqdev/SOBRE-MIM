@@ -4,22 +4,14 @@ import AboutSection from '@/components/AboutSection';
 import ProjectsSection from '@/components/ProjectsSection';
 import TechStackSection from '@/components/TechStackSection';
 import Footer from '@/components/Footer';
-import TargetCursor from '@/components/TargetCursor';
-import DownloadCV from '@/components/DownloadCV';
-import Iridescence from '@/components/Iridescence';
 import Navbar from '@/components/Navbar';
 import ExperiencesPanel from '@/components/ExperiencesPanel';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import DotGrid from '@/components/effects/DotGrid';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
-import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-
-// Fora do componente: um literal inline viraria um array novo a cada render e
-// forçaria o Iridescence a recriar o contexto WebGL.
-const IRIDESCENCE_COLOR: [number, number, number] = [0.3, 0.95, 0.95];
 
 const Index = () => {
   const [isExperiencesOpen, setIsExperiencesOpen] = useState(false);
-  const prefersReducedMotion = usePrefersReducedMotion();
 
   useScrollReveal();
 
@@ -27,43 +19,34 @@ const Index = () => {
   const closeExperiences = useCallback(() => setIsExperiencesOpen(false), []);
 
   return (
-    <div className="min-h-screen bg-background relative overflow-x-hidden">
+    <div className="relative min-h-screen overflow-x-hidden bg-background">
       <a
         href="#conteudo"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-primary focus:text-primary-foreground focus:font-semibold"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-foreground focus:text-background focus:font-medium"
       >
         Pular para o conteúdo
       </a>
 
-      {/* Enfeites: se algum quebrar, a página continua de pé sem eles. */}
-      <ErrorBoundary>
-        {!prefersReducedMotion && <TargetCursor spinDuration={2} hideDefaultCursor={true} />}
-      </ErrorBoundary>
+      {/* Fundo: grade de pontos que acende perto do cursor, sumindo nas
+          bordas. Se quebrar, a página continua de pé sem ela. */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0 [mask-image:radial-gradient(ellipse_at_top,black_10%,transparent_70%)]"
+        aria-hidden="true"
+      >
+        <ErrorBoundary>
+          <DotGrid />
+        </ErrorBoundary>
+      </div>
+      {/* Luz suave no topo */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[600px] bg-[radial-gradient(ellipse_60%_50%_at_50%_-10%,rgba(110,231,183,0.08),transparent)]"
+        aria-hidden="true"
+      />
 
       <Navbar onOpenExperiences={openExperiences} />
       <ExperiencesPanel isOpen={isExperiencesOpen} onClose={closeExperiences} />
-      <DownloadCV isHidden={isExperiencesOpen} />
 
-      {/* Fundo animado (WebGL). Sem GPU disponível ou com "reduzir movimento"
-          ativo, o gradiente estático do CSS assume sozinho. */}
-      <div className="fixed inset-0 w-screen h-screen" style={{ zIndex: 0 }}>
-        <ErrorBoundary>
-          <Iridescence
-            color={IRIDESCENCE_COLOR}
-            mouseReact={true}
-            amplitude={0.2}
-            speed={0.6}
-          />
-        </ErrorBoundary>
-      </div>
-
-      {/* Camada de contraste, para o texto continuar legível sobre o fundo */}
-      <div
-        className="fixed inset-0 bg-gradient-to-b from-background/85 via-background/70 to-background/85 md:from-background/80 md:via-background/60 md:to-background/80 pointer-events-none"
-        style={{ zIndex: 1 }}
-      />
-
-      <main id="conteudo" className="relative" style={{ zIndex: 2 }}>
+      <main id="conteudo" className="relative z-[2]">
         <div id="home">
           <TerminalHero />
         </div>
