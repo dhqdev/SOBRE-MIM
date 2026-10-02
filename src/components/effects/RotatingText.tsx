@@ -24,7 +24,7 @@ const RotatingText = ({ words, interval = 2400, className = '' }: RotatingTextPr
   }, [interval, prefersReducedMotion, words.length]);
 
   return (
-    <span className={`relative inline-grid overflow-hidden align-bottom ${className}`}>
+    <span className={`relative -mb-[0.15em] inline-grid overflow-hidden pb-[0.15em] align-bottom ${className}`}>
       {/* Leitores de tela ouvem só a primeira palavra, sem anúncios a cada troca. */}
       <span className="sr-only">{words[0]}</span>
       {words.map((word, i) => {
