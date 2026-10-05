@@ -256,3 +256,19 @@
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
+
+/* Mundo 3D (/ilha) */
+@keyframes world-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes world-blink {
+  0% { opacity: 1; }
+  100% { opacity: 0.35; }
+}
+
+@keyframes world-pop {
+  0% { scale: 0.9; opacity: 0; }
+  100% { scale: 1; opacity: 1; }
+}

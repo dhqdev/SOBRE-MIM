@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Command } from 'cmdk';
+import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
   ArrowUpRight,
@@ -13,6 +14,7 @@ import {
   Hash,
   Instagram,
   Linkedin,
+  Map as MapIcon,
   MessageSquareText,
   Search,
   Terminal,
@@ -55,6 +57,7 @@ type Item = {
  */
 const CommandPalette = ({ onOpenExperiences }: CommandPaletteProps) => {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
   const [query, setQuery] = useState('');
 
   useEffect(() => {
@@ -139,6 +142,14 @@ const CommandPalette = ({ onOpenExperiences }: CommandPaletteProps) => {
           keywords: ['git push', 'recado', 'mensagem'],
           icon: MessageSquareText,
           run: () => runInTerminal('git push'),
+        },
+        {
+          id: 'ilha',
+          label: 'Explorar a ilha 3D',
+          hint: 'retrô',
+          keywords: ['3d', 'mundo', 'ilha', 'jogo', 'explorar'],
+          icon: MapIcon,
+          run: () => navigate('/ilha'),
         },
         {
           id: 'flappy',

@@ -1,4 +1,5 @@
-import { ArrowDown, ArrowUpRight, Download, Github, Instagram, Linkedin } from 'lucide-react';
+import { ArrowDown, ArrowUpRight, Download, Github, Instagram, Linkedin, Map as MapIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import BlurText from './effects/BlurText';
 import RotatingText from './effects/RotatingText';
 import CountUp from './effects/CountUp';
@@ -124,6 +125,14 @@ const TerminalHero = () => {
                 <Download className="w-4 h-4" aria-hidden="true" />
                 Currículo
               </a>
+
+              <Link
+                to="/ilha"
+                className="inline-flex h-12 items-center gap-2 rounded-xl px-4 text-[15px] text-accent transition-opacity hover:opacity-80"
+              >
+                <MapIcon className="w-4 h-4" aria-hidden="true" />
+                Explorar em 3D
+              </Link>
             </div>
           </div>
 
