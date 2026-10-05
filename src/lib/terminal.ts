@@ -1,6 +1,7 @@
 import { projects } from './projects';
 import { buildWhatsAppUrl } from './contact';
 import { EMAIL, LINKS, SECTIONS } from './site';
+import { GREETINGS, periodOf } from './period';
 
 export type Tone = 'muted' | 'ok' | 'accent' | 'error' | 'text';
 
@@ -21,7 +22,8 @@ export type TerminalAction =
   | { type: 'open'; url: string }
   | { type: 'download' }
   | { type: 'confetti' }
-  | { type: 'palette' };
+  | { type: 'palette' }
+  | { type: 'game' };
 
 export interface CommandResult {
   lines: OutLine[];
@@ -29,7 +31,7 @@ export interface CommandResult {
 }
 
 /** Atalhos que aparecem como botões embaixo do terminal (bom no celular). */
-export const QUICK_COMMANDS = ['help', 'whoami', 'projetos', 'neofetch', 'contato', 'sudo contratar david'];
+export const QUICK_COMMANDS = ['help', 'whoami', 'projetos', 'jogar', 'neofetch', 'contato', 'sudo contratar david'];
 
 const HELP: [string, string][] = [
   ['whoami', 'quem é o david'],
@@ -42,6 +44,8 @@ const HELP: [string, string][] = [
   ['cv', 'baixa o currículo'],
   ['git push', 'deixa um recado no mural'],
   ['git log', 'meus últimos commits'],
+  ['jogar', 'flappy bird com ranking'],
+  ['hora', 'por que o site mudou de cor?'],
   ['menu', 'abre a paleta (Ctrl K)'],
   ['clear', 'limpa a tela'],
 ];
@@ -49,6 +53,8 @@ const HELP: [string, string][] = [
 /** Nomes usados no autocompletar com Tab. */
 export const COMMAND_NAMES = [
   'help',
+  'jogar',
+  'hora',
   'whoami',
   'neofetch',
   'projetos',
@@ -397,6 +403,11 @@ const commands: Record<string, (args: string[], raw: string, history: string[]) 
     ],
   }),
 
+  jogar: () => ({
+    lines: [{ text: 'carregando flappy-bird.ia… boa sorte 🐤', tone: 'ok' }],
+    action: { type: 'game' },
+  }),
+
   menu: () => ({
     lines: [{ text: 'abrindo a paleta de comandos…', tone: 'muted' }],
     action: { type: 'palette' },
@@ -414,6 +425,22 @@ const commands: Record<string, (args: string[], raw: string, history: string[]) 
   echo: (_args, raw) => ({
     lines: [{ text: raw.replace(/^echo\s*/i, ''), tone: 'text' }],
   }),
+
+  hora: () => {
+    const period = periodOf();
+    const looks: Record<string, string> = {
+      madrugada: 'roxo profundo, quase só brilho. vai dormir, hein? 😴',
+      manha: 'roxo claro, puxando pro azul, pra acordar junto.',
+      tarde: 'o lavanda de sempre.',
+      noite: 'roxo mais fundo e fundo mais escuro, pra descansar a vista.',
+    };
+    return {
+      lines: [
+        { text: `${GREETINGS[period].text} ${GREETINGS[period].emoji}`, tone: 'text' },
+        { text: `o site muda de cor com a sua hora. agora: ${looks[period]}`, tone: 'muted' },
+      ],
+    };
+  },
 
   date: () => ({
     lines: [
@@ -491,6 +518,10 @@ const ALIASES: Record<string, string> = {
   hello: 'oi',
   hi: 'oi',
   k: 'menu',
+  flappy: 'jogar',
+  play: 'jogar',
+  jogo: 'jogar',
+  game: 'jogar',
   quit: 'exit',
   logout: 'exit',
 };

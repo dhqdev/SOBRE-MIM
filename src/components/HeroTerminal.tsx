@@ -12,8 +12,9 @@ import {
   type GitHubData,
 } from '@/lib/github';
 import { MESSAGE_MAX, NAME_MAX, sendPush, type VisitorPush } from '@/lib/guestbook';
-import { TERMINAL_EVENT, downloadCv, openExternal, openPalette, scrollToSection } from '@/lib/site';
+import { TERMINAL_EVENT, downloadCv, openExternal, openGame, openPalette, scrollToSection } from '@/lib/site';
 import { QUICK_COMMANDS, complete, runCommand, type OutLine, type Tone } from '@/lib/terminal';
+import { GREETINGS, periodOf } from '@/lib/period';
 
 const COMMAND = 'git log --oneline -5';
 const TYPE_MS = 45;
@@ -119,6 +120,7 @@ const HeroTerminal = () => {
   const pushButtonRef = useRef<HTMLButtonElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [greeting] = useState(() => GREETINGS[periodOf()]);
   const entryId = useRef(0);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [input, setInput] = useState('');
@@ -238,6 +240,7 @@ const HeroTerminal = () => {
       if (action.type === 'open') openExternal(action.url);
       if (action.type === 'download') downloadCv();
       if (action.type === 'palette') window.setTimeout(openPalette, 250);
+      if (action.type === 'game') window.setTimeout(openGame, 400);
       if (action.type === 'confetti') {
         const rect = (inputRef.current ?? bodyRef.current)?.getBoundingClientRect();
         if (rect) window.setTimeout(() => burstConfetti(rect.left + 80, rect.top), 900);
@@ -357,6 +360,9 @@ const HeroTerminal = () => {
           >
             {!cleared && (
               <>
+                <p className="mb-1 text-muted-foreground/70">
+                  # {greeting.text}, visitante {greeting.emoji}
+                </p>
                 <p className="text-foreground">
                   <span className="text-accent">❯</span> {COMMAND.slice(0, typed)}
                   {typed < COMMAND.length && <span className="animate-pulse text-accent">▌</span>}

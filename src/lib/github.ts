@@ -10,7 +10,7 @@ export const GITHUB_URL = `https://github.com/${GITHUB_USER}`;
 
 const API = 'https://api.github.com';
 const CONTRIBUTIONS_API = `https://github-contributions-api.jogruber.de/v4/${GITHUB_USER}?y=last`;
-const CACHE_KEY = 'github-cache-v1';
+const CACHE_KEY = 'github-cache-v2';
 const CACHE_TTL_MS = 30 * 60 * 1000;
 
 /** Repositórios que já aparecem na seção de projetos. */
@@ -60,6 +60,8 @@ export interface GitHubData {
   profile: GitHubProfile;
   /** Repositórios que não estão entre os projetos em destaque. */
   repos: GitHubRepo[];
+  /** Todos os repositórios próprios (inclusive os em destaque), para o grafo. */
+  allRepos: GitHubRepo[];
   commits: GitHubCommit[];
   contributions: Contributions | null;
 }
@@ -134,6 +136,16 @@ const fetchContributions = async (): Promise<Contributions | null> => {
   }
 };
 
+const toRepo = (repo: ApiRepo): GitHubRepo => ({
+  name: repo.name,
+  description: repo.description,
+  language: repo.language,
+  stars: repo.stargazers_count,
+  forks: repo.forks_count,
+  url: repo.html_url,
+  pushedAt: repo.pushed_at,
+});
+
 let inFlight: Promise<GitHubData> | null = null;
 
 /**
@@ -194,17 +206,8 @@ const loadGitHubData = async (): Promise<GitHubData> => {
       following: user.following,
       createdAt: user.created_at,
     },
-    repos: ownRepos
-      .filter((repo) => !FEATURED_REPOS.includes(repo.name.toLowerCase()))
-      .map((repo) => ({
-        name: repo.name,
-        description: repo.description,
-        language: repo.language,
-        stars: repo.stargazers_count,
-        forks: repo.forks_count,
-        url: repo.html_url,
-        pushedAt: repo.pushed_at,
-      })),
+    repos: ownRepos.filter((repo) => !FEATURED_REPOS.includes(repo.name.toLowerCase())).map(toRepo),
+    allRepos: ownRepos.slice(0, 40).map(toRepo),
     commits: commitLists
       .flat()
       .sort((a, b) => b.date.localeCompare(a.date))

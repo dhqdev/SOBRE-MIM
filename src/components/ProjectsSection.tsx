@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowUpRight, Github } from 'lucide-react';
+import { ArrowUpRight, Gamepad2, Github } from 'lucide-react';
 import SectionHeading from './SectionHeading';
 import SpotlightCard from './effects/SpotlightCard';
 import TiltedCard from './effects/TiltedCard';
 import { projects, type Project } from '@/lib/projects';
+import { openGame } from '@/lib/site';
 
 /**
  * Só baixa o vídeo quando o card chega perto da viewport. Sem isso o MP4 do
@@ -77,6 +78,18 @@ const ProjectCard = ({ project, featured }: { project: Project; featured: boolea
                 {project.badge}
               </span>
             )}
+            {project.game && (
+              <button
+                type="button"
+                onClick={openGame}
+                className="absolute inset-0 z-10 grid place-items-center bg-black/0 transition-colors hover:bg-black/40 focus-visible:bg-black/40"
+              >
+                <span className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-background/80 px-4 py-2 text-sm font-medium text-foreground shadow-xl backdrop-blur-md transition-transform group-hover:scale-105">
+                  <Gamepad2 className="h-4 w-4 text-accent" aria-hidden="true" />
+                  Jogar agora
+                </span>
+              </button>
+            )}
             {project.video ? (
               <LazyVideo src={project.video} poster={project.poster} className={mediaClass} />
             ) : (
@@ -117,6 +130,16 @@ const ProjectCard = ({ project, featured }: { project: Project; featured: boolea
           </ul>
 
           <div className="mt-auto flex flex-wrap items-center gap-5 pt-6">
+            {project.game && (
+              <button
+                type="button"
+                onClick={openGame}
+                className="inline-flex h-9 items-center gap-2 rounded-lg border border-accent/30 bg-accent/10 px-3 text-sm font-medium text-accent transition-colors hover:bg-accent/20"
+              >
+                <Gamepad2 className="h-4 w-4" aria-hidden="true" />
+                Jogar no site
+              </button>
+            )}
             <a
               href={project.link}
               target="_blank"

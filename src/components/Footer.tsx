@@ -3,6 +3,8 @@ import WhatsAppIcon from './WhatsAppIcon';
 import BlurText from './effects/BlurText';
 import Magnet from './effects/Magnet';
 import StarBorder from './effects/StarBorder';
+import CoffeeMeter from './CoffeeMeter';
+import Signature from './Signature';
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL, WHATSAPP_URL } from '@/lib/contact';
 
 const socialLinks = [
@@ -57,6 +59,18 @@ const Footer = () => {
           >
             <Instagram className="h-4 w-4 text-accent" aria-hidden="true" />@{INSTAGRAM_HANDLE}
           </a>
+        </div>
+
+        <div className="mt-16 grid grid-cols-1 items-center gap-10 md:grid-cols-2 md:gap-12">
+          <div className="scroll-reveal">
+            <CoffeeMeter />
+          </div>
+          <div className="md:justify-self-end">
+            <Signature className="w-[min(100%,360px)] md:w-[400px]" />
+            <p className="mt-2 font-mono text-xs text-muted-foreground">
+              — feito à mão, com carinho e muito café
+            </p>
+          </div>
         </div>
       </div>
 

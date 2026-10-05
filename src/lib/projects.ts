@@ -7,6 +7,8 @@ export interface Project {
   link: string;
   /** Repositório do código, quando o link principal é o produto no ar. */
   repo?: string;
+  /** Tem versão jogável no site (abre o FlappyGame). */
+  game?: boolean;
   /** Selo no canto da imagem, ex.: "Novo". */
   badge?: string;
   tags: string[];
@@ -46,6 +48,7 @@ export const projects: Project[] = [
     tags: ['Python', 'IA', 'Algoritmo Genético', 'Rede Neural'],
     video: '/media/flappy-bird-ai.mp4',
     poster: '/media/flappy-bird-poster.webp',
+    game: true,
   },
   {
     title: 'Planejai - Gestão financeira',

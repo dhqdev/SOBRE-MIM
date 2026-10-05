@@ -68,6 +68,7 @@ export const copyText = async (text: string) => {
  * assim nenhum dos dois precisa conhecer o outro.
  */
 export const OPEN_PALETTE_EVENT = 'site:open-palette';
+export const OPEN_GAME_EVENT = 'site:open-game';
 export const TERMINAL_EVENT = 'site:terminal';
 
 /** Atalho mostrado nos botões: ⌘K no Mac, Ctrl K no resto. */
@@ -75,6 +76,9 @@ export const shortcutLabel = () =>
   typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K';
 
 export const openPalette = () => window.dispatchEvent(new Event(OPEN_PALETTE_EVENT));
+
+/** Abre o Flappy Bird jogável. */
+export const openGame = () => window.dispatchEvent(new Event(OPEN_GAME_EVENT));
 
 /** Rola até o terminal e roda um comando nele, como se a pessoa tivesse digitado. */
 export const runInTerminal = (command: string) => {

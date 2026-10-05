@@ -8,6 +8,7 @@ import {
   Copy,
   CornerDownLeft,
   Download,
+  Gamepad2,
   Github,
   Hash,
   Instagram,
@@ -28,6 +29,7 @@ import {
   copyText,
   downloadCv,
   openExternal,
+  openGame,
   runInTerminal,
   scrollToSection,
 } from '@/lib/site';
@@ -137,6 +139,14 @@ const CommandPalette = ({ onOpenExperiences }: CommandPaletteProps) => {
           keywords: ['git push', 'recado', 'mensagem'],
           icon: MessageSquareText,
           run: () => runInTerminal('git push'),
+        },
+        {
+          id: 'flappy',
+          label: 'Jogar Flappy Bird',
+          hint: 'tem ranking',
+          keywords: ['jogo', 'game', 'flappy', 'ranking'],
+          icon: Gamepad2,
+          run: openGame,
         },
         {
           id: 'terminal',

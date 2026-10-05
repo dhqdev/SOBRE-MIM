@@ -6,6 +6,7 @@ import CountUp from './effects/CountUp';
 import AnimatedList from './effects/AnimatedList';
 import TiltedCard from './effects/TiltedCard';
 import VisitorWall from './VisitorWall';
+import RepoGraph from './RepoGraph';
 import {
   GITHUB_URL,
   GITHUB_USER,
@@ -207,7 +208,11 @@ const GitHubSection = () => {
               )}
             </SpotlightCard>
 
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+            <div className="pt-4">
+              <RepoGraph data={data} />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 pt-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
               {/* Repositórios */}
               <div>
                 <div className="mb-3 flex items-baseline justify-between px-1">

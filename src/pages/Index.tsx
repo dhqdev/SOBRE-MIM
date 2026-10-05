@@ -3,6 +3,7 @@ import TerminalHero from '@/components/TerminalHero';
 import AboutSection from '@/components/AboutSection';
 import TimelineSection from '@/components/TimelineSection';
 import CommandPalette from '@/components/CommandPalette';
+import FlappyGame from '@/components/FlappyGame';
 import ProjectsSection from '@/components/ProjectsSection';
 import TechStackSection from '@/components/TechStackSection';
 import GitHubSection from '@/components/GitHubSection';
@@ -47,13 +48,14 @@ const Index = () => {
 
       {/* Luz roxa suave no topo */}
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[700px] bg-[radial-gradient(ellipse_60%_50%_at_50%_-10%,rgba(167,139,250,0.14),transparent)]"
+        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[700px] bg-[radial-gradient(ellipse_60%_50%_at_50%_-10%,hsl(var(--glow)/var(--glow-alpha)),transparent)]"
         aria-hidden="true"
       />
 
       <Navbar onOpenExperiences={openExperiences} />
       <ExperiencesPanel isOpen={isExperiencesOpen} onClose={closeExperiences} />
       <CommandPalette onOpenExperiences={openExperiences} />
+      <FlappyGame />
 
       <main id="conteudo" className="relative z-[2]">
         <div id="home">

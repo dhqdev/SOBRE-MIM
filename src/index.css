@@ -42,6 +42,40 @@
     --ring: 258 90% 76%;
 
     --radius: 0.75rem;
+
+    /* Brilho roxo do topo da página; muda com a hora do dia. */
+    --glow: 258 90% 76%;
+    --glow-alpha: 0.14;
+    --gradient-mid: 285 85% 82%;
+  }
+
+  /* O site acompanha a hora de quem visita (src/lib/period.ts). A tarde é o
+     visual padrão; os outros períodos só mexem no roxo e no fundo. */
+  :root[data-period='manha'] {
+    --accent: 250 95% 80%;
+    --ring: 250 95% 80%;
+    --glow: 240 90% 80%;
+    --glow-alpha: 0.18;
+    --gradient-mid: 200 85% 82%;
+    --background: 240 6% 5.5%;
+  }
+
+  :root[data-period='noite'] {
+    --accent: 265 88% 74%;
+    --ring: 265 88% 74%;
+    --glow: 270 85% 62%;
+    --glow-alpha: 0.16;
+    --gradient-mid: 300 80% 78%;
+    --background: 260 12% 3.5%;
+  }
+
+  :root[data-period='madrugada'] {
+    --accent: 275 80% 72%;
+    --ring: 275 80% 72%;
+    --glow: 280 80% 55%;
+    --glow-alpha: 0.12;
+    --gradient-mid: 320 75% 76%;
+    --background: 270 18% 2.5%;
   }
 
   html {
@@ -128,10 +162,10 @@
   .text-gradient-violet {
     background-image: linear-gradient(
       90deg,
-      hsl(258 90% 76%),
-      hsl(285 85% 82%),
+      hsl(var(--accent)),
+      hsl(var(--gradient-mid)),
       hsl(0 0% 96%),
-      hsl(258 90% 76%)
+      hsl(var(--accent))
     );
     background-size: 300% 100%;
     -webkit-background-clip: text;
@@ -153,6 +187,51 @@
   .logo-loop:hover .logo-loop-track {
     animation-play-state: paused;
   }
+
+  /* Assinatura do rodapé: cada traço é desenhado (dashoffset) e depois
+     preenchido. Os atrasos vêm do Signature.tsx. */
+  .signature path {
+    fill: currentColor;
+    fill-opacity: 0;
+    stroke: currentColor;
+    stroke-width: 0.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+
+  .signature.is-drawn path {
+    stroke-dashoffset: 0;
+    fill-opacity: 1;
+    transition:
+      stroke-dashoffset var(--stroke-duration) cubic-bezier(0.55, 0, 0.35, 1) var(--stroke-delay),
+      fill-opacity 900ms ease var(--fill-delay);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .signature path {
+      stroke-dashoffset: 0;
+      fill-opacity: 1;
+    }
+  }
+
+  /* Vapor da xícara do café-o-metro. */
+  .coffee-steam {
+    animation: coffee-steam 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes coffee-steam {
+  0% { transform: translateY(4px) scaleX(1); opacity: 0; }
+  30% { opacity: 0.7; }
+  100% { transform: translateY(-14px) scaleX(1.4); opacity: 0; }
+}
+
+@keyframes coffee-pop {
+  0% { transform: translate(-50%, 0) scale(0.8); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translate(-50%, -48px) scale(1.1); opacity: 0; }
 }
 
 @keyframes shine {
