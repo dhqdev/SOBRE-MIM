@@ -2,6 +2,8 @@ import { Calendar, Bot, Wallet, Gamepad2, MessagesSquare, CandlestickChart } fro
 
 export interface Project {
   title: string;
+  /** Uma linha só, pra lista de projetos. */
+  summary: string;
   description: string;
   icon: React.ComponentType<{ className?: string }>;
   link: string;
@@ -20,6 +22,7 @@ export interface Project {
 export const projects: Project[] = [
   {
     title: 'Meta-Bot - Escritório de trading com IA',
+    summary: '8 agentes de IA que leem notícias, controlam o risco e operam juntos no MetaTrader 5.',
     description:
       'Um escritório de trading em pixel-art onde 8 agentes de IA trabalham juntos: a Nina lê as notícias, a Rita vigia o risco, a Estela testa estratégias, o Gustavo gerencia o plano e o Caio executa as ordens no MetaTrader 5. Eles conversam entre si, fazem reunião diária às 19h e aprendem com os próprios resultados. São 18 estratégias, backtest honesto (com slippage e comissão), conta simulada com preços reais e app PWA para acompanhar pelo celular.',
     icon: CandlestickChart,
@@ -30,6 +33,7 @@ export const projects: Project[] = [
   },
   {
     title: 'Tekvosoft Chat - Atendimento via WhatsApp',
+    summary: 'Vários atendentes no mesmo WhatsApp, com chatbot de IA, filas e kanban. Já em produção.',
     description:
       'Plataforma de atendimento com CRM e helpdesk: vários atendentes no mesmo número de WhatsApp, filas, chatbot com pipeline de IA, kanban, campanhas e agendamentos, tudo em tempo real. É multiempresa, roda em Docker e já está em produção.',
     icon: MessagesSquare,
@@ -41,6 +45,7 @@ export const projects: Project[] = [
   },
   {
     title: 'Flappy Bird IA',
+    summary: '50 passarinhos com rede neural e algoritmo genético aprendendo a jogar sozinhos.',
     description:
       '🤖 Ensinei uma IA a zerar o Flappy Bird — e ela aprendeu sozinha! Criei um experimento em Python onde 50 passarinhos-IA jogam Flappy Bird ao mesmo tempo. Eles evoluem, cruzam genes, sofrem mutação e ficam cada vez mais inteligentes. Depois de algumas gerações, começam a dominar o jogo com uma precisão absurda. Usei Algoritmo Genético, Rede Neural (4-5-1), Python + Pygame + NumPy. Resultado? Aprendizado 100% autônomo, zero jogadas humanas.',
     icon: Gamepad2,
@@ -52,6 +57,7 @@ export const projects: Project[] = [
   },
   {
     title: 'Planejai - Gestão financeira',
+    summary: 'SaaS de finanças que mostra pra onde vai o seu dinheiro e acompanha suas metas.',
     description:
       'Um software SaaS de gestão financeira desenvolvido para todo tipo de cliente que deseja ter um maior controle sobre o que gasta.',
     icon: Wallet,
@@ -61,6 +67,7 @@ export const projects: Project[] = [
   },
   {
     title: 'Encontro com Deus',
+    summary: 'Site do retiro com inscrição online e um assistente de IA que conversa e aconselha.',
     description:
       'Site oficial do retiro espiritual Encontro com Deus - Um ministério de transformação dedicado a promover experiências profundas de renovação espiritual, cura e reconexão com Deus. TypeScript e React, com inteligência artificial que conversa e aconselha a pessoa.',
     icon: Calendar,
@@ -70,6 +77,7 @@ export const projects: Project[] = [
   },
   {
     title: 'BCI-ON1 - Automação Servopa',
+    summary: 'Robô que dá os lances no Servopa nos dias 8 e 16 e avisa cada cliente no WhatsApp.',
     description:
       'O BCI-ON1 é um sistema de automação desenvolvido para simplificar e automatizar processos de licitação no portal Servopa. O sistema realiza login automático, extrai protocolos do Todoist, envia lances e notifica clientes via WhatsApp nos dias 8 e 16 de cada mês.',
     icon: Bot,

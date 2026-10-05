@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Briefcase, GraduationCap, Sparkles, Sprout } from 'lucide-react';
+import { ArrowRight, Briefcase, GraduationCap, Sparkles, Sprout } from 'lucide-react';
 import SectionHeading from './SectionHeading';
 
 type Kind = 'trabalho' | 'estudo' | 'evento' | 'inicio';
@@ -101,7 +101,7 @@ const KIND_LABEL: Record<Kind, string> = {
  * marco acende quando a linha passa por ele. No celular a linha fica à
  * esquerda; do notebook pra cima ela vai pro meio e os cards alternam de lado.
  */
-const TimelineSection = () => {
+const TimelineSection = ({ onOpenExperiences }: { onOpenExperiences: () => void }) => {
   const listRef = useRef<HTMLOListElement>(null);
   const fillRef = useRef<HTMLDivElement>(null);
   const [lit, setLit] = useState(-1);
@@ -240,6 +240,22 @@ const TimelineSection = () => {
               );
             })}
           </ol>
+        </div>
+
+        <div className="mt-12 flex justify-center">
+          <button
+            type="button"
+            onClick={onOpenExperiences}
+            aria-haspopup="dialog"
+            aria-controls="painel-experiencias"
+            className="group inline-flex h-10 items-center gap-2 rounded-xl border border-white/10 px-4 text-sm text-muted-foreground transition-colors hover:border-accent/40 hover:text-foreground"
+          >
+            Ver todas as experiências
+            <ArrowRight
+              className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+              aria-hidden="true"
+            />
+          </button>
         </div>
       </div>
     </section>

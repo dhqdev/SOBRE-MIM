@@ -3,7 +3,6 @@ import BlurText from './effects/BlurText';
 import RotatingText from './effects/RotatingText';
 import CountUp from './effects/CountUp';
 import Magnet from './effects/Magnet';
-import StarBorder from './effects/StarBorder';
 import WhatsAppIcon from './WhatsAppIcon';
 import HeroTerminal from './HeroTerminal';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
@@ -94,17 +93,15 @@ const TerminalHero = () => {
               style={{ '--reveal-delay': '500ms' } as React.CSSProperties}
             >
               <Magnet>
-                <StarBorder>
-                  <a
-                    href={WHATSAPP_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex h-12 items-center gap-2.5 rounded-[11px] bg-foreground px-6 text-[15px] font-medium text-background transition-opacity hover:opacity-90"
-                  >
-                    <WhatsAppIcon className="w-4 h-4" />
-                    Falar comigo
-                  </a>
-                </StarBorder>
+                <a
+                  href={WHATSAPP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-12 items-center gap-2.5 rounded-[11px] bg-foreground px-6 text-[15px] font-medium text-background transition-opacity hover:opacity-90"
+                >
+                  <WhatsAppIcon className="w-4 h-4" />
+                  Falar comigo
+                </a>
               </Magnet>
 
               <button

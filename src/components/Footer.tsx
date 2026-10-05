@@ -2,7 +2,6 @@ import { ArrowUpRight, Github, Instagram, Linkedin, Mail } from 'lucide-react';
 import WhatsAppIcon from './WhatsAppIcon';
 import BlurText from './effects/BlurText';
 import Magnet from './effects/Magnet';
-import StarBorder from './effects/StarBorder';
 import CoffeeMeter from './CoffeeMeter';
 import Signature from './Signature';
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL, WHATSAPP_URL } from '@/lib/contact';
@@ -39,17 +38,15 @@ const Footer = () => {
         </p>
         <div className="scroll-reveal mt-10 flex flex-wrap items-center gap-3">
           <Magnet>
-            <StarBorder>
-              <a
-                href={WHATSAPP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex h-12 items-center gap-2.5 rounded-[11px] bg-foreground px-6 text-[15px] font-medium text-background transition-opacity hover:opacity-90"
-              >
-                <WhatsAppIcon className="h-4 w-4" />
-                Falar comigo no WhatsApp
-              </a>
-            </StarBorder>
+            <a
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-12 items-center gap-2.5 rounded-[11px] bg-foreground px-6 text-[15px] font-medium text-background transition-opacity hover:opacity-90"
+            >
+              <WhatsAppIcon className="h-4 w-4" />
+              Falar comigo no WhatsApp
+            </a>
           </Magnet>
           <a
             href={INSTAGRAM_URL}
@@ -91,7 +88,10 @@ const Footer = () => {
                 >
                   <social.icon className="h-4 w-4" aria-hidden="true" />
                   {social.label}
-                  <ArrowUpRight className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" aria-hidden="true" />
+                  <ArrowUpRight
+                    className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100"
+                    aria-hidden="true"
+                  />
                 </a>
               </li>
             ))}

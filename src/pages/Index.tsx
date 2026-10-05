@@ -13,7 +13,6 @@ import ExperiencesPanel from '@/components/ExperiencesPanel';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import DotGrid from '@/components/effects/DotGrid';
 import ClickSpark from '@/components/effects/ClickSpark';
-import ScrollVelocity from '@/components/effects/ScrollVelocity';
 import { useScrollReveal } from '@/hooks/useScrollReveal';
 
 const Index = () => {
@@ -25,7 +24,7 @@ const Index = () => {
   const closeExperiences = useCallback(() => setIsExperiencesOpen(false), []);
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-background">
+    <div className="relative min-h-screen overflow-x-clip bg-background">
       <a
         href="#conteudo"
         className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-foreground focus:text-background focus:font-medium"
@@ -52,7 +51,7 @@ const Index = () => {
         aria-hidden="true"
       />
 
-      <Navbar onOpenExperiences={openExperiences} />
+      <Navbar />
       <ExperiencesPanel isOpen={isExperiencesOpen} onClose={closeExperiences} />
       <CommandPalette onOpenExperiences={openExperiences} />
       <FlappyGame />
@@ -62,14 +61,9 @@ const Index = () => {
           <TerminalHero />
         </div>
 
-        <ScrollVelocity
-          text="Full-Stack · Vue & React · Python · Automação · IA"
-          className="border-y border-border py-5 text-2xl font-semibold tracking-tight text-muted-foreground/40 sm:text-4xl"
-        />
-
         <ProjectsSection />
         <AboutSection />
-        <TimelineSection />
+        <TimelineSection onOpenExperiences={openExperiences} />
         <TechStackSection />
         <GitHubSection />
       </main>
