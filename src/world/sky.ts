@@ -20,8 +20,10 @@ const C = (hex: string) => new THREE.Color(hex);
 const PALETTE = {
   dayTop: C('#2f86e0'),
   dayHorizon: C('#cdeeff'),
-  duskTop: C('#3a2d7d'),
-  duskHorizon: C('#ff9a66'),
+  duskTop: C('#2a2470'),
+  duskMid: C('#c2508a'),
+  duskHorizon: C('#ff8c4a'),
+  duskGlow: C('#ffcf73'),
   nightTop: C('#04071a'),
   nightHorizon: C('#1a2756'),
 };
@@ -32,7 +34,14 @@ const PALETTE = {
  */
 export class Sky {
   private dome: THREE.Mesh;
-  private uniforms: { top: { value: THREE.Color }; horizon: { value: THREE.Color } };
+  private uniforms: {
+    top: { value: THREE.Color };
+    horizon: { value: THREE.Color };
+    mid: { value: THREE.Color };
+    glow: { value: THREE.Color };
+    sunDir: { value: THREE.Vector3 };
+    dusk: { value: number };
+  };
   private sun: THREE.Sprite;
   private moon: THREE.Sprite;
   private stars: THREE.Points;
@@ -42,10 +51,18 @@ export class Sky {
   readonly moonLight: THREE.DirectionalLight;
   /** 1 = dia claro, 0 = noite. Lido pelas lâmpadas, janelas e vaga-lumes. */
   day = 1;
+  /** Quanto é pôr (ou nascer) do sol agora: esquenta nuvens, água e luzes. */
   twilight = 0;
 
   constructor(private scene: THREE.Scene) {
-    this.uniforms = { top: { value: new THREE.Color() }, horizon: { value: new THREE.Color() } };
+    this.uniforms = {
+      top: { value: new THREE.Color() },
+      horizon: { value: new THREE.Color() },
+      mid: { value: new THREE.Color() },
+      glow: { value: new THREE.Color() },
+      sunDir: { value: new THREE.Vector3(0, 0.2, -1) },
+      dusk: { value: 0 },
+    };
     this.dome = new THREE.Mesh(
       new THREE.SphereGeometry(480, 32, 16),
       new THREE.ShaderMaterial({
@@ -54,19 +71,35 @@ export class Sky {
         fog: false,
         uniforms: this.uniforms,
         vertexShader: /* glsl */ `
-          varying float vY;
+          varying vec3 vDir;
           void main() {
-            vY = normalize(position).y;
+            vDir = normalize(position);
             gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
           }
         `,
         fragmentShader: /* glsl */ `
           uniform vec3 top;
           uniform vec3 horizon;
-          varying float vY;
+          uniform vec3 mid;
+          uniform vec3 glow;
+          uniform vec3 sunDir;
+          uniform float dusk;
+          varying vec3 vDir;
           void main() {
-            float k = smoothstep(-0.05, 0.55, vY);
-            gl_FragColor = vec4(mix(horizon, top, k), 1.0);
+            vec3 dir = normalize(vDir);
+            float y = dir.y;
+            // três faixas: horizonte quente, meio rosado e topo
+            float low = smoothstep(-0.08, 0.22, y);
+            float high = smoothstep(0.12, 0.7, y);
+            vec3 col = mix(horizon, mid, low);
+            col = mix(col, top, high);
+            // brilho em volta do sol (bem forte no pôr do sol, perto do horizonte)
+            float facing = max(dot(dir, normalize(sunDir)), 0.0);
+            float near = pow(facing, 10.0);
+            float wide = pow(facing, 2.5) * (1.0 - smoothstep(0.0, 0.5, y));
+            col += glow * (near * 0.9 + wide * 0.55) * dusk;
+            col += glow * pow(facing, 60.0) * 0.4 * (1.0 - dusk);
+            gl_FragColor = vec4(col, 1.0);
             #include <colorspace_fragment>
           }
         `,
@@ -122,26 +155,39 @@ export class Sky {
   update(hour: number, center: THREE.Vector3, t: number) {
     const { elevation, day, twilight } = lightFor(hour);
     this.day = day;
-    this.twilight = twilight;
 
+    // o pôr do sol pesa mais quando ainda tem um pouco de dia (antes de escurecer)
+    const dusk = twilight * (0.35 + 0.65 * smoothstep(-0.15, 0.1, elevation));
     const top = PALETTE.nightTop
       .clone()
       .lerp(PALETTE.dayTop, day)
-      .lerp(PALETTE.duskTop, twilight * 0.75);
+      .lerp(PALETTE.duskTop, dusk * 0.8);
     const horizon = PALETTE.nightHorizon
       .clone()
       .lerp(PALETTE.dayHorizon, day)
-      .lerp(PALETTE.duskHorizon, twilight * 0.85);
+      .lerp(PALETTE.duskHorizon, dusk * 0.95);
+    this.twilight = dusk;
+    const mid = top
+      .clone()
+      .lerp(horizon, 0.45)
+      .lerp(PALETTE.duskMid, dusk * 0.85);
     this.uniforms.top.value.copy(top);
     this.uniforms.horizon.value.copy(horizon);
+    this.uniforms.mid.value.copy(mid);
+    this.uniforms.glow.value.copy(PALETTE.duskGlow).lerp(C('#fff6e0'), 1 - dusk);
+    this.uniforms.dusk.value = dusk;
     const fog = this.scene.fog as THREE.Fog;
-    fog.color.copy(horizon);
+    // névoa puxa pro rosado no fim da tarde (o horizonte inteiro esquenta)
+    fog.color.copy(horizon).lerp(mid, 0.35 * dusk);
     fog.near = 70 + day * 40;
     fog.far = 210 + day * 90;
 
     // o sol nasce no leste (+x) e se põe no oeste, sempre ao norte da câmera
     const arc = ((hour - 6) / 12) * Math.PI;
     this.sun.position.set(center.x + Math.cos(arc) * 330, center.y + elevation * 230 + 20, center.z - 300);
+    this.uniforms.sunDir.value.copy(this.sun.position).sub(center).normalize();
+    // sol baixo fica maior e alaranjado
+    this.sun.scale.setScalar(90 + dusk * 70);
     const moonArc = arc + Math.PI;
     this.moon.position.set(
       center.x + Math.cos(moonArc) * 300,
@@ -150,17 +196,17 @@ export class Sky {
     );
     this.sun.material.opacity = smoothstep(-0.25, 0.05, elevation);
     this.moon.material.opacity = smoothstep(0.1, -0.2, elevation);
-    this.sun.material.color.set(twilight > 0.4 ? '#ffb27a' : '#ffffff');
+    this.sun.material.color.set('#ffffff').lerp(C('#ff9a4d'), Math.min(1, dusk * 1.2));
     this.dome.position.copy(center);
     this.stars.position.copy(center);
     this.stars.rotation.y = t * 0.004;
     this.starMaterial.opacity = (1 - day) * (0.75 + Math.sin(t * 1.3) * 0.15);
 
     this.hemi.intensity = 0.55 + day * 1.45;
-    this.hemi.color.set(day > 0.5 ? '#d8ecff' : '#7d8cff').lerp(C('#ffc49a'), twilight * 0.5);
+    this.hemi.color.set(day > 0.5 ? '#d8ecff' : '#7d8cff').lerp(C('#ffb08a'), dusk * 0.65);
     this.hemi.groundColor.set(day > 0.5 ? '#4d6b3a' : '#1d2340');
     this.sunLight.intensity = 2.7 * day;
-    this.sunLight.color.set('#fff1dc').lerp(C('#ff9a5c'), twilight * 0.8);
+    this.sunLight.color.set('#fff1dc').lerp(C('#ff8a4a'), dusk * 0.9);
     this.sunLight.position.set(
       center.x + Math.cos(arc) * 60,
       center.y + Math.max(8, elevation * 70),

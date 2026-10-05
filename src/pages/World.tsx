@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Clock, Moon, Sun, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, Clock, Moon, Sun, Sunset, Volume2, VolumeX } from 'lucide-react';
 import FlappyGame from '@/components/FlappyGame';
 import { burstConfetti } from '@/lib/confetti';
 import { downloadCv, openExternal, openGame } from '@/lib/site';
 import { createWorld, type RideState, type TimeMode, type WorldHandle } from '@/world/engine';
-import { EGGS, FAIR, PENS, ROADS, STATIONS, type Station, type StationAction } from '@/world/stations';
+import { EGGS, PENS, RIDES, ROADS, STATIONS, type Station, type StationAction } from '@/world/stations';
 import { LAKE, POND, STREAM_HALF, STREAM_PATH, WORLD_RADIUS } from '@/world/terrain';
 import { setMuted, sfx, unlockAudio } from '@/world/audio';
 import type { RideKind } from '@/world/animals';
@@ -64,10 +64,18 @@ const MOUNT_TEXT: Record<RideKind, { on: string; off: string }> = {
   porco: { on: 'Montar no porco', off: 'Descer do porco' },
   ovelha: { on: 'Montar na ovelha', off: 'Descer da ovelha' },
   bugue: { on: 'Dirigir o bugue', off: 'Sair do bugue' },
+  barco: { on: 'Andar de barco', off: 'Descer do barco' },
+  brinquedo: { on: 'Andar no brinquedo', off: 'Descer do brinquedo' },
 };
 
-const TIME_LABEL: Record<TimeMode, string> = { auto: 'Hora real', dia: 'Dia', noite: 'Noite' };
-const NEXT_TIME: Record<TimeMode, TimeMode> = { auto: 'dia', dia: 'noite', noite: 'auto' };
+const TIME_LABEL: Record<TimeMode, string> = {
+  auto: 'Hora real',
+  dia: 'Dia',
+  tarde: 'Pôr do sol',
+  noite: 'Noite',
+};
+const NEXT_TIME: Record<TimeMode, TimeMode> = { auto: 'dia', dia: 'tarde', tarde: 'noite', noite: 'auto' };
+const TIME_ICON = { auto: Clock, dia: Sun, tarde: Sunset, noite: Moon };
 
 interface Toast {
   id: number;
@@ -188,10 +196,20 @@ const Minimap = ({
         const [x, y] = toMap(p.x - p.w / 2, p.z - p.d / 2);
         ctx.strokeRect(x, y, p.w * scale, p.d * scale);
       });
-      ctx.fillStyle = 'rgba(216,192,138,0.9)';
-      ctx.beginPath();
-      ctx.arc(...toMap(FAIR.x, FAIR.z), 8 * scale, 0, Math.PI * 2);
-      ctx.fill();
+      // brinquedos do parque (a montanha-russa é o anel grande)
+      RIDES.forEach((ride) => {
+        ctx.beginPath();
+        if (ride.type === 'coaster') {
+          ctx.strokeStyle = 'rgba(244,240,255,0.9)';
+          ctx.lineWidth = 1.5;
+          ctx.ellipse(...toMap(ride.bx, ride.bz), 11 * scale, 8 * scale, 0, 0, Math.PI * 2);
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = 'rgba(216,192,138,0.95)';
+          ctx.arc(...toMap(ride.bx, ride.bz), ride.plaza * scale, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
       STATIONS.forEach((station) => {
         const [x, y] = toMap(station.x, station.z);
         const done = visited.has(station.id);
@@ -248,7 +266,7 @@ const World = () => {
   const [muted, setMutedState] = useState(() => readSetting(MUTE_KEY) === '1');
   const [timeMode, setTimeMode] = useState<TimeMode>(() => {
     const saved = readSetting(TIME_KEY);
-    return saved === 'dia' || saved === 'noite' ? saved : 'auto';
+    return saved === 'dia' || saved === 'tarde' || saved === 'noite' ? saved : 'auto';
   });
   const [touch] = useState(() => window.matchMedia('(pointer: coarse)').matches);
   const [compact, setCompact] = useState(() => window.innerWidth < 640);
@@ -293,6 +311,7 @@ const World = () => {
         onNear: (station) => setNear(station),
         onRide: (state) => setRide(state),
         onNight: (value) => setNight(value),
+        onHint: (text) => pushToast(text, 'visit'),
         onVisit: (station) => {
           sfx.visit();
           setProgress((current) => {
@@ -320,7 +339,7 @@ const World = () => {
       cancelled = true;
       handle?.dispose();
     };
-  }, []);
+  }, [pushToast]);
 
   // avisos de conquista
   const lastCounts = useRef({ visited: progress.visited.length, collected: progress.collected.length });
@@ -398,7 +417,10 @@ const World = () => {
   const runAction = (action: StationAction) => {
     if (action.href) openExternal(action.href);
     else if (action.run === 'cv') downloadCv();
-    else if (action.run === 'game') {
+    else if (action.run === 'ride' && card) {
+      setCard(null);
+      world?.ride(card.id);
+    } else if (action.run === 'game') {
       setCard(null);
       openGame();
     }
@@ -417,15 +439,22 @@ const World = () => {
   };
 
   const milestoneNear = near?.kind === 'milestone' ? near : null;
-  const rideText = ride.riding
-    ? MOUNT_TEXT[ride.riding].off
-    : ride.canMount
-      ? MOUNT_TEXT[ride.canMount].on
-      : null;
+  const rideText =
+    ride.label ??
+    (ride.riding ? MOUNT_TEXT[ride.riding].off : ride.canMount ? MOUNT_TEXT[ride.canMount].on : null);
   const promptText = interactive ? `Abrir · ${interactive.label}` : rideText;
   const promptKey = interactive ? 'E' : 'F';
-  const bLabel = ride.riding === 'bugue' ? 'Buzina' : 'Pular';
-  const TimeIcon = timeMode === 'auto' ? Clock : timeMode === 'dia' ? Sun : Moon;
+  /** Perto de um brinquedo aparecem os dois: abrir o projeto e andar nele. */
+  const secondPrompt = interactive && ride.canMount === 'brinquedo' ? rideText : null;
+  const bLabel =
+    ride.riding === 'bugue'
+      ? 'Buzina'
+      : ride.riding === 'barco'
+        ? 'Remar'
+        : ride.riding === 'brinquedo'
+          ? 'Gritar'
+          : 'Pular';
+  const TimeIcon = TIME_ICON[timeMode];
 
   return (
     <div className="fixed inset-0 select-none overflow-hidden bg-[#0f0a1e] font-sans text-white">
@@ -458,8 +487,9 @@ const World = () => {
             David
           </h1>
           <p className="mt-6 max-w-md text-[15px] leading-relaxed text-white/85 sm:text-base">
-            Desça a colina, atravesse o riacho e visite os {points} pontos. Dá pra montar nos bichos, dirigir
-            o bugue e procurar os {EGGS.length} ovos de ouro.
+            Desça a colina, atravesse o riacho e visite os {points} pontos. Cada projeto é um brinquedo do
+            parque, e dá pra andar em todos. Também dá pra montar nos bichos, dirigir o bugue, remar no lago e
+            procurar os {EGGS.length} ovos de ouro.
           </p>
           <button
             type="button"
@@ -572,26 +602,44 @@ const World = () => {
 
           {/* chamada pra interagir ou montar */}
           {promptText && !card && !milestoneNear && (
-            <button
-              type="button"
-              onClick={primary}
-              className={`${panel} absolute left-1/2 flex -translate-x-1/2 animate-[world-pop_0.3s_ease-out] items-center gap-2 px-4 py-2.5 text-sm font-semibold ${
+            <div
+              className={`absolute left-1/2 flex -translate-x-1/2 animate-[world-pop_0.3s_ease-out] flex-col items-center gap-2 sm:flex-row ${
                 touch ? 'bottom-48' : 'bottom-8'
               }`}
             >
-              {!touch && (
-                <kbd className="rounded-md bg-amber-300 px-1.5 py-0.5 font-mono text-xs font-bold text-[#140c26]">
-                  {promptKey}
-                </kbd>
+              <button
+                type="button"
+                onClick={primary}
+                className={`${panel} flex items-center gap-2 whitespace-nowrap px-4 py-2.5 text-sm font-semibold`}
+              >
+                {!touch && (
+                  <kbd className="rounded-md bg-amber-300 px-1.5 py-0.5 font-mono text-xs font-bold text-[#140c26]">
+                    {promptKey}
+                  </kbd>
+                )}
+                {promptText}
+              </button>
+              {secondPrompt && (
+                <button
+                  type="button"
+                  onClick={() => world?.toggleRide()}
+                  className="flex items-center gap-2 whitespace-nowrap rounded-2xl border border-amber-200/50 bg-violet-600/90 px-4 py-2.5 text-sm font-semibold shadow-lg shadow-black/30 backdrop-blur-md"
+                >
+                  {!touch && (
+                    <kbd className="rounded-md bg-amber-300 px-1.5 py-0.5 font-mono text-xs font-bold text-[#140c26]">
+                      F
+                    </kbd>
+                  )}
+                  🎢 {secondPrompt}
+                </button>
               )}
-              {promptText}
-            </button>
+            </div>
           )}
 
           {!touch && !card && !promptText && !milestoneNear && (
             <p className="absolute bottom-4 left-4 text-xs leading-relaxed text-white/80 [text-shadow:0_1px_3px_rgba(0,0,0,0.6)]">
               WASD/setas andam · Shift corre · Espaço pula · arraste pra girar
-              <br />E interage · F monta e desce
+              <br />E interage · F monta, desce e anda nos brinquedos
             </p>
           )}
 

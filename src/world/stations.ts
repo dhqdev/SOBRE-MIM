@@ -10,7 +10,18 @@ export interface StationAction {
   label: string;
   href?: string;
   /** Ações que o próprio site resolve. */
-  run?: 'game' | 'cv';
+  run?: 'game' | 'cv' | 'ride';
+}
+
+export type RideType = 'coaster' | 'carousel' | 'swing' | 'viking' | 'ferris' | 'drop';
+
+/** O brinquedo do parque que representa um projeto. */
+export interface RideInfo {
+  type: RideType;
+  /** Nome do brinquedo (vai na placa). */
+  name: string;
+  on: string;
+  off: string;
 }
 
 /**
@@ -32,6 +43,7 @@ export interface Station {
   image?: string;
   tags?: string[];
   actions?: StationAction[];
+  ride?: RideInfo;
 }
 
 /** Põe a construção `distance` atrás do ponto, olhando pra `face`. */
@@ -50,9 +62,81 @@ export const GATE = { x: 0, z: 77 };
 /** Terreiro com o poço, no meio do sítio. */
 export const YARD = { x: 2, z: -5 };
 
-/** Feira dos projetos: barracas num arco aberto pro terreiro. */
-export const FAIR = { x: 25, z: 2, radius: 9.5 };
-const FAIR_ANGLES = [-112, -67, -22, 22, 67, 112];
+/**
+ * Parque dos projetos: uma avenida saindo do terreiro pro leste, com um
+ * brinquedo de cada lado. Cada projeto é um brinquedo.
+ */
+export const PARK = { x: 38, z: 1.5, from: 15, to: 54 };
+
+/** Brinquedos na ordem dos projetos: centro do brinquedo e onde a pessoa embarca. */
+export const RIDES: (RideInfo & { bx: number; bz: number; x: number; z: number; plaza: number })[] = [
+  {
+    type: 'coaster',
+    name: 'Montanha-russa',
+    on: 'Andar na montanha-russa',
+    off: 'Descer da montanha-russa',
+    bx: 67,
+    bz: -1,
+    x: 53.2,
+    z: 1.5,
+    plaza: 0,
+  },
+  {
+    type: 'carousel',
+    name: 'Carrossel',
+    on: 'Andar no carrossel',
+    off: 'Descer do carrossel',
+    bx: 24,
+    bz: -7,
+    x: 24,
+    z: -1.4,
+    plaza: 6.2,
+  },
+  {
+    type: 'swing',
+    name: 'Chapéu mexicano',
+    on: 'Voar no chapéu mexicano',
+    off: 'Descer do chapéu mexicano',
+    bx: 21,
+    bz: 10.5,
+    x: 21,
+    z: 4.4,
+    plaza: 6.6,
+  },
+  {
+    type: 'viking',
+    name: 'Barco viking',
+    on: 'Andar no barco viking',
+    off: 'Descer do barco viking',
+    bx: 35,
+    bz: 10.5,
+    x: 35,
+    z: 4.4,
+    plaza: 6,
+  },
+  {
+    type: 'ferris',
+    name: 'Roda-gigante',
+    on: 'Andar na roda-gigante',
+    off: 'Descer da roda-gigante',
+    bx: 36,
+    bz: -7.5,
+    x: 36,
+    z: -1.5,
+    plaza: 5.2,
+  },
+  {
+    type: 'drop',
+    name: 'Elevador',
+    on: 'Andar no elevador',
+    off: 'Descer do elevador',
+    bx: 48.5,
+    bz: -6.5,
+    x: 48.5,
+    z: -1.5,
+    plaza: 4.6,
+  },
+];
 
 /** Trilha da carreira subindo o morro do nordeste até o mirante. */
 export const TRAIL: [number, number][] = [
@@ -153,7 +237,23 @@ export const ROADS: { points: [number, number][]; width: number }[] = [
       [3, -39],
     ],
   },
-  { width: 2, points: [[33, -7], [38, -9], TRAIL[0]] },
+  // avenida do parque e o caminho que sobe pra trilha
+  {
+    width: 3.4,
+    points: [
+      [PARK.from, 0.8],
+      [28, 1.5],
+      [PARK.to, 1.5],
+    ],
+  },
+  {
+    width: 2.4,
+    points: [
+      [54, 1.5],
+      [57.2, 1.5],
+    ],
+  },
+  { width: 2, points: [[43, 1.5], [43, -6], TRAIL[0]] },
   { width: 1.8, points: TRAIL },
   { width: 1.8, points: [TRAIL[8], [55.5, -57]] },
   {
@@ -177,8 +277,9 @@ export const ROADS: { points: [number, number][]; width: number }[] = [
   {
     width: 2,
     points: [
-      [30, 12],
-      [35, 19],
+      [44, 1.5],
+      [44.5, 11],
+      [41.6, 20.2],
       [39.6, 25.8],
       [45, 31],
       [52, 33],
@@ -229,11 +330,10 @@ export const EGGS: [number, number][] = [
 /* -------------------------------------------------------------- estações */
 
 const projectStations: Station[] = projects.map((project, index) => {
-  const angle = (FAIR_ANGLES[index] * Math.PI) / 180;
-  const bx = FAIR.x + Math.cos(angle) * FAIR.radius;
-  const bz = FAIR.z + Math.sin(angle) * FAIR.radius;
+  const { plaza: _plaza, bx, bz, x, z, ...ride } = RIDES[index % RIDES.length];
+  void _plaza;
   const [name, ...rest] = project.title.split(' - ');
-  const actions: StationAction[] = [];
+  const actions: StationAction[] = [{ label: ride.on, run: 'ride' }];
   if (project.game) actions.push({ label: 'Jogar agora', run: 'game' });
   actions.push({ label: 'Ver projeto', href: project.link });
   if (project.repo) actions.push({ label: 'Código', href: project.repo });
@@ -241,13 +341,17 @@ const projectStations: Station[] = projects.map((project, index) => {
     id: `projeto-${index}`,
     kind: 'project',
     label: name,
-    ...place(bx, bz, FAIR.x, FAIR.z, 3),
+    bx,
+    bz,
+    x,
+    z,
     title: name,
-    subtitle: rest.join(' - ') || 'Projeto',
+    subtitle: `${ride.name} · ${rest.join(' - ') || 'Projeto'}`,
     text: project.description,
     image: project.image ?? project.poster,
     tags: project.tags,
     actions,
+    ride,
   };
 });
 
@@ -282,7 +386,7 @@ export const STATIONS: Station[] = [
     ...place(5.6, 70, 0.5, 70, 2.8),
     title: 'Bem-vindo ao Sítio do David!',
     subtitle: 'Desenvolvedor Full-Stack',
-    text: 'Oi! Eu sou o David, desenvolvedor full-stack apaixonado por automação e IA. Este sítio é o meu portfólio: desça a colina, atravesse o riacho e visite cada ponto roxo. Dá pra montar nos bichos, dirigir o bugue e procurar os ovos de ouro escondidos.',
+    text: 'Oi! Eu sou o David, desenvolvedor full-stack apaixonado por automação e IA. Este sítio é o meu portfólio: desça a colina, atravesse o riacho e visite cada ponto roxo. Cada projeto meu virou um brinquedo no parque. Dá pra montar nos bichos, dirigir o bugue, remar no lago e procurar os ovos de ouro escondidos.',
     tags: ['Vue & React', 'Python', 'Automação', 'Agentes de IA'],
   },
   {

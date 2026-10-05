@@ -204,3 +204,27 @@ export const glowTexture = (inner: string, outer = 'rgba(255,255,255,0)') => {
   ctx.fillRect(0, 0, 256, 256);
   return canvasTexture(canvas);
 };
+
+/** Brilho macio de lâmpada: núcleo pequeno e forte, cauda longa que some sem borda. */
+export const softGlowTexture = (r: number, g: number, b: number) => {
+  const { canvas, ctx } = makeCanvas(256, 256);
+  const gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+  const stops: [number, number][] = [
+    [0, 1],
+    [0.06, 0.9],
+    [0.14, 0.55],
+    [0.26, 0.26],
+    [0.42, 0.1],
+    [0.65, 0.03],
+    [1, 0],
+  ];
+  stops.forEach(([at, alpha]) => {
+    // o miolo puxa pro branco, a borda fica na cor da lâmpada
+    const white = Math.max(0, 1 - at * 6);
+    const mix = (c: number) => Math.round(c + (255 - c) * white);
+    gradient.addColorStop(at, `rgba(${mix(r)},${mix(g)},${mix(b)},${alpha})`);
+  });
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 256, 256);
+  return canvasTexture(canvas);
+};

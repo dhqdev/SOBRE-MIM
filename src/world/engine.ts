@@ -4,6 +4,8 @@ import {
   applyNight,
   bake,
   box,
+  buildHalos,
+  buildPools,
   collide,
   createKit,
   disposeMaterials,
@@ -20,19 +22,35 @@ import * as B from './buildings';
 import * as L from './life';
 import { Animal, ducks, type RideKind } from './animals';
 import { Buggy } from './buggy';
+import { Boat } from './boat';
+import { buildPark, stringLights, type Attraction } from './park';
 import { Sky, localHour } from './sky';
 import { sfx } from './audio';
-import { LAKE, POND, STREAM_PATH, canStand, groundHeight, terrainHeight, waterDistance } from './terrain';
-import { EGGS, FAIR, GATE, PENS, ROADS, SPAWN, STATIONS, TRAIL, YARD, type Station } from './stations';
+import {
+  BRIDGES,
+  LAKE,
+  POND,
+  STREAM_PATH,
+  bridgeAt,
+  canStand,
+  groundHeight,
+  terrainHeight,
+  waterDistance,
+} from './terrain';
+import { EGGS, GATE, PARK, PENS, RIDES, ROADS, SPAWN, STATIONS, TRAIL, YARD, type Station } from './stations';
 import { makeLabel, textureQuality } from './textures';
 
-export type TimeMode = 'auto' | 'dia' | 'noite';
+export type TimeMode = 'auto' | 'dia' | 'tarde' | 'noite';
+
+type Mount = Animal | Buggy | Boat;
 
 export interface RideState {
   /** No que a pessoa está montada agora. */
   riding: RideKind | null;
   /** O que dá pra montar ali do lado. */
   canMount: RideKind | null;
+  /** Texto do brinquedo (ex.: "Andar na montanha-russa"). */
+  label?: string;
 }
 
 export interface WorldEvents {
@@ -45,6 +63,8 @@ export interface WorldEvents {
   onRide: (state: RideState) => void;
   /** Mudou entre dia e noite (pro HUD trocar o ícone). */
   onNight?: (night: boolean) => void;
+  /** Recadinho rápido pra pessoa (ex.: "encoste o barco na margem"). */
+  onHint?: (text: string) => void;
 }
 
 export interface WorldHandle {
@@ -54,6 +74,8 @@ export interface WorldHandle {
   action: () => void;
   /** Botão de montar/descer. */
   toggleRide: () => void;
+  /** Embarca no brinquedo da estação `id` (botão do cartão do projeto). */
+  ride: (id: string) => void;
   setPaused: (paused: boolean) => void;
   setTimeMode: (mode: TimeMode) => void;
   restore: (visited: string[], collected: number[]) => void;
@@ -63,7 +85,14 @@ export interface WorldHandle {
   /** Só pra testes: onde está o bicho (ou o bugue) mais perto desse tipo. */
   locate: (kind: RideKind) => { x: number; z: number } | null;
   /** Só pra testes: chamadas de desenho, triângulos e fps. */
-  stats: () => { calls: number; triangles: number; fps: number; mode: string };
+  stats: () => {
+    calls: number;
+    triangles: number;
+    fps: number;
+    mode: string;
+    hour: number;
+    timeMode: string;
+  };
   dispose: () => void;
 }
 
@@ -85,7 +114,12 @@ const TECH_ICONS = [
 /** Altura da plaquinha (acima do chão) de cada estação. */
 const labelHeight = (station: Station) => {
   if (station.kind === 'milestone') return 3.7;
-  if (station.kind === 'project') return station.id === 'projeto-2' ? 4.1 : 5.0;
+  if (station.kind === 'project')
+    return (
+      { coaster: 13, carousel: 8.4, swing: 8.6, viking: 10.6, ferris: 18.2, drop: 21.5 }[
+        station.ride!.type
+      ] ?? 6
+    );
   return (
     {
       inicio: 3.8,
@@ -106,6 +140,8 @@ const SOUND: Record<RideKind, () => void> = {
   porco: sfx.oink,
   ovelha: sfx.baa,
   bugue: sfx.horn,
+  barco: sfx.splash,
+  brinquedo: sfx.ride,
 };
 
 /* ---------------------------------------------------------------- boneco */
@@ -191,7 +227,12 @@ const buildWorld = (kit: Kit) => {
   };
   G.buildTerrain(kit, ROADS, [
     { x: YARD.x, z: YARD.z, r: 7, color: '#c9a46b' },
-    { x: FAIR.x, z: FAIR.z, r: 8.5, color: '#d8c08a' },
+    ...RIDES.filter((ride) => ride.plaza > 0).map((ride) => ({
+      x: ride.bx,
+      z: ride.bz,
+      r: ride.plaza,
+      color: '#d8c08a',
+    })),
     { ...PENS.pigs, color: '#8a6440' },
     { ...PENS.horses, color: '#b8975f' },
     { x: -27, z: -50, r: 9, color: '#8fc95a' },
@@ -234,7 +275,7 @@ const buildWorld = (kit: Kit) => {
   ]);
   B.signpost(kit, 5.5, -1, [
     { text: 'Casa', toX: -17, toZ: -24 },
-    { text: 'Feira', toX: FAIR.x, toZ: FAIR.z },
+    { text: 'Parque', toX: PARK.x, toZ: PARK.z },
     { text: 'Celeiro', toX: 14, toZ: -31 },
     { text: 'Trilha', toX: TRAIL[0][0], toZ: TRAIL[0][1] },
     { text: 'Cachoeira', toX: POND.x, toZ: POND.z },
@@ -248,13 +289,10 @@ const buildWorld = (kit: Kit) => {
   };
   const labels: { sprite: THREE.Sprite; station: Station; base: THREE.Vector3 }[] = [];
   const firstMilestone = STATIONS.findIndex((s) => s.kind === 'milestone');
-  const projectStalls: THREE.Vector3[] = [];
   STATIONS.forEach((station, index) => {
     const { id, bx, bz, x, z } = station;
     if (station.kind === 'project') {
-      if (id === 'projeto-2') B.arcade(kit, bx, bz, FAIR.x, FAIR.z);
-      else B.stall(kit, bx, bz, FAIR.x, FAIR.z, station.label, station.image);
-      projectStalls.push(new THREE.Vector3(bx, terrainHeight(bx, bz) + 3.6, bz));
+      // o brinquedo é montado no parque, logo abaixo
     } else if (station.kind === 'milestone') {
       addHook(id, B.milestoneSign(kit, bx, bz, x, z, milestones[index - firstMilestone]));
     } else {
@@ -304,14 +342,22 @@ const buildWorld = (kit: Kit) => {
     labels.push({ sprite, station, base: sprite.scale.clone() });
   });
 
-  // feira: roda-gigante, bandeirinhas e arco
-  B.ferrisWheel(kit, FAIR.x + 0.5, FAIR.z + 2);
-  for (let i = 0; i < projectStalls.length - 1; i++) {
-    const a = projectStalls[i];
-    const b = projectStalls[i + 1];
-    B.bunting(kit, [a.x, a.y, a.z], [b.x, b.y, b.z]);
+  // parque dos projetos: um brinquedo por projeto, arco na entrada e varal de luzes
+  const attractions = buildPark(kit, STATIONS);
+  B.fairArch(kit, 14.6, 0.4, 6, -5, 'PARQUE DOS PROJETOS');
+  B.arcade(kit, 16.4, 5.4, 18.5, 1.2);
+  const parkPosts: [number, number][] = [];
+  for (let px = 18; px <= 52; px += 5.7) parkPosts.push([px, parkPosts.length % 2 ? 3.7 : -0.7]);
+  parkPosts.forEach(([px, pz]) => B.lampPost(kit, px, pz, false));
+  for (let i = 0; i < parkPosts.length - 1; i++) {
+    const [ax, az] = parkPosts[i];
+    const [bx2, bz2] = parkPosts[i + 1];
+    stringLights(
+      kit,
+      [ax + 0.7, terrainHeight(ax, az) + 3.0, az],
+      [bx2 + 0.7, terrainHeight(bx2, bz2) + 3.0, bz2],
+    );
   }
-  B.fairArch(kit, 14.6, 0.2, 6, -5);
 
   // terreiro e arredores da casa
   B.well(kit, YARD.x, YARD.z);
@@ -353,9 +399,15 @@ const buildWorld = (kit: Kit) => {
     [7.5, -12, false],
     [-9, -18.5, !mobile],
     [11, 0.5, false],
-    [36, -7.5, false],
     [-20, 3.8, false],
-    [33, 17.5, false],
+    [43.5, 15, false],
+    [8, 26, false],
+    [-14, 22, false],
+    [-30, 10.5, false],
+    [-12, -26, false],
+    [20, -22, false],
+    [58.5, 31, false],
+    [62, 4, false],
     [48, 34, false],
     [48, -21, false],
     [57, -42, false],
@@ -368,7 +420,10 @@ const buildWorld = (kit: Kit) => {
     [0, 70, 6],
     [-7, 61.5, 2.5],
     [YARD.x, YARD.z, 6],
-    [FAIR.x, FAIR.z, 13],
+    ...RIDES.map((ride) => [ride.bx, ride.bz, ride.type === 'coaster' ? 15 : 7] as [number, number, number]),
+    [55, 2, 6],
+    [16.4, 5.4, 2],
+    [61.4, 27.5, 3],
     [-17, -24, 8],
     [-30, -14, 5],
     [-22, -1, 5],
@@ -425,7 +480,7 @@ const buildWorld = (kit: Kit) => {
   };
 
   // mata em volta (mais densa perto da serra)
-  const trees = mobile ? 70 : 110;
+  const trees = mobile ? 110 : 175;
   for (let i = 0; i < trees; i++) {
     const spot = i < trees * 0.45 ? pick(70, 98, 3.2) : pick(12, 78, 4.2);
     if (!spot) continue;
@@ -443,7 +498,7 @@ const buildWorld = (kit: Kit) => {
     [-40, -6],
     [38, -48],
   ].forEach(([x, z]) => G.ipe(kit, x, z, 0.9));
-  for (let i = 0; i < (mobile ? 28 : 44); i++) {
+  for (let i = 0; i < (mobile ? 50 : 85); i++) {
     const spot = pick(8, 84, 2, 1.2);
     if (spot) G.bush(kit, spot[0], spot[1], 0.7 + rand() * 0.6, i % 3 === 0);
   }
@@ -453,9 +508,9 @@ const buildWorld = (kit: Kit) => {
   }
   const flowers: [number, number][] = [];
   const tufts: [number, number][] = [];
-  const flowerCount = mobile ? 170 : 300;
-  const tuftCount = mobile ? 420 : 800;
-  for (let i = 0; i < 6000 && (flowers.length < flowerCount || tufts.length < tuftCount); i++) {
+  const flowerCount = mobile ? 230 : 420;
+  const tuftCount = mobile ? 650 : 1300;
+  for (let i = 0; i < 9000 && (flowers.length < flowerCount || tufts.length < tuftCount); i++) {
     const angle = rand() * Math.PI * 2;
     const r = Math.sqrt(rand()) * 86;
     const x = Math.cos(angle) * r;
@@ -505,11 +560,21 @@ const buildWorld = (kit: Kit) => {
   ];
   ducks(kit);
   const buggy = new Buggy(kit, 7.4, 39.4, -1.5);
+  // barquinho amarrado no deque do lago
+  const deck = BRIDGES.find((bridge) => bridge.flat)!;
+  const boat = new Boat(
+    kit,
+    deck.x + Math.sin(deck.angle) * (deck.length / 2) + Math.cos(deck.angle) * 1.7,
+    deck.z + Math.cos(deck.angle) * (deck.length / 2) - Math.sin(deck.angle) * 1.7,
+    deck.angle,
+  );
 
   const eggs = EGGS.map(([x, z]) => B.goldenEgg(kit, x, z));
 
+  buildPools(kit, groundHeight);
+  buildHalos(kit);
   mergeStatics(kit);
-  return { hooks, labels, eggs, animals, buggy };
+  return { hooks, labels, eggs, animals, buggy, boat, attractions };
 };
 
 /* ---------------------------------------------------------------- motor */
@@ -525,7 +590,7 @@ export const createWorld = (canvas: HTMLCanvasElement, events: WorldEvents): Wor
 
   const kit = createKit(scene, mobile);
   const sky = new Sky(scene);
-  const { hooks, labels, eggs, animals, buggy } = buildWorld(kit);
+  const { hooks, labels, eggs, animals, buggy, boat, attractions } = buildWorld(kit);
   const player = buildPlayer(scene);
   const rideable = animals.filter((animal) => animal.rideable);
 
@@ -547,9 +612,15 @@ export const createWorld = (canvas: HTMLCanvasElement, events: WorldEvents): Wor
     visited: new Set<string>(),
     nextDust: 0,
     blinkAt: 2,
-    mount: null as Animal | Buggy | null,
-    mountable: null as Animal | Buggy | null,
+    mount: null as Mount | null,
+    mountable: null as Mount | null,
     rideKey: '',
+    /** Brinquedo do parque em que a pessoa está. */
+    attraction: null as Attraction | null,
+    /** Giro da câmera quando embarcou (a câmera da montanha-russa segue o carrinho). */
+    boardYaw: 0,
+    lastThrill: 0,
+    wheeAt: -10,
     /** Giro da câmera em volta do boneco (0 = olhando pro norte). */
     yaw: 0,
     timeMode: 'auto' as TimeMode,
@@ -558,22 +629,79 @@ export const createWorld = (canvas: HTMLCanvasElement, events: WorldEvents): Wor
   };
   const keys = new Set<string>();
 
-  const kindOf = (mount: Animal | Buggy | null): RideKind | null =>
-    !mount ? null : mount instanceof Buggy ? 'bugue' : (mount.kind as RideKind);
+  const kindOf = (mount: Mount | null): RideKind | null =>
+    !mount
+      ? null
+      : mount instanceof Buggy
+        ? 'bugue'
+        : mount instanceof Boat
+          ? 'barco'
+          : (mount.kind as RideKind);
+
+  /** Brinquedo cujo ponto de embarque está bem ali. */
+  const nearAttraction = () =>
+    state.mount || state.attraction ? null : (attractions.find((a) => a.station.id === state.nearId) ?? null);
 
   const emitRide = () => {
-    const riding = kindOf(state.mount);
-    const canMount = state.mount ? null : kindOf(state.mountable);
-    const key = `${riding}:${canMount}`;
+    const near = nearAttraction();
+    let riding = kindOf(state.mount);
+    let canMount = state.mount ? null : kindOf(state.mountable);
+    let label: string | undefined;
+    if (state.attraction) {
+      riding = 'brinquedo';
+      canMount = null;
+      label = state.attraction.station.ride!.off;
+    } else if (near) {
+      canMount = 'brinquedo';
+      label = near.station.ride!.on;
+    }
+    const key = `${riding}:${canMount}:${label}`;
     if (key === state.rideKey) return;
     state.rideKey = key;
-    events.onRide({ riding, canMount });
+    events.onRide({ riding, canMount, label });
+  };
+
+  const board = (attraction: Attraction) => {
+    if (state.mount) dismount(true);
+    state.attraction = attraction;
+    attraction.board(kit.time.value);
+    state.boardYaw = state.yaw;
+    state.vx = state.vz = state.vy = state.y = 0;
+    state.lastThrill = 0;
+    if (state.nearId) {
+      state.nearId = '';
+      events.onNear(null);
+    }
+    sfx.ride();
+    emitRide();
+  };
+
+  const leaveAttraction = () => {
+    const attraction = state.attraction;
+    if (!attraction) return;
+    attraction.leave();
+    state.attraction = null;
+    state.x = attraction.station.x;
+    state.z = attraction.station.z;
+    state.y = state.vy = state.vx = state.vz = 0;
+    // de frente pro brinquedo, pra ver o que acabou de andar
+    state.angle = Math.atan2(attraction.station.bx - state.x, attraction.station.bz - state.z);
+    player.root.quaternion.identity();
+    player.arms.forEach((arm) => arm.rotation.set(0, 0, 0));
+    sfx.close();
+    emitRide();
   };
 
   const action = () => {
     if (state.mode !== 'play' || state.paused) return;
     const mount = state.mount;
-    if (mount instanceof Buggy) {
+    if (state.attraction) {
+      sfx.whee();
+      state.wheeAt = kit.time.value;
+    } else if (mount instanceof Boat) {
+      mount.splash();
+      sfx.splash();
+    } else if (mount instanceof Buggy) {
       mount.honk(kit.time.value);
       sfx.horn();
     } else if (mount) {
@@ -585,33 +713,65 @@ export const createWorld = (canvas: HTMLCanvasElement, events: WorldEvents): Wor
     }
   };
 
-  const toggleRide = () => {
-    if (state.mode !== 'play' || state.paused) return;
+  /** Desce do bicho/bugue/barco. `force` = desce mesmo sem lugar bom (pra trocar de brinquedo). */
+  const dismount = (force = false) => {
     const mount = state.mount;
-    if (mount) {
+    if (!mount) return true;
+    const radius = mount instanceof Buggy || mount instanceof Boat ? mount.radius : mount.spec.radius;
+    let spot: [number, number] | null = null;
+    if (mount instanceof Boat) {
+      // do barco: procura chão firme (ou o deque) em volta, cada vez mais longe
+      for (let r = radius + 0.6; r < 4.6 && !spot; r += 0.5) {
+        for (let k = 0; k < 16; k++) {
+          const a = mount.angle + (k / 16) * Math.PI * 2;
+          const ox = mount.x + Math.cos(a) * r;
+          const oz = mount.z + Math.sin(a) * r;
+          if (canStand(ox, oz, 0.5) && (bridgeAt(ox, oz) || waterDistance(ox, oz) > 0.5)) {
+            spot = [ox, oz];
+            break;
+          }
+        }
+      }
+      if (!spot && !force) {
+        events.onHint?.('Encoste o barco na margem ou no deque pra descer');
+        return false;
+      }
+    } else {
       // desce do lado, onde der pra pisar
       const s = Math.sin(mount.angle);
       const c = Math.cos(mount.angle);
-      const r = (mount instanceof Buggy ? mount.radius : mount.spec.radius) + 0.7;
+      const r = radius + 0.7;
       const options: [number, number][] = [
         [mount.x + c * r, mount.z - s * r],
         [mount.x - c * r, mount.z + s * r],
         [mount.x - s * r, mount.z - c * r],
         [mount.x + s * r, mount.z + c * r],
       ];
-      const [x, z] = options.find(([ox, oz]) => canStand(ox, oz, 0.4)) ?? [mount.x, mount.z];
-      state.x = x;
-      state.z = z;
-      state.vx = state.vz = 0;
-      if (mount instanceof Buggy) mount.ridden = false;
-      else mount.release();
-      state.mount = null;
-      sfx.close();
-    } else if (state.mountable) {
+      spot = options.find(([ox, oz]) => canStand(ox, oz, 0.4)) ?? null;
+    }
+    const [x, z] = spot ?? [mount.x, mount.z];
+    state.x = x;
+    state.z = z;
+    state.vx = state.vz = 0;
+    if (mount instanceof Buggy || mount instanceof Boat) mount.ridden = false;
+    else mount.release();
+    state.mount = null;
+    player.root.quaternion.identity();
+    sfx.close();
+    return true;
+  };
+
+  const toggleRide = () => {
+    if (state.mode !== 'play' || state.paused) return;
+    if (state.attraction) leaveAttraction();
+    else if (state.mount) dismount();
+    else if (nearAttraction()) board(nearAttraction()!);
+    else if (state.mountable) {
       const target = state.mountable;
       state.mount = target;
       target.ridden = true;
       if (target instanceof Buggy) sfx.engine();
+      else if (target instanceof Boat) sfx.splash();
       else SOUND[target.kind as RideKind]?.();
       state.mountable = null;
     }
@@ -649,7 +809,9 @@ export const createWorld = (canvas: HTMLCanvasElement, events: WorldEvents): Wor
   const UP = new THREE.Vector3(0, 1, 0);
   const followOffset = () => {
     const base = portrait ? new THREE.Vector3(0, 9, 14) : new THREE.Vector3(0, 6.6, 12.5);
-    if (state.mount instanceof Buggy) base.multiplyScalar(1.3);
+    if (state.attraction) base.multiplyScalar(state.attraction.view);
+    else if (state.mount instanceof Buggy) base.multiplyScalar(1.3);
+    else if (state.mount instanceof Boat) base.multiplyScalar(1.2);
     else if (state.mount)
       base.multiplyScalar(state.mount.kind === 'cavalo' || state.mount.kind === 'vaca' ? 1.18 : 1.08);
     return base.applyAxisAngle(UP, state.yaw);
@@ -679,6 +841,8 @@ export const createWorld = (canvas: HTMLCanvasElement, events: WorldEvents): Wor
   const orbitPos = new THREE.Vector3();
   const orbitLook = new THREE.Vector3(4, 4, -6);
   const seat = new THREE.Vector3();
+  const seatQuat = new THREE.Quaternion();
+  const forward = new THREE.Vector3();
 
   /** Sobe a câmera se o morro ficar entre ela e o boneco. */
   const clearHills = (target: THREE.Vector3, focusY: number, fx: number, fz: number) => {
@@ -737,9 +901,32 @@ export const createWorld = (canvas: HTMLCanvasElement, events: WorldEvents): Wor
     const [ix, iz] = readInput();
     const boost = keys.has('shift');
     const mount = state.mount;
+    const attraction = state.attraction;
     let groundY = 0;
 
-    if (mount instanceof Buggy) {
+    if (attraction) {
+      // no brinquedo: o boneco vai junto com a cadeirinha
+      attraction.seat.updateWorldMatrix(true, false);
+      attraction.seat.getWorldPosition(seat);
+      attraction.seat.getWorldQuaternion(seatQuat);
+      player.root.position.copy(seat);
+      player.root.quaternion.copy(seatQuat);
+      state.x = seat.x;
+      state.z = seat.z;
+      groundY = groundHeight(seat.x, seat.z);
+      pose(1, t, 0, 0);
+      const thrill = attraction.thrill;
+      const cheer = t - state.wheeAt < 1 ? 1 : thrill;
+      player.arms[0].rotation.set(-0.75 - 2.25 * cheer, 0, -0.3 * cheer);
+      player.arms[1].rotation.set(-0.75 - 2.25 * cheer, 0, 0.3 * cheer);
+      player.torso.rotation.x = 0;
+      player.head.rotation.y = 0;
+      if (thrill > 0.85 && state.lastThrill <= 0.85 && t - state.wheeAt > 3) {
+        sfx.whee();
+        state.wheeAt = t;
+      }
+      state.lastThrill = thrill;
+    } else if (mount instanceof Buggy || mount instanceof Boat) {
       mount.drive(dt, t, ix, iz, boost);
       state.x = mount.x;
       state.z = mount.z;
@@ -747,10 +934,18 @@ export const createWorld = (canvas: HTMLCanvasElement, events: WorldEvents): Wor
       mount.seatPosition(seat);
       player.root.position.copy(seat);
       player.root.quaternion.copy(mount.root.quaternion);
-      groundY = groundHeight(state.x, state.z);
+      groundY = mount instanceof Boat ? seat.y + 0.4 : groundHeight(state.x, state.z);
       pose(1, t, 0, 0);
-      player.arms[0].rotation.x = -1.15;
-      player.arms[1].rotation.x = -1.15;
+      if (mount instanceof Boat) {
+        // remando
+        const stroke = mount.stroke;
+        player.arms[0].rotation.set(-1.2 + stroke * 0.45, 0, -0.2);
+        player.arms[1].rotation.set(-1.2 + stroke * 0.45, 0, 0.2);
+        player.torso.rotation.x = stroke * 0.12;
+      } else {
+        player.arms[0].rotation.x = -1.15;
+        player.arms[1].rotation.x = -1.15;
+      }
       player.head.rotation.y = -mount.steer * 0.6;
     } else {
       const speed = mount ? (mount.spec.ride ?? 7) * (boost ? 1.15 : 1) : boost ? 11 : 7.5;
@@ -818,24 +1013,25 @@ export const createWorld = (canvas: HTMLCanvasElement, events: WorldEvents): Wor
         }
       }
     }
-    if (!(mount instanceof Buggy)) buggy.idle(t, dt);
+    if (mount !== buggy) buggy.idle(t, dt);
+    if (mount !== boat) boat.idle(t, dt);
 
     const blinking = t > state.blinkAt && t < state.blinkAt + 0.12;
     if (t > state.blinkAt + 0.12) state.blinkAt = t + 2 + Math.random() * 3;
     player.eyes.forEach((eye) => (eye.scale.y = blinking ? 0.02 : 0.14));
-    player.shadow.visible = !mount;
+    player.shadow.visible = !mount && !attraction;
     player.shadow.position.set(state.x, groundY + 0.05, state.z);
     player.shadow.scale.setScalar(1 - Math.min(0.5, state.y * 0.15));
 
     // bichos
-    const busy = Boolean(mount);
+    const busy = Boolean(mount || attraction);
     Animal.eye.copy(camera.position);
     animals.forEach((animal) => animal.update(t, dt, { x: state.x, z: state.z, busy }));
 
     if (state.mode === 'play') {
       // o que dá pra montar ali do lado
-      if (!mount) {
-        let best: Animal | Buggy | null = null;
+      if (!mount && !attraction) {
+        let best: Mount | null = null;
         let bestD = Infinity;
         for (const animal of rideable) {
           const d = Math.hypot(animal.x - state.x, animal.z - state.z) - animal.spec.radius;
@@ -845,14 +1041,19 @@ export const createWorld = (canvas: HTMLCanvasElement, events: WorldEvents): Wor
           }
         }
         const dBuggy = Math.hypot(buggy.x - state.x, buggy.z - state.z) - buggy.radius;
-        if (dBuggy < 1.8 && dBuggy < bestD) best = buggy;
+        if (dBuggy < 1.8 && dBuggy < bestD) {
+          best = buggy;
+          bestD = dBuggy;
+        }
+        const dBoat = Math.hypot(boat.x - state.x, boat.z - state.z) - boat.radius;
+        if (dBoat < 2.0 && dBoat < bestD) best = boat;
         state.mountable = best;
       }
       emitRide();
 
       // estação mais perto
       let near: Station | null = null;
-      let best = Infinity;
+      let best = attraction ? -1 : Infinity;
       for (const station of STATIONS) {
         const d = Math.hypot(station.x - state.x, station.z - state.z);
         const radius = (station.kind === 'milestone' ? 2.6 : 3.0) + (mount ? 1 : 0);
@@ -867,7 +1068,7 @@ export const createWorld = (canvas: HTMLCanvasElement, events: WorldEvents): Wor
         events.onNear(near);
       }
       // ovos de ouro
-      const reach = mount instanceof Buggy ? 2.4 : mount ? 1.9 : 1.4;
+      const reach = mount instanceof Buggy || mount instanceof Boat ? 2.4 : mount ? 1.9 : 1.4;
       eggs.forEach((egg, index) => {
         if (egg.collected) return;
         const [ex, ez] = EGGS[index];
@@ -902,6 +1103,30 @@ export const createWorld = (canvas: HTMLCanvasElement, events: WorldEvents): Wor
       groundY + 2.1 + (mount ? 0.8 : 0),
       state.z - Math.cos(state.yaw) * 5,
     );
+    if (attraction && state.attraction) {
+      if (attraction.chase) {
+        // montanha-russa: câmera atrás do carrinho, olhando pra frente da pista
+        forward.set(0, 0, 1).applyQuaternion(seatQuat);
+        const behind = forward
+          .clone()
+          .setY(forward.y * 0.5)
+          .normalize();
+        behind.applyAxisAngle(UP, state.yaw - state.boardYaw);
+        camPos
+          .copy(seat)
+          .addScaledVector(behind, -6.2)
+          .add(new THREE.Vector3(0, 2.9, 0));
+        lookTarget
+          .copy(seat)
+          .addScaledVector(forward, 5)
+          .add(new THREE.Vector3(0, 1.3, 0));
+      } else {
+        camPos.copy(seat).add(offset);
+        lookTarget.copy(seat).add(new THREE.Vector3(0, 1.6, 0));
+      }
+      const floor = groundHeight(camPos.x, camPos.z) + 1.4;
+      if (camPos.y < floor) camPos.y = floor;
+    }
     if (state.mode === 'intro') {
       orbitPos.y = Math.max(orbitPos.y, groundHeight(orbitPos.x, orbitPos.z) + 18);
       camera.position.copy(orbitPos);
@@ -913,7 +1138,8 @@ export const createWorld = (canvas: HTMLCanvasElement, events: WorldEvents): Wor
       camera.lookAt(new THREE.Vector3().lerpVectors(orbitLook, lookTarget, e));
       if (state.flyT >= 1) state.mode = 'play';
     } else {
-      camera.position.lerp(camPos, 1 - Math.exp(-dt * (mount instanceof Buggy ? 6 : 5)));
+      const follow = attraction?.chase ? 9 : attraction ? 4 : mount instanceof Buggy ? 6 : 5;
+      camera.position.lerp(camPos, 1 - Math.exp(-dt * follow));
       const floor = groundHeight(camera.position.x, camera.position.z) + 1.4;
       if (camera.position.y < floor) camera.position.y = floor;
       camera.lookAt(lookTarget);
@@ -921,7 +1147,8 @@ export const createWorld = (canvas: HTMLCanvasElement, events: WorldEvents): Wor
   };
 
   // hora do dia (anda suave quando troca o modo)
-  const targetHour = () => (state.timeMode === 'dia' ? 13 : state.timeMode === 'noite' ? 22.5 : localHour());
+  const HOURS: Record<TimeMode, number | null> = { auto: null, dia: 13, tarde: 17.75, noite: 22.5 };
+  const targetHour = () => HOURS[state.timeMode] ?? localHour();
   let lastNight = -1;
   const updateTime = (dt: number, t: number) => {
     const goal = targetHour();
@@ -929,6 +1156,7 @@ export const createWorld = (canvas: HTMLCanvasElement, events: WorldEvents): Wor
     diff = ((diff + 36) % 24) - 12;
     state.hour = (state.hour + diff * Math.min(1, dt * 1.2) + 24) % 24;
     sky.update(state.hour, camera.position, t);
+    kit.env.dusk = sky.twilight;
     const night = 1 - sky.day;
     if (Math.abs(night - lastNight) > 0.002) {
       lastNight = night;
@@ -975,6 +1203,13 @@ export const createWorld = (canvas: HTMLCanvasElement, events: WorldEvents): Wor
     },
     action,
     toggleRide,
+    ride: (id) => {
+      if (state.mode !== 'play') return;
+      const attraction = attractions.find((a) => a.station.id === id);
+      if (!attraction || state.attraction === attraction) return;
+      if (state.attraction) leaveAttraction();
+      board(attraction);
+    },
     setPaused: (paused) => {
       state.paused = paused;
       if (paused) keys.clear();
@@ -991,6 +1226,7 @@ export const createWorld = (canvas: HTMLCanvasElement, events: WorldEvents): Wor
     },
     player: () => ({ x: state.x, z: state.z, angle: state.angle }),
     teleport: (x, z) => {
+      if (state.attraction) leaveAttraction();
       const mount = state.mount;
       if (mount) {
         mount.x = x;
@@ -1002,6 +1238,7 @@ export const createWorld = (canvas: HTMLCanvasElement, events: WorldEvents): Wor
     },
     locate: (kind) => {
       if (kind === 'bugue') return { x: buggy.x, z: buggy.z };
+      if (kind === 'barco') return { x: boat.x, z: boat.z };
       const animal = rideable.find((a) => a.kind === kind && !a.ridden);
       return animal ? { x: animal.x, z: animal.z } : null;
     },
@@ -1010,6 +1247,8 @@ export const createWorld = (canvas: HTMLCanvasElement, events: WorldEvents): Wor
       triangles: renderer.info.render.triangles,
       fps: Math.round(fps),
       mode: state.mode,
+      hour: Math.round(state.hour * 10) / 10,
+      timeMode: state.timeMode,
     }),
     dispose: () => {
       cancelAnimationFrame(frame);

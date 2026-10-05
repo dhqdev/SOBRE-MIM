@@ -87,6 +87,15 @@ export const sfx = {
     slide(620, 300, 0.1, 0.05, 'square');
     slide(640, 280, 0.1, 0.05, 'square', 0.16);
   },
+  /** Sineta de brinquedo do parque. */
+  ride: () => [784, 988, 1175, 1568].forEach((f, i) => tone(f, i * 0.07, 0.14, 'triangle', 0.06)),
+  /** Grito de alegria na descida: um "uiii" que cai. */
+  whee: () => slide(900, 380, 0.7, 0.03, 'triangle'),
+  /** Remada e respingo. */
+  splash: () => {
+    slide(1800, 300, 0.22, 0.03, 'sawtooth');
+    slide(1200, 200, 0.3, 0.02, 'triangle', 0.05);
+  },
   win: () =>
     [523, 659, 784, 1046, 784, 1046, 1319].forEach((f, i) =>
       tone(f, i * 0.12, 0.22, i % 2 ? 'square' : 'triangle'),

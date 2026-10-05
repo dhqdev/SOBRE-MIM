@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { terrainHeight } from './terrain';
-import { glowTexture } from './textures';
+import { softGlowTexture } from './textures';
 
 /**
  * Peças básicas do sítio: materiais, caixinhas, partículas, colisão e o
@@ -34,6 +34,11 @@ export interface Night {
   halo: THREE.SpriteMaterial;
   halos: THREE.Sprite[];
   lamps: { light: THREE.PointLight; base: number }[];
+  /** Lâmpadas coloridas (parque): cada cor é um material que acende de noite. */
+  glows: Map<string, { material: THREE.MeshBasicMaterial; on: THREE.Color; off: THREE.Color }>;
+  /** Círculos de luz no chão em volta das lâmpadas (viram uma malha só). */
+  pools: { x: number; z: number; r: number; color: THREE.Color }[];
+  poolMaterial: THREE.MeshBasicMaterial;
   hooks: ((night: number) => void)[];
 }
 
@@ -46,8 +51,8 @@ export interface Kit {
   walls: Wall[];
   particles: Particles;
   time: { value: number };
-  /** 0 = dia, 1 = noite. Atualizado pelo motor a cada quadro. */
-  env: { night: number; mobile: boolean };
+  /** 0 = dia, 1 = noite; `dusk` = quanto é pôr do sol. Atualizado pelo motor a cada quadro. */
+  env: { night: number; dusk: number; mobile: boolean };
   night: Night;
 }
 
@@ -62,12 +67,12 @@ export const createKit = (scene: THREE.Scene, mobile: boolean): Kit => {
     walls: [],
     particles: new Particles(scene),
     time: { value: 0 },
-    env: { night: 0, mobile },
+    env: { night: 0, dusk: 0, mobile },
     night: {
       bulbs: new THREE.MeshBasicMaterial({ color: '#8a7b58' }),
       windows: new THREE.MeshBasicMaterial({ color: '#4a5a6e' }),
       halo: new THREE.SpriteMaterial({
-        map: glowTexture('rgba(255,214,140,0.9)', 'rgba(255,190,110,0)'),
+        map: softGlowTexture(255, 214, 150),
         blending: THREE.AdditiveBlending,
         transparent: true,
         depthWrite: false,
@@ -75,6 +80,18 @@ export const createKit = (scene: THREE.Scene, mobile: boolean): Kit => {
       }),
       halos: [],
       lamps: [],
+      glows: new Map(),
+      pools: [],
+      poolMaterial: new THREE.MeshBasicMaterial({
+        vertexColors: true,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        polygonOffset: true,
+        polygonOffsetFactor: -3,
+        fog: true,
+      }),
       hooks: [],
     },
   };
@@ -90,11 +107,16 @@ export const applyNight = (kit: Kit, night: number) => {
   kit.env.night = night;
   kit.night.bulbs.color.lerpColors(BULB_OFF, BULB_ON, Math.min(1, night * 1.6));
   kit.night.windows.color.lerpColors(WINDOW_OFF, WINDOW_ON, Math.min(1, night * 1.3));
-  kit.night.halo.opacity = night * 0.9;
-  kit.night.halos.forEach((sprite) => (sprite.visible = night > 0.03));
+  // as lâmpadas só acendem quando já escureceu de verdade (no pôr do sol ficam apagadas)
+  const lit = Math.max(0, Math.min(1, (night - 0.25) / 0.45));
+  kit.night.halo.opacity = lit * 0.85;
+  kit.night.halos.forEach((sprite) => (sprite.visible = lit > 0.02));
+  kit.night.poolMaterial.opacity = lit;
+  kit.night.glows.forEach(({ material, on, off }) => material.color.lerpColors(off, on, lit));
+  PARTY.color.setScalar(0.5 + 0.5 * lit);
   kit.night.lamps.forEach(({ light, base }) => {
-    light.intensity = base * night;
-    light.visible = night > 0.02;
+    light.intensity = base * lit;
+    light.visible = lit > 0.02;
   });
   kit.night.hooks.forEach((hook) => hook(night));
 };
@@ -268,17 +290,187 @@ export const nightLight = (
   intensity = 9,
   distance = 14,
 ) => {
-  const light = new THREE.PointLight(color, 0, distance, 1.4);
+  // queda física (decay 2): o clarão some suave, sem aquele círculo duro no chão
+  const light = new THREE.PointLight(color, 0, distance * 1.3, 2);
   light.position.set(...position);
   parent.add(light);
-  kit.night.lamps.push({ light, base: kit.env.mobile ? intensity * 0.9 : intensity });
+  const base = intensity * 3.2;
+  kit.night.lamps.push({ light, base: kit.env.mobile ? base * 0.9 : base });
+  const spot = toWorld(parent, position[0], position[2], position[1]);
+  lightPool(kit, spot.x, spot.z, Math.min(7, distance * 0.42), color, 0.4);
   return light;
+};
+
+/** Lâmpada colorida que fica apagadinha de dia e acende de noite. */
+export const nightGlow = (kit: Kit, color: string) => {
+  let entry = kit.night.glows.get(color);
+  if (!entry) {
+    const on = new THREE.Color(color);
+    const off = on.clone().lerp(new THREE.Color('#8f8a80'), 0.55).multiplyScalar(0.85);
+    entry = { material: new THREE.MeshBasicMaterial({ color: off }), on, off };
+    // na hora de juntar as malhas, todas as cores viram um material só (cor no vértice)
+    entry.material.userData.party = on;
+    kit.night.glows.set(color, entry);
+  }
+  return entry.material;
+};
+
+/** Círculo de luz quente no chão (de noite), sem custo de luz de verdade. */
+export const lightPool = (kit: Kit, x: number, z: number, r = 4.5, color = '#ffb866', strength = 0.55) => {
+  kit.night.pools.push({ x, z, r, color: new THREE.Color(color).multiplyScalar(strength) });
+};
+
+/** Monta todos os círculos de luz numa malha só, colada no relevo. */
+export const buildPools = (kit: Kit, height: (x: number, z: number) => number) => {
+  const RINGS = 6;
+  const SEGMENTS = 20;
+  const positions: number[] = [];
+  const colors: number[] = [];
+  const index: number[] = [];
+  kit.night.pools.forEach(({ x, z, r, color }) => {
+    const start = positions.length / 3;
+    positions.push(x, height(x, z) + 0.07, z);
+    colors.push(color.r, color.g, color.b);
+    for (let ring = 1; ring <= RINGS; ring++) {
+      const k = ring / RINGS;
+      // queda suave tipo gaussiana: forte no meio, some na borda
+      const fade = Math.exp(-k * k * 3.2) * (1 - k * k);
+      for (let s = 0; s < SEGMENTS; s++) {
+        const a = (s / SEGMENTS) * Math.PI * 2;
+        const px = x + Math.cos(a) * r * k;
+        const pz = z + Math.sin(a) * r * k;
+        positions.push(px, height(px, pz) + 0.07, pz);
+        colors.push(color.r * fade, color.g * fade, color.b * fade);
+      }
+    }
+    for (let s = 0; s < SEGMENTS; s++) {
+      const n = (s + 1) % SEGMENTS;
+      index.push(start, start + 1 + n, start + 1 + s);
+    }
+    for (let ring = 1; ring < RINGS; ring++) {
+      const a0 = start + 1 + (ring - 1) * SEGMENTS;
+      const b0 = start + 1 + ring * SEGMENTS;
+      for (let s = 0; s < SEGMENTS; s++) {
+        const n = (s + 1) % SEGMENTS;
+        index.push(a0 + s, a0 + n, b0 + s, a0 + n, b0 + n, b0 + s);
+      }
+    }
+  });
+  if (!positions.length) return;
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  geometry.setIndex(index);
+  const pools = new THREE.Mesh(geometry, kit.night.poolMaterial);
+  pools.renderOrder = 2;
+  kit.night.hooks.push((night) => (pools.visible = night > 0.25));
+  kit.scene.add(pools);
+};
+
+/**
+ * Troca os brilhos das lâmpadas paradas (postes, casas, brinquedos) por uma
+ * malha só de "cartõezinhos" virados pra câmera: dezenas de sprites viram
+ * uma chamada de desenho.
+ */
+export const buildHalos = (kit: Kit) => {
+  kit.scene.updateMatrixWorld(true);
+  const isStatic = (object: THREE.Object3D) => {
+    for (let o: THREE.Object3D | null = object.parent; o; o = o.parent) {
+      if (o.userData.live) return false;
+      if (o === kit.statics) return true;
+    }
+    return false;
+  };
+  const still = kit.night.halos.filter(isStatic);
+  if (!still.length) return;
+  const centers: number[] = [];
+  const corners: number[] = [];
+  const index: number[] = [];
+  const point = new THREE.Vector3();
+  still.forEach((sprite, i) => {
+    sprite.getWorldPosition(point);
+    const size = sprite.scale.x;
+    for (const [cx, cy] of [
+      [-0.5, -0.5],
+      [0.5, -0.5],
+      [0.5, 0.5],
+      [-0.5, 0.5],
+    ]) {
+      centers.push(point.x, point.y, point.z);
+      corners.push(cx * size, cy * size);
+    }
+    index.push(i * 4, i * 4 + 1, i * 4 + 2, i * 4, i * 4 + 2, i * 4 + 3);
+    sprite.removeFromParent();
+  });
+  kit.night.halos = kit.night.halos.filter((sprite) => !still.includes(sprite));
+  const geometry = new THREE.BufferGeometry();
+  // "position" é o centro (pro frustum culling funcionar), "corner" abre o cartão
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(centers, 3));
+  geometry.setAttribute('corner', new THREE.Float32BufferAttribute(corners, 2));
+  geometry.setIndex(index);
+  const uniforms = THREE.UniformsUtils.merge([
+    THREE.UniformsLib.fog,
+    { map: { value: kit.night.halo.map }, opacity: { value: 0 } },
+  ]);
+  const material = new THREE.ShaderMaterial({
+    uniforms,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    fog: true,
+    vertexShader: /* glsl */ `
+      attribute vec2 corner;
+      varying vec2 vUv;
+      #include <fog_pars_vertex>
+      void main() {
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        mvPosition.xy += corner;
+        vUv = corner / max(abs(corner.x) * 2.0, 0.0001) + 0.5;
+        gl_Position = projectionMatrix * mvPosition;
+        #include <fog_vertex>
+      }
+    `,
+    fragmentShader: /* glsl */ `
+      uniform sampler2D map;
+      uniform float opacity;
+      varying vec2 vUv;
+      #include <fog_pars_fragment>
+      void main() {
+        vec4 tex = texture2D(map, vUv);
+        float fade = 1.0;
+        #ifdef USE_FOG
+          fade = 1.0 - smoothstep(fogNear, fogFar, vFogDepth);
+        #endif
+        gl_FragColor = vec4(tex.rgb, tex.a * opacity * fade);
+        #include <colorspace_fragment>
+      }
+    `,
+  });
+  const halos = new THREE.Mesh(geometry, material);
+  halos.frustumCulled = false;
+  halos.renderOrder = 4;
+  kit.scene.add(halos);
+  kit.night.hooks.push(() => {
+    uniforms.opacity.value = kit.night.halo.opacity;
+    halos.visible = kit.night.halo.opacity > 0.01;
+  });
+};
+
+/** Malha instanciada a partir de um modelinho (só peças foscas e lisas). */
+export const instancedFrom = (template: THREE.Object3D, count: number) => {
+  const flat = flatten(template);
+  const part = flat.children[0] as THREE.Mesh;
+  const instanced = new THREE.InstancedMesh(part.geometry, part.material, count);
+  instanced.frustumCulled = false;
+  return instanced;
 };
 
 /* ------------------------------------------------------ malha estática */
 
 /** Um material só pra tudo que é fosco e liso: a cor vai em cada vértice. */
 const PAINTED = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
+/** Todas as lampadinhas coloridas juntas: a cor vai no vértice, o brilho acende de noite. */
+const PARTY = new THREE.MeshBasicMaterial({ vertexColors: true, color: '#808080' });
 
 const isPlain = (material: THREE.Material): material is THREE.MeshLambertMaterial =>
   material instanceof THREE.MeshLambertMaterial &&
@@ -305,17 +497,18 @@ const prepare = (object: THREE.Mesh, matrix: THREE.Matrix4) => {
   geometry.clearGroups();
   geometry.applyMatrix4(matrix);
   const material = object.material as THREE.Material;
-  if (isPlain(material)) {
+  const party = material.userData.party as THREE.Color | undefined;
+  if (isPlain(material) || party) {
     const count = geometry.attributes.position.count;
     const colors = new Float32Array(count * 3);
-    const { r, g, b } = material.color;
+    const { r, g, b } = party ?? (material as THREE.MeshLambertMaterial).color;
     for (let i = 0; i < count; i++) {
       colors[i * 3] = r;
       colors[i * 3 + 1] = g;
       colors[i * 3 + 2] = b;
     }
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    return { geometry, material: PAINTED as THREE.Material };
+    return { geometry, material: (party ? PARTY : PAINTED) as THREE.Material };
   }
   return { geometry, material };
 };

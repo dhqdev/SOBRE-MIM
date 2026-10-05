@@ -50,9 +50,19 @@ export const clouds = (kit: Kit, count: number, rand: () => number) => {
   });
   const day = new THREE.Color('#ffffff');
   const dark = new THREE.Color('#4a5278');
-  kit.night.hooks.push((night) => {
-    material.color.lerpColors(day, dark, night);
-    material.emissiveIntensity = 0.25 * (1 - night);
+  const pink = new THREE.Color('#ff9fb0');
+  const white = new THREE.Color('#ffffff');
+  const orange = new THREE.Color('#ff8a4a');
+  let last = -1;
+  // no pôr do sol as nuvens ficam rosadas e com a barriga laranja
+  kit.ticks.push(() => {
+    const { night, dusk } = kit.env;
+    const key = night * 1000 + dusk;
+    if (Math.abs(key - last) < 0.001) return;
+    last = key;
+    material.color.lerpColors(day, dark, night).lerp(pink, dusk * 0.75);
+    material.emissive.copy(white).lerp(orange, dusk);
+    material.emissiveIntensity = 0.25 * (1 - night) + dusk * 0.3;
   });
   const puff = new THREE.IcosahedronGeometry(1, 1);
   for (let i = 0; i < count; i++) {

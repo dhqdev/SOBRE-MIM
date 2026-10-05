@@ -8,7 +8,9 @@ import {
   group,
   halo,
   lambert,
+  lightPool,
   live,
+  nightGlow,
   mesh,
   nightLight,
   seeded,
@@ -34,7 +36,7 @@ const CYL6 = shared(new THREE.CylinderGeometry(1, 1, 1, 6));
 const SPHERE = shared(new THREE.IcosahedronGeometry(1, 1));
 
 /** Placa de madeira com texto nítido. */
-const signBoard = (
+export const signBoard = (
   parent: THREE.Object3D,
   lines: string[],
   width: number,
@@ -95,8 +97,9 @@ export const lampPost = (kit: Kit, x: number, z: number, withLight = false) => {
   box(g, [0.36, 0.08, 0.36], [0.7, 2.66, 0], lambert('#2a2a2a'));
   box(g, [0.26, 0.34, 0.26], [0.7, 2.44, 0], kit.night.bulbs);
   box(g, [0.34, 0.06, 0.34], [0.7, 2.25, 0], lambert('#2a2a2a'));
-  halo(kit, g, [0.7, 2.44, 0], 2.2);
+  halo(kit, g, [0.7, 2.44, 0], 2.6);
   if (withLight) nightLight(kit, g, [0.7, 2.2, 0], '#ffc977', 10, 15);
+  else lightPool(kit, x + 0.7, z, 4.2);
   kit.obstacles.push({ x, z, r: 0.25 });
 };
 
@@ -900,28 +903,43 @@ export const bunting = (kit: Kit, a: [number, number, number], b: [number, numbe
 };
 
 /** Arco de entrada da feira. */
-export const fairArch = (kit: Kit, x: number, z: number, faceX: number, faceZ: number) => {
+export const fairArch = (
+  kit: Kit,
+  x: number,
+  z: number,
+  faceX: number,
+  faceZ: number,
+  text = 'FEIRA DOS PROJETOS',
+) => {
   const g = group(kit, x, z);
   faceTo(g, faceX, faceZ);
   for (const sx of [-2.4, 2.4]) {
     box(g, [0.3, 4.2, 0.3], [sx, 2.1, 0], lambert('#6d28d9'));
     solid(kit, g, sx, 0, 0.35);
-    for (let i = 0; i < 5; i++) box(g, [0.14, 0.14, 0.14], [sx, 0.8 + i * 0.75, 0.2], kit.night.bulbs);
+    for (let i = 0; i < 5; i++)
+      box(g, [0.16, 0.16, 0.16], [sx, 0.8 + i * 0.75, 0.2], nightGlow(kit, i % 2 ? '#ffd166' : '#ff7eb6'));
   }
   box(g, [5.4, 1.1, 0.2], [0, 4.4, 0], lambert('#2a1650'));
-  signBoard(g, ['FEIRA DOS PROJETOS'], 5.1, [0, 4.4, 0.11], {
+  signBoard(g, [text], 5.1, [0, 4.4, 0.11], {
     bg: '#2a1650',
     color: '#ffd166',
     size: 92,
     basic: true,
   });
-  signBoard(g, ['FEIRA DOS PROJETOS'], 5.1, [0, 4.4, -0.11], {
+  signBoard(g, [text], 5.1, [0, 4.4, -0.11], {
     bg: '#2a1650',
     color: '#ffd166',
     size: 92,
     basic: true,
   }).plane.rotation.y = Math.PI;
-  halo(kit, g, [0, 4.4, 0.4], 4);
+  for (let i = 0; i < 12; i++)
+    box(
+      g,
+      [0.14, 0.14, 0.14],
+      [-2.5 + i * (5 / 11), 5.05, 0.1],
+      nightGlow(kit, i % 2 ? '#5ec8f2' : '#ffd166'),
+    );
+  lightPool(kit, x, z, 4.5, '#ffb3d9', 0.45);
 };
 
 /* ------------------------------------------------------------------ trilha */

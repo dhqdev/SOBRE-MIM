@@ -42,11 +42,11 @@ export interface Patch {
 /* ------------------------------------------------------------------ relevo */
 
 const C = (hex: string) => new THREE.Color(hex);
-const GRASS_A = C('#74c454');
-const GRASS_B = C('#4f9f3f');
-const GRASS_DRY = C('#a4cf5c');
-const HILL = C('#5d9445');
-const ROCKY = C('#8d9a6a');
+const GRASS_A = C('#6cc24e');
+const GRASS_B = C('#46993a');
+const GRASS_DRY = C('#93cc58');
+const HILL = C('#4c943e');
+const ROCKY = C('#6f8f5a');
 const MUD = C('#8b7652');
 const BED = C('#5f5a44');
 const DIRT = C('#c9a46b');
@@ -60,7 +60,7 @@ const grassColor = (x: number, z: number, h: number, target: THREE.Color) => {
     0.07 * Math.sin(x * 1.3 + z * 0.9);
   target.copy(GRASS_A).lerp(GRASS_B, Math.max(0, Math.min(1, n)));
   const dry = smoothstep(0.55, 0.95, Math.sin(x * 0.05 + 2.1) * Math.cos(z * 0.06 - 0.4));
-  target.lerp(GRASS_DRY, dry * 0.5);
+  target.lerp(GRASS_DRY, dry * 0.3);
   target.lerp(HILL, smoothstep(5, 14, h) * 0.55);
   target.lerp(ROCKY, smoothstep(16, 26, h) * 0.7);
   return target;
@@ -169,7 +169,13 @@ export const buildTerrain = (kit: Kit, roads: Road[], patches: Patch[]) => {
 const waterShader = (flow: number, opacity = 0.9) => {
   const uniforms = THREE.UniformsUtils.merge([
     THREE.UniformsLib.fog,
-    { uTime: { value: 0 }, uDay: { value: 1 }, uFlow: { value: flow }, uOpacity: { value: opacity } },
+    {
+      uTime: { value: 0 },
+      uDay: { value: 1 },
+      uDusk: { value: 0 },
+      uFlow: { value: flow },
+      uOpacity: { value: opacity },
+    },
   ]);
   const material = new THREE.ShaderMaterial({
     uniforms,
@@ -198,6 +204,7 @@ const waterShader = (flow: number, opacity = 0.9) => {
       uniform float uTime;
       uniform float uDay;
       uniform float uFlow;
+      uniform float uDusk;
       uniform float uOpacity;
       varying float vAcross;
       varying float vAlong;
@@ -229,6 +236,8 @@ const waterShader = (flow: number, opacity = 0.9) => {
         col += sparkle * (patches * 0.32 + lines * 0.55 + smoothstep(0.8, 1.0, ripple) * 0.12 * (1.0 - uFlow));
         float foam = smoothstep(0.8, 1.02, edge + (n - 0.5) * 0.25);
         col = mix(col, sparkle * 0.95, foam * 0.7);
+        // pôr do sol refletido: a água esquenta pro laranja e rosa
+        col = mix(col, col * vec3(1.15, 0.7, 0.75) + lin(vec3(0.55, 0.3, 0.25)), uDusk * 0.55);
         gl_FragColor = vec4(col, uOpacity);
         #include <colorspace_fragment>
         #include <fog_fragment>
@@ -296,7 +305,12 @@ export const buildWater = (kit: Kit) => {
     kit.scene.add(water);
   }
 
-  kit.ticks.push((t) => materials.forEach((m) => (m.uniforms.uTime.value = t)));
+  kit.ticks.push((t) =>
+    materials.forEach((m) => {
+      m.uniforms.uTime.value = t;
+      m.uniforms.uDusk.value = kit.env.dusk;
+    }),
+  );
   driftingBits(kit);
   kit.night.hooks.push((night) => materials.forEach((m) => (m.uniforms.uDay.value = 1 - night)));
 
