@@ -61,10 +61,7 @@ const ProjectCard = ({ project, featured }: { project: Project; featured: boolea
     'h-full w-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-[1.03]';
 
   return (
-    <SpotlightCard
-      className={`group scroll-reveal ${featured ? 'md:col-span-2' : ''}`}
-      spotlightColor="rgba(167, 139, 250, 0.08)"
-    >
+    <SpotlightCard className={`group scroll-reveal ${featured ? 'md:col-span-2' : ''}`}>
       <article className={`flex h-full flex-col ${featured ? 'lg:flex-row' : ''}`}>
         {/* Mídia emoldurada */}
         <div className={`p-3 pb-0 ${featured ? 'lg:w-[55%] lg:shrink-0 lg:self-center lg:pb-3' : ''}`}>

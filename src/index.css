@@ -216,6 +216,14 @@
     }
   }
 
+  /* SpotlightCard: o brilho aparece só no contorno de 1px do card. */
+  .spotlight-border {
+    padding: 1px;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  }
+
   /* Vapor da xícara do café-o-metro. */
   .coffee-steam {
     animation: coffee-steam 2.4s ease-in-out infinite;

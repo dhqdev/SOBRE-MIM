@@ -1,8 +1,9 @@
 /**
- * Dados públicos do GitHub do David, buscados no navegador de quem visita.
- * Assim a seção fica sempre atualizada sem precisar de deploy. As respostas
- * ficam em cache no localStorage por 30 minutos, porque a API pública do
- * GitHub permite só 60 requisições por hora por IP.
+ * Dados públicos do GitHub do David. O caminho principal é a função
+ * /api/github (cache de 30 min na CDN da Vercel, então o GitHub é consultado
+ * poucas vezes por hora, não uma vez por visitante). Se ela falhar, o
+ * navegador busca direto na API pública, que só permite 60 requisições por
+ * hora por IP. A última resposta boa fica no localStorage e serve de reserva.
  */
 
 export const GITHUB_USER = 'dhqdev';
@@ -72,12 +73,12 @@ const getJson = async <T>(url: string): Promise<T> => {
   return response.json() as Promise<T>;
 };
 
-const readCache = (): GitHubData | null => {
+const readCache = (allowStale = false): GitHubData | null => {
   try {
     const raw = window.localStorage.getItem(CACHE_KEY);
     if (!raw) return null;
     const { at, data } = JSON.parse(raw) as { at: number; data: GitHubData };
-    return Date.now() - at < CACHE_TTL_MS ? data : null;
+    return allowStale || Date.now() - at < CACHE_TTL_MS ? data : null;
   } catch {
     return null;
   }
@@ -166,6 +167,32 @@ const loadGitHubData = async (): Promise<GitHubData> => {
   const cached = readCache();
   if (cached) return cached;
 
+  let data: GitHubData;
+  try {
+    data = await loadFromServer();
+  } catch {
+    try {
+      data = await loadFromBrowser();
+    } catch (error) {
+      // Tudo fora do ar (ou limite da API estourado): melhor dado velho que nada.
+      const stale = readCache(true);
+      if (stale) return stale;
+      throw error;
+    }
+  }
+  writeCache(data);
+  return data;
+};
+
+const loadFromServer = async (): Promise<GitHubData> => {
+  const response = await fetch('/api/github', { headers: { Accept: 'application/json' } });
+  if (!response.ok) throw new Error(`/api/github respondeu ${response.status}`);
+  const data = (await response.json()) as GitHubData;
+  if (!data?.profile?.login || !Array.isArray(data.repos)) throw new Error('resposta inválida de /api/github');
+  return data;
+};
+
+const loadFromBrowser = async (): Promise<GitHubData> => {
   const [user, apiRepos, contributions] = await Promise.all([
     getJson<ApiUser>(`${API}/users/${GITHUB_USER}`),
     getJson<ApiRepo[]>(`${API}/users/${GITHUB_USER}/repos?per_page=100&sort=pushed`),
@@ -215,7 +242,6 @@ const loadGitHubData = async (): Promise<GitHubData> => {
     contributions,
   };
 
-  writeCache(data);
   return data;
 };
 

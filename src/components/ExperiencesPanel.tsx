@@ -1,55 +1,35 @@
 import { useEffect, useRef } from 'react';
-import { ExternalLink, Heart, X } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, X } from 'lucide-react';
+import { scrollToSection } from '@/lib/site';
 
 interface Experience {
   title: string;
+  date: string;
+  place: string;
   image: string;
   imageAlt: string;
-  emoji?: string;
-  showHeart?: boolean;
   postUrl: string;
-  body: React.ReactNode;
+  body: string;
 }
 
 const experiences: Experience[] = [
   {
-    title: 'Nubank',
+    title: 'Palestra no Nubank',
+    date: 'Ago 2025',
+    place: 'Escritório do Nubank',
     image: '/media/nubank.webp',
-    imageAlt: 'Logotipo do Nubank',
-    showHeart: true,
+    imageAlt: 'Ilustração de David Fernandes no escritório do Nubank',
     postUrl: 'https://www.linkedin.com/feed/update/urn:li:activity:7359717825935998976/',
-    body: (
-      <>
-        Participei de uma palestra incrível no escritório da Nubank sobre{' '}
-        <strong className="font-medium text-foreground">Ciência de Dados</strong> e{' '}
-        <strong className="font-medium text-foreground">Engenharia de Software</strong>.
-        <br />
-        <br />
-        Conheci <em className="text-foreground">"o jeitinho NUUU!"</em> e um time que realmente faz a
-        diferença.
-      </>
-    ),
+    body: 'Uma tarde sobre Ciência de Dados e Engenharia de Software, conhecendo de perto o "jeitinho NU" e um time que realmente faz a diferença.',
   },
   {
     title: 'EXPOMAFE',
+    date: 'Mai 2025',
+    place: 'Estande da GRV Software',
     image: '/media/euexpo.webp',
-    imageAlt: 'David Fernandes na feira EXPOMAFE',
-    emoji: '🎉',
+    imageAlt: 'David Fernandes no estande da GRV Software na EXPOMAFE',
     postUrl: 'https://www.linkedin.com/feed/update/urn:li:activity:7326759044335980544/',
-    body: (
-      <>
-        Sabe aquele momento em que você sai da caixinha pela quantidade de ideias? Foi assim na{' '}
-        <strong className="font-medium text-foreground">EXPOMAFE</strong>.
-        <br />
-        <br />
-        Através de várias conversas com diferentes empresas, pude aprender muito e aprimorar minhas
-        habilidades de trabalho.
-        <br />
-        <br />
-        Agradeço à <strong className="font-medium text-foreground">GRV Software</strong> pela
-        oportunidade.
-      </>
-    ),
+    body: 'Um dia inteiro conversando com empresas de vários setores e saindo da caixinha com um monte de ideias. Obrigado à GRV Software pela oportunidade.',
   },
 ];
 
@@ -59,16 +39,18 @@ interface ExperiencesPanelProps {
 }
 
 /**
- * Painel lateral com as experiências. O gatilho vive na Navbar — este
- * componente só recebe o estado.
+ * Painel das experiências. No notebook abre como gaveta à direita; no celular
+ * sobe de baixo como uma folha, com a lista rolando dentro dele. O gatilho
+ * vive na Navbar; aqui só chega o estado.
  */
 const ExperiencesPanel = ({ isOpen, onClose }: ExperiencesPanelProps) => {
   const panelRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
-  // Trava o scroll da página enquanto o painel está aberto e devolve o
-  // controle ao fechar — inclusive se o componente sair da tela aberto.
+  // Trava o scroll da página enquanto o painel está aberto.
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : '';
+    if (isOpen && listRef.current) listRef.current.scrollTop = 0;
     return () => {
       document.body.style.overflow = '';
     };
@@ -77,21 +59,24 @@ const ExperiencesPanel = ({ isOpen, onClose }: ExperiencesPanelProps) => {
   // Esc fecha. Sem isso o painel fica intransponível para quem usa teclado.
   useEffect(() => {
     if (!isOpen) return;
-
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
     };
-
     document.addEventListener('keydown', onKeyDown);
-    panelRef.current?.focus();
+    panelRef.current?.focus({ preventScroll: true });
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [isOpen, onClose]);
+
+  const goToTimeline = () => {
+    onClose();
+    window.setTimeout(() => scrollToSection('trajetoria'), 350);
+  };
 
   return (
     <>
       <div
-        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] transition-opacity duration-500 ${
-          isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        className={`fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm transition-opacity duration-500 ${
+          isOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
         }`}
         onClick={onClose}
         aria-hidden="true"
@@ -102,83 +87,86 @@ const ExperiencesPanel = ({ isOpen, onClose }: ExperiencesPanelProps) => {
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Experiências"
+        aria-labelledby="titulo-experiencias"
         tabIndex={-1}
         // `inert` tira o painel fechado da ordem de tabulação e do leitor de tela.
         {...(!isOpen && { inert: '' })}
-        className={`fixed top-0 right-0 h-full w-full md:w-[480px] bg-background border-l border-border z-[80] transition-transform duration-500 ease-out overflow-hidden outline-none ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
+        className={`fixed inset-x-0 bottom-0 z-[80] flex h-[88dvh] flex-col overflow-hidden rounded-t-3xl border-t border-white/10 bg-background outline-none transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] md:inset-y-0 md:left-auto md:right-0 md:h-full md:w-[440px] md:rounded-none md:border-l md:border-t-0 ${
+          isOpen ? 'translate-x-0 translate-y-0' : 'translate-y-full md:translate-x-full md:translate-y-0'
         }`}
       >
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Fechar experiências"
-          className="absolute top-5 right-5 z-10 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-colors"
-        >
-          <X className="w-5 h-5" aria-hidden="true" />
-        </button>
+        {/* Alça (só no celular) */}
+        <div className="flex justify-center pt-3 md:hidden" aria-hidden="true">
+          <span className="h-1 w-10 rounded-full bg-white/15" />
+        </div>
 
-        <div
-          // className="h-full overflow-y-auto overflow-x-hidden overscroll-contain"
-          style={{ WebkitOverflowScrolling: 'touch' }}
-        >
-          <div className="p-6 md:p-8 pt-20 pb-4">
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
-              Experiências
-            </p>
-            <h2 className="mt-3 text-3xl md:text-4xl font-semibold tracking-[-0.03em]">
+        <header className="flex items-start justify-between gap-4 border-b border-border px-6 pb-5 pt-4 md:px-8 md:pt-8">
+          <div>
+            <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Experiências</p>
+            <h2 id="titulo-experiencias" className="mt-2 text-2xl font-semibold tracking-[-0.03em] md:text-3xl">
               Onde eu <span className="text-muted-foreground/60">estive.</span>
             </h2>
           </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fechar experiências"
+            className="-mr-2 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground"
+          >
+            <X className="h-5 w-5" aria-hidden="true" />
+          </button>
+        </header>
 
-          <div className="px-6 md:px-8 pb-8 space-y-6">
+        <div
+          ref={listRef}
+          className="flex-1 overflow-y-auto overscroll-contain px-6 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] md:px-8"
+        >
+          <ol className="list-none space-y-10 p-0">
             {experiences.map((experience) => (
-                <article
-                  key={experience.title}
-                  className={`group relative bg-card/60 rounded-2xl overflow-hidden border transition-colors duration-300 border-border hover:border-white/15`}
-                >
-                  <div className="relative w-full aspect-video bg-white/[0.02] p-8 flex items-center justify-center overflow-hidden border-b border-border">
+              <li key={experience.title}>
+                <article>
+                  <div className="overflow-hidden rounded-xl border border-white/[0.06]">
                     <img
                       src={experience.image}
+                      alt={experience.imageAlt}
                       loading="lazy"
                       decoding="async"
-                      alt={experience.imageAlt}
-                      className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700"
+                      className="aspect-[16/10] w-full object-cover object-[center_22%]"
                     />
                   </div>
-
-                  <div className="p-6 space-y-4">
-                    <h3 className="flex items-center gap-2 text-xl font-semibold tracking-tight">
-                      {experience.title}
-                      {experience.showHeart && (
-                        <Heart className="w-4 h-4 text-accent fill-accent" aria-hidden="true" />
-                      )}
-                      {experience.emoji && <span aria-hidden="true">{experience.emoji}</span>}
-                    </h3>
-
-                    <p className="text-sm leading-relaxed text-muted-foreground">
-                      {experience.body}
-                    </p>
-
-                    <a
-                      href={experience.postUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`inline-flex w-full items-center justify-center gap-2 px-4 py-2.5 border rounded-lg text-sm font-medium transition-colors duration-300 border-white/10 text-foreground hover:bg-white/[0.04]`}
-                    >
-                      Ver post completo
-                      <span className="sr-only"> sobre {experience.title} (abre em nova aba)</span>
-                      <ExternalLink className="w-4 h-4" aria-hidden="true" />
-                    </a>
-                  </div>
+                  <p className="mt-4 flex items-center gap-2 font-mono text-xs text-muted-foreground">
+                    <span className="text-accent">{experience.date}</span>
+                    <span aria-hidden="true">·</span>
+                    <span className="truncate">{experience.place}</span>
+                  </p>
+                  <h3 className="mt-2 text-xl font-semibold tracking-tight text-foreground">{experience.title}</h3>
+                  <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">{experience.body}</p>
+                  <a
+                    href={experience.postUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group mt-3 inline-flex items-center gap-1 text-sm font-medium text-foreground"
+                  >
+                    Ver post no LinkedIn
+                    <span className="sr-only"> sobre {experience.title} (abre em nova aba)</span>
+                    <ArrowUpRight
+                      className="h-4 w-4 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground"
+                      aria-hidden="true"
+                    />
+                  </a>
                 </article>
+              </li>
             ))}
+          </ol>
 
-            <p className="py-8 text-center text-sm italic text-muted-foreground/50">
-              Mais experiências em breve...
-            </p>
-          </div>
+          <button
+            type="button"
+            onClick={goToTimeline}
+            className="group mt-12 flex w-full items-center justify-between rounded-xl border border-border px-4 py-3.5 text-left text-sm text-muted-foreground transition-colors hover:border-accent/40 hover:text-foreground"
+          >
+            Ver a trajetória completa
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+          </button>
         </div>
       </div>
     </>

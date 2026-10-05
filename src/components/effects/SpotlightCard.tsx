@@ -6,13 +6,14 @@ interface SpotlightCardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Inspirado no "Spotlight Card" do React Bits: um brilho suave segue o cursor
- * dentro do card. A posição vai por variável CSS, sem re-render no React.
+ * Inspirado no "Spotlight Card" do React Bits, na versão discreta: só a borda
+ * do card acende em roxo perto do cursor (nada de mancha clara no meio). A
+ * posição vai por variável CSS, sem re-render no React.
  */
 const SpotlightCard = ({
   children,
   className = '',
-  spotlightColor = 'rgba(255, 255, 255, 0.06)',
+  spotlightColor = 'hsl(var(--accent) / 0.55)',
   ...rest
 }: SpotlightCardProps) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -34,9 +35,9 @@ const SpotlightCard = ({
     >
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 z-0 opacity-0 transition-opacity duration-500 group-hover/spot:opacity-100"
+        className="spotlight-border pointer-events-none absolute inset-0 z-[2] rounded-[inherit] opacity-0 transition-opacity duration-500 group-hover/spot:opacity-100"
         style={{
-          background: `radial-gradient(500px circle at var(--spot-x, 50%) var(--spot-y, 50%), ${spotlightColor}, transparent 45%)`,
+          background: `radial-gradient(220px circle at var(--spot-x, 50%) var(--spot-y, 50%), ${spotlightColor}, transparent 70%)`,
         }}
       />
       <div className="relative z-[1] h-full">{children}</div>

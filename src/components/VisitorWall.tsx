@@ -51,17 +51,14 @@ const VisitorWall = () => {
       </div>
 
       {pushes.length === 0 ? (
-        <SpotlightCard
-          className="p-6 text-sm text-muted-foreground"
-          spotlightColor="rgba(167, 139, 250, 0.08)"
-        >
+        <SpotlightCard className="p-6 text-sm text-muted-foreground">
           Ninguém deu push ainda. Aperte <span className="font-mono text-accent">git push</span> no terminal e
           seja o primeiro.
         </SpotlightCard>
       ) : (
         <AnimatedList className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" stagger={50}>
           {pushes.map((push) => (
-            <SpotlightCard key={push.id} className="h-full p-5" spotlightColor="rgba(167, 139, 250, 0.08)">
+            <SpotlightCard key={push.id} className="h-full p-5">
               <p className="flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
                 <GitCommitHorizontal className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
                 <span className="text-accent">{push.id}</span>

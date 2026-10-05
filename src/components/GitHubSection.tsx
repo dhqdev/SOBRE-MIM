@@ -91,16 +91,18 @@ const Skeleton = ({ className = '' }: { className?: string }) => (
 const GitHubSection = () => {
   const [data, setData] = useState<GitHubData | null>(null);
   const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
+    setFailed(false);
     fetchGitHubData()
       .then((result) => !cancelled && setData(result))
       .catch(() => !cancelled && setFailed(true));
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [attempt]);
 
   const memberSince = data ? new Date(data.profile.createdAt).getFullYear() : null;
 
@@ -129,14 +131,23 @@ const GitHubSection = () => {
         {failed && (
           <SpotlightCard className="p-8 text-center">
             <p className="text-muted-foreground">Não consegui carregar os dados do GitHub agora.</p>
-            <a
-              href={GITHUB_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-foreground"
-            >
-              Ver perfil no GitHub <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
-            </a>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-5">
+              <button
+                type="button"
+                onClick={() => setAttempt((n) => n + 1)}
+                className="text-sm font-medium text-accent underline-offset-4 hover:underline"
+              >
+                Tentar de novo
+              </button>
+              <a
+                href={GITHUB_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground"
+              >
+                Ver perfil no GitHub <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+              </a>
+            </div>
           </SpotlightCard>
         )}
 
@@ -153,7 +164,7 @@ const GitHubSection = () => {
         {data && (
           <div className="space-y-4">
             {/* Perfil + números + gráfico */}
-            <SpotlightCard className="p-6 md:p-8" spotlightColor="rgba(167, 139, 250, 0.08)">
+            <SpotlightCard className="p-6 md:p-8">
               <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-4">
                   <TiltedCard className="shrink-0 rounded-2xl">
@@ -228,7 +239,7 @@ const GitHubSection = () => {
                 </div>
                 <AnimatedList className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {data.repos.slice(0, REPOS_SHOWN).map((repo) => (
-                    <SpotlightCard key={repo.name} className="h-full" spotlightColor="rgba(167, 139, 250, 0.08)">
+                    <SpotlightCard key={repo.name} className="h-full">
                       <a
                         href={repo.url}
                         target="_blank"
@@ -276,7 +287,7 @@ const GitHubSection = () => {
               {/* Commits */}
               <div>
                 <h3 className="mb-3 px-1 text-sm font-medium text-foreground">Commits recentes</h3>
-                <SpotlightCard className="p-5" spotlightColor="rgba(167, 139, 250, 0.08)">
+                <SpotlightCard className="p-5">
                   {data.commits.length === 0 ? (
                     <p className="text-sm text-muted-foreground">Nenhum commit público recente.</p>
                   ) : (
