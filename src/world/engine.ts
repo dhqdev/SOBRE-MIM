@@ -290,7 +290,7 @@ const buildPlayer = (scene: THREE.Scene, outfit: Outfit) => {
   // vara de pesca (só aparece pescando)
   const rod = keep(new THREE.Group());
   rod.position.set(0, -0.64, 0);
-  rod.rotation.x = 1.25;
+  rod.rotation.x = -1.25;
   arms[1].add(rod);
   box(rod, [0.05, 3.0, 0.05], [0, -1.45, 0], lambert('#3b3350'));
   box(rod, [0.1, 0.1, 0.14], [0, -0.12, 0.07], lambert('#2a2a33'));

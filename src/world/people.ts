@@ -448,7 +448,7 @@ const tool = (arm: THREE.Group, job: Job) => {
     case 'pescar': {
       const rod = keep(new THREE.Group());
       rod.position.set(0, -0.62, 0);
-      rod.rotation.x = 1.25;
+      rod.rotation.x = -1.25;
       arm.add(rod);
       box(rod, [0.05, 2.8, 0.05], [0, -1.35, 0], lambert('#3b3350'));
       box(rod, [0.1, 0.1, 0.12], [0, -0.1, 0.06], lambert('#2a2a33'));
