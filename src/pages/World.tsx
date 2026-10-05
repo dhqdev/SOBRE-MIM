@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import '@fontsource/press-start-2p';
+import { ArrowLeft, Clock, Moon, Sun, Volume2, VolumeX } from 'lucide-react';
 import FlappyGame from '@/components/FlappyGame';
 import { burstConfetti } from '@/lib/confetti';
 import { downloadCv, openExternal, openGame } from '@/lib/site';
-import { createWorld, islandOutline, PIER_RECT, type WorldHandle } from '@/world/engine';
-import { FLOPPIES, STATIONS, type Station, type StationAction } from '@/world/stations';
+import { createWorld, type RideState, type TimeMode, type WorldHandle } from '@/world/engine';
+import { EGGS, FAIR, PENS, ROADS, STATIONS, type Station, type StationAction } from '@/world/stations';
+import { LAKE, POND, STREAM_HALF, STREAM_PATH, WORLD_RADIUS } from '@/world/terrain';
 import { setMuted, sfx, unlockAudio } from '@/world/audio';
+import type { RideKind } from '@/world/animals';
 
-const STORAGE_KEY = 'ilha:progresso';
-const MUTE_KEY = 'ilha:mudo';
+const STORAGE_KEY = 'sitio:progresso';
+const MUTE_KEY = 'sitio:mudo';
+const TIME_KEY = 'sitio:hora';
 
 interface Progress {
   visited: string[];
@@ -35,16 +38,41 @@ const writeProgress = (progress: Progress) => {
   }
 };
 
-const pixel = { fontFamily: '"Press Start 2P", monospace' } as const;
+const readSetting = (key: string) => {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
 
-/** Moldura de janela de RPG. */
+const saveSetting = (key: string, value: string) => {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // tudo bem
+  }
+};
+
+/** Vidro escuro com borda roxa: legível por cima do dia e da noite. */
 const panel =
-  'border-[3px] border-[#a78bfa] bg-[#1a1030]/95 shadow-[4px_4px_0_#000] [image-rendering:pixelated]';
+  'rounded-2xl border border-violet-300/30 bg-[#140c26]/80 shadow-lg shadow-black/30 backdrop-blur-md';
+
+const MOUNT_TEXT: Record<RideKind, { on: string; off: string }> = {
+  cavalo: { on: 'Montar no cavalo', off: 'Descer do cavalo' },
+  vaca: { on: 'Montar na vaca', off: 'Descer da vaca' },
+  porco: { on: 'Montar no porco', off: 'Descer do porco' },
+  ovelha: { on: 'Montar na ovelha', off: 'Descer da ovelha' },
+  bugue: { on: 'Dirigir o bugue', off: 'Sair do bugue' },
+};
+
+const TIME_LABEL: Record<TimeMode, string> = { auto: 'Hora real', dia: 'Dia', noite: 'Noite' };
+const NEXT_TIME: Record<TimeMode, TimeMode> = { auto: 'dia', dia: 'noite', noite: 'auto' };
 
 interface Toast {
   id: number;
   text: string;
-  tone: 'visit' | 'floppy' | 'win';
+  tone: 'visit' | 'egg' | 'win';
 }
 
 /* ---------------------------------------------------------------- joystick */
@@ -78,7 +106,7 @@ const Joystick = ({ onMove }: { onMove: (x: number, z: number) => void }) => {
   return (
     <div
       ref={baseRef}
-      className="relative h-32 w-32 touch-none rounded-full border-[3px] border-white/30 bg-black/30 backdrop-blur-sm"
+      className="relative h-32 w-32 touch-none rounded-full border-2 border-white/25 bg-black/30 backdrop-blur-sm"
       onPointerDown={(event) => {
         pointer.current = event.pointerId;
         event.currentTarget.setPointerCapture(event.pointerId);
@@ -90,7 +118,7 @@ const Joystick = ({ onMove }: { onMove: (x: number, z: number) => void }) => {
       aria-hidden="true"
     >
       <div
-        className="absolute left-1/2 top-1/2 h-14 w-14 rounded-full border-[3px] border-white/70 bg-[#a78bfa]/80"
+        className="absolute left-1/2 top-1/2 h-14 w-14 rounded-full border-2 border-white/70 bg-violet-500/85 shadow-lg"
         style={{ transform: `translate(calc(-50% + ${knob.x}px), calc(-50% + ${knob.y}px))` }}
       />
     </div>
@@ -98,8 +126,6 @@ const Joystick = ({ onMove }: { onMove: (x: number, z: number) => void }) => {
 };
 
 /* ---------------------------------------------------------------- minimapa */
-
-const OUTLINE = islandOutline();
 
 const Minimap = ({
   world,
@@ -114,45 +140,74 @@ const Minimap = ({
   useEffect(() => {
     const canvas = ref.current;
     if (!canvas || !world) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
     const ctx = canvas.getContext('2d')!;
-    const scale = size / 110;
+    ctx.scale(dpr, dpr);
+    const scale = size / 2 / (WORLD_RADIUS + 4);
     const toMap = (x: number, z: number) => [size / 2 + x * scale, size / 2 + z * scale] as const;
     const draw = () => {
       ctx.clearRect(0, 0, size, size);
-      ctx.fillStyle = '#2f86b5';
+      ctx.save();
       ctx.beginPath();
       ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.save();
       ctx.clip();
-      ctx.fillStyle = '#f2cf8d';
+      ctx.fillStyle = '#4f9f3f';
+      ctx.fillRect(0, 0, size, size);
+      ctx.fillStyle = '#5fae4c';
       ctx.beginPath();
-      OUTLINE.forEach(([x, z], i) => (i ? ctx.lineTo(...toMap(x, z)) : ctx.moveTo(...toMap(x, z))));
+      ctx.arc(size / 2, size / 2, WORLD_RADIUS * scale * 0.9, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = '#5fbf5a';
-      ctx.beginPath();
-      OUTLINE.forEach(([x, z], i) => {
-        const p = toMap(x * 0.86, z * 0.86);
-        if (i) ctx.lineTo(...p);
-        else ctx.moveTo(...p);
+      // estradas
+      ctx.strokeStyle = '#d6b27a';
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ROADS.forEach((road) => {
+        ctx.lineWidth = Math.max(1.2, road.width * scale);
+        ctx.beginPath();
+        road.points.forEach(([x, z], i) => (i ? ctx.lineTo(...toMap(x, z)) : ctx.moveTo(...toMap(x, z))));
+        ctx.stroke();
       });
+      // riacho, lago e poço
+      ctx.strokeStyle = '#4cb3d9';
+      ctx.lineWidth = Math.max(2, STREAM_HALF * 2 * scale);
+      ctx.beginPath();
+      STREAM_PATH.forEach(([x, z], i) => (i ? ctx.lineTo(...toMap(x, z)) : ctx.moveTo(...toMap(x, z))));
+      ctx.stroke();
+      ctx.fillStyle = '#4cb3d9';
+      for (const pool of [LAKE, POND]) {
+        ctx.beginPath();
+        ctx.arc(...toMap(pool.x, pool.z), pool.r * scale, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // currais e feira
+      ctx.strokeStyle = 'rgba(122,74,42,0.9)';
+      ctx.lineWidth = 1;
+      Object.values(PENS).forEach((p) => {
+        const [x, y] = toMap(p.x - p.w / 2, p.z - p.d / 2);
+        ctx.strokeRect(x, y, p.w * scale, p.d * scale);
+      });
+      ctx.fillStyle = 'rgba(216,192,138,0.9)';
+      ctx.beginPath();
+      ctx.arc(...toMap(FAIR.x, FAIR.z), 8 * scale, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = '#a8794a';
-      const [px, pz] = toMap(PIER_RECT.x - 1.2, PIER_RECT.z);
-      ctx.fillRect(px, pz, 2.4 * scale, PIER_RECT.length * scale);
       STATIONS.forEach((station) => {
         const [x, y] = toMap(station.x, station.z);
         const done = visited.has(station.id);
         ctx.fillStyle = done ? '#ffd166' : station.kind === 'milestone' ? '#5ec8f2' : '#a78bfa';
-        const s = station.kind === 'milestone' ? 3 : 5;
-        ctx.fillRect(Math.round(x - s / 2), Math.round(y - s / 2), s, s);
+        ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+        ctx.beginPath();
+        ctx.arc(x, y, station.kind === 'milestone' ? 1.8 : 2.8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
       });
       const player = world.player();
       const [x, y] = toMap(player.x, player.z);
       ctx.translate(x, y);
       ctx.rotate(-player.angle + Math.PI);
       ctx.fillStyle = '#ffffff';
-      ctx.strokeStyle = '#000';
+      ctx.strokeStyle = '#140c26';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(0, -6);
@@ -164,17 +219,16 @@ const Minimap = ({
       ctx.restore();
     };
     draw();
-    const timer = window.setInterval(draw, 100);
+    const timer = window.setInterval(draw, 120);
     return () => window.clearInterval(timer);
   }, [world, visited, size]);
 
   return (
     <canvas
       ref={ref}
-      width={size}
-      height={size}
-      className="rounded-full border-[3px] border-[#a78bfa] shadow-[3px_3px_0_#000]"
-      aria-label="Mapa da ilha"
+      style={{ width: size, height: size }}
+      className="rounded-full border-2 border-violet-300/60 shadow-lg shadow-black/30"
+      aria-label="Mapa do sítio"
     />
   );
 };
@@ -186,15 +240,15 @@ const World = () => {
   const [world, setWorld] = useState<WorldHandle | null>(null);
   const [started, setStarted] = useState(false);
   const [near, setNear] = useState<Station | null>(null);
+  const [ride, setRide] = useState<RideState>({ riding: null, canMount: null });
+  const [night, setNight] = useState(false);
   const [card, setCard] = useState<Station | null>(null);
   const [progress, setProgress] = useState<Progress>(readProgress);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [muted, setMutedState] = useState(() => {
-    try {
-      return window.localStorage.getItem(MUTE_KEY) === '1';
-    } catch {
-      return false;
-    }
+  const [muted, setMutedState] = useState(() => readSetting(MUTE_KEY) === '1');
+  const [timeMode, setTimeMode] = useState<TimeMode>(() => {
+    const saved = readSetting(TIME_KEY);
+    return saved === 'dia' || saved === 'noite' ? saved : 'auto';
   });
   const [touch] = useState(() => window.matchMedia('(pointer: coarse)').matches);
   const [compact, setCompact] = useState(() => window.innerWidth < 640);
@@ -210,26 +264,35 @@ const World = () => {
   }, []);
 
   useEffect(() => {
-    document.title = 'Ilha do David · portfólio 3D';
+    document.title = 'Sítio do David · portfólio 3D';
     const onResize = () => setCompact(window.innerWidth < 640);
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
   useEffect(() => setMuted(muted), [muted]);
+  useEffect(() => {
+    world?.setTimeMode(timeMode);
+    saveSetting(TIME_KEY, timeMode);
+  }, [world, timeMode]);
 
-  // monta o mundo depois que a fonte pixelada carrega (as placas usam ela)
+  // monta o mundo depois que a fonte carrega (as plaquinhas usam ela)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     let handle: WorldHandle | null = null;
     let cancelled = false;
     const fontReady =
-      document.fonts?.load('16px "Press Start 2P"').catch(() => undefined) ?? Promise.resolve();
+      Promise.all([
+        document.fonts?.load('650 44px "Geist Variable"'),
+        document.fonts?.load('750 72px "Geist Variable"'),
+      ]).catch(() => undefined) ?? Promise.resolve();
     void Promise.race([fontReady, new Promise((resolve) => setTimeout(resolve, 2500))]).then(() => {
       if (cancelled) return;
       handle = createWorld(canvas, {
         onNear: (station) => setNear(station),
+        onRide: (state) => setRide(state),
+        onNight: (value) => setNight(value),
         onVisit: (station) => {
           sfx.visit();
           setProgress((current) => {
@@ -248,10 +311,9 @@ const World = () => {
             return next;
           });
         },
-        onJump: () => sfx.jump(),
       });
       handle.restore(readProgress().visited, readProgress().collected);
-      if (import.meta.env.DEV) (window as unknown as { __ilha: WorldHandle }).__ilha = handle;
+      if (import.meta.env.DEV) (window as unknown as { __sitio: WorldHandle }).__sitio = handle;
       setWorld(handle);
     });
     return () => {
@@ -269,15 +331,15 @@ const World = () => {
       if (station && station.kind !== 'milestone') pushToast(`+1 ponto · ${station.label}`, 'visit');
       if (progress.visited.length === points) {
         sfx.win();
-        pushToast('Você explorou a ilha inteira!', 'win');
+        pushToast('Você explorou o sítio inteiro!', 'win');
         burstConfetti(window.innerWidth / 2, window.innerHeight / 3, 80);
       }
     }
     if (progress.collected.length > before.collected) {
-      pushToast(`Disquete ${progress.collected.length}/${FLOPPIES.length}`, 'floppy');
-      if (progress.collected.length === FLOPPIES.length) {
+      pushToast(`Ovo de ouro ${progress.collected.length}/${EGGS.length}`, 'egg');
+      if (progress.collected.length === EGGS.length) {
         sfx.win();
-        pushToast('Todos os disquetes! Você é demais.', 'win');
+        pushToast('Todos os ovos de ouro! Você é demais.', 'win');
         burstConfetti(window.innerWidth / 2, window.innerHeight / 3, 80);
       }
     }
@@ -304,6 +366,14 @@ const World = () => {
 
   useEffect(() => world?.setPaused(Boolean(card)), [world, card]);
 
+  const interactive = near && near.kind !== 'milestone' ? near : null;
+
+  /** Botão A / tecla E: abre a estação; se não tiver, monta ou desce. */
+  const primary = useCallback(() => {
+    if (interactive) openCard(interactive);
+    else world?.toggleRide();
+  }, [interactive, openCard, world]);
+
   // teclado da interface
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -319,11 +389,11 @@ const World = () => {
         if (key === 'escape' || key === 'e') closeCard();
         return;
       }
-      if ((key === 'e' || key === 'enter') && near) openCard(near);
+      if (key === 'e' || key === 'enter') primary();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [started, card, near, start, openCard, closeCard]);
+  }, [started, card, start, closeCard, primary]);
 
   const runAction = (action: StationAction) => {
     if (action.href) openExternal(action.href);
@@ -336,11 +406,7 @@ const World = () => {
 
   const toggleMute = () => {
     setMutedState((value) => {
-      try {
-        window.localStorage.setItem(MUTE_KEY, value ? '0' : '1');
-      } catch {
-        // tudo bem
-      }
+      saveSetting(MUTE_KEY, value ? '0' : '1');
       return !value;
     });
   };
@@ -351,80 +417,78 @@ const World = () => {
   };
 
   const milestoneNear = near?.kind === 'milestone' ? near : null;
-  const interactive = near && near.kind !== 'milestone' ? near : null;
+  const rideText = ride.riding
+    ? MOUNT_TEXT[ride.riding].off
+    : ride.canMount
+      ? MOUNT_TEXT[ride.canMount].on
+      : null;
+  const promptText = interactive ? `Abrir · ${interactive.label}` : rideText;
+  const promptKey = interactive ? 'E' : 'F';
+  const bLabel = ride.riding === 'bugue' ? 'Buzina' : 'Pular';
+  const TimeIcon = timeMode === 'auto' ? Clock : timeMode === 'dia' ? Sun : Moon;
 
   return (
-    <div className="fixed inset-0 select-none overflow-hidden bg-[#1b1038] text-white">
+    <div className="fixed inset-0 select-none overflow-hidden bg-[#0f0a1e] font-sans text-white">
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 h-full w-full"
-        style={{ imageRendering: 'pixelated' }}
-        aria-label="Ilha do David em 3D"
-      />
-      {/* scanlines e vinheta de TV antiga */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.18] mix-blend-multiply"
-        style={{ backgroundImage: 'repeating-linear-gradient(0deg, #000 0 1px, transparent 1px 3px)' }}
-        aria-hidden="true"
-      />
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ background: 'radial-gradient(ellipse at center, transparent 55%, rgba(10,0,30,0.55) 100%)' }}
-        aria-hidden="true"
+        className="absolute inset-0 h-full w-full touch-none"
+        aria-label="Sítio do David em 3D"
       />
 
       {!world && (
-        <div className="absolute inset-0 grid place-items-center bg-[#1b1038]" style={pixel}>
-          <p className="animate-pulse text-xs text-[#c4b5fd]">CARREGANDO A ILHA…</p>
+        <div className="absolute inset-0 grid place-items-center bg-[#0f0a1e]">
+          <p className="animate-pulse text-sm font-medium tracking-wide text-violet-200">
+            Abrindo a porteira do sítio…
+          </p>
         </div>
       )}
 
       {/* tela inicial */}
       {world && !started && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[radial-gradient(ellipse_at_center,rgba(27,16,56,0.82)_0%,rgba(27,16,56,0.55)_55%,rgba(27,16,56,0.2)_100%)] px-4 text-center">
-          <p className="text-[10px] tracking-widest text-[#ffd166] sm:text-xs" style={pixel}>
-            UM PORTFÓLIO PRA EXPLORAR
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[radial-gradient(ellipse_at_center,rgba(15,10,30,0.78)_0%,rgba(15,10,30,0.5)_55%,rgba(15,10,30,0.15)_100%)] px-5 text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-300 sm:text-sm">
+            Um portfólio pra explorar
           </p>
           <h1
-            className="mt-5 animate-[world-bob_2.4s_ease-in-out_infinite] text-3xl leading-tight sm:text-5xl md:text-6xl"
-            style={{
-              ...pixel,
-              color: '#fff7e6',
-              textShadow: '4px 4px 0 #7c3aed, 8px 8px 0 #2a1650',
-            }}
+            className="mt-4 animate-[world-bob_2.6s_ease-in-out_infinite] text-5xl font-extrabold leading-[0.95] tracking-tight sm:text-7xl"
+            style={{ textShadow: '0 3px 0 #6d28d9, 0 10px 30px rgba(0,0,0,0.45)' }}
           >
-            ILHA DO
+            Sítio do
             <br />
-            DAVID
+            David
           </h1>
-          <p className="mt-8 max-w-md text-sm text-white/80 sm:text-base">
-            Ande pela ilha, visite os {points} pontos e ache os {FLOPPIES.length} disquetes escondidos.
+          <p className="mt-6 max-w-md text-[15px] leading-relaxed text-white/85 sm:text-base">
+            Desça a colina, atravesse o riacho e visite os {points} pontos. Dá pra montar nos bichos, dirigir
+            o bugue e procurar os {EGGS.length} ovos de ouro.
           </p>
           <button
             type="button"
             onClick={start}
-            className={`${panel} mt-8 animate-[world-blink_1.1s_steps(2)_infinite] px-6 py-4 text-xs text-[#ffd166] sm:text-sm`}
-            style={pixel}
+            className="mt-8 rounded-full bg-violet-500 px-8 py-3.5 text-base font-semibold shadow-lg shadow-violet-900/50 transition hover:bg-violet-400 active:scale-95"
           >
-            ▶ PRESSIONE START
+            Entrar no sítio
           </button>
-          <p className="mt-6 text-[9px] leading-relaxed text-white/60 sm:text-[10px]" style={pixel}>
+          <p className="mt-5 text-xs leading-relaxed text-white/65 sm:text-sm">
             {touch
-              ? 'JOYSTICK PRA ANDAR · A PRA INTERAGIR'
-              : 'WASD/SETAS · SHIFT CORRE · ESPAÇO PULA · E INTERAGE'}
+              ? 'Joystick pra andar · arraste a tela pra girar · A interage e monta · B pula'
+              : 'WASD ou setas · arraste pra girar · Shift corre · Espaço pula · E interage · F monta'}
           </p>
           {(progress.visited.length > 0 || progress.collected.length > 0) && (
-            <p className="mt-4 text-xs text-white/60">
+            <p className="mt-3 text-xs text-white/60 sm:text-sm">
               Você já visitou {progress.visited.length}/{points} pontos e achou {progress.collected.length}/
-              {FLOPPIES.length} disquetes.{' '}
-              <button type="button" onClick={resetProgress} className="underline hover:text-white">
+              {EGGS.length} ovos.{' '}
+              <button
+                type="button"
+                onClick={resetProgress}
+                className="underline underline-offset-2 hover:text-white"
+              >
                 Recomeçar
               </button>
             </p>
           )}
           <Link
             to="/"
-            className="mt-8 text-xs text-white/60 underline-offset-4 hover:text-white hover:underline"
+            className="mt-8 text-sm text-white/65 underline-offset-4 hover:text-white hover:underline"
           >
             ← Voltar pro site normal
           </Link>
@@ -435,45 +499,56 @@ const World = () => {
       {started && (
         <>
           <div className="absolute left-3 top-3 flex items-center gap-2 sm:left-4 sm:top-4">
-            <Link to="/" className={`${panel} px-3 py-2 text-[9px] text-white sm:text-[10px]`} style={pixel}>
-              ← SITE
+            <Link to="/" className={`${panel} flex items-center gap-1.5 px-3 py-2 text-sm font-medium`}>
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              Site
             </Link>
             <button
               type="button"
               onClick={toggleMute}
-              className={`${panel} px-3 py-2 text-[9px] sm:text-[10px]`}
-              style={pixel}
+              className={`${panel} grid h-9 w-9 place-items-center`}
               aria-label={muted ? 'Ligar o som' : 'Desligar o som'}
             >
-              {muted ? 'SOM: OFF' : 'SOM: ON'}
+              {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => setTimeMode((mode) => NEXT_TIME[mode])}
+              className={`${panel} flex h-9 items-center gap-1.5 px-3 text-sm font-medium`}
+              aria-label={`Hora do dia: ${TIME_LABEL[timeMode]}. Toque pra trocar.`}
+            >
+              <TimeIcon
+                className={`h-4 w-4 ${night ? 'text-indigo-200' : 'text-amber-300'}`}
+                aria-hidden="true"
+              />
+              {!compact && TIME_LABEL[timeMode]}
             </button>
           </div>
 
           <div className="absolute right-3 top-3 flex flex-col items-end gap-2 sm:right-4 sm:top-4">
-            <div className={`${panel} space-y-2 px-3 py-2 text-[9px] sm:text-[10px]`} style={pixel}>
-              <p>
-                <span className="text-[#ffd166]">★</span> {progress.visited.length}/{points}
-              </p>
-              <p>
-                <span className="text-[#5ec8f2]">▣</span> {progress.collected.length}/{FLOPPIES.length}
-              </p>
+            <div className={`${panel} flex items-center gap-3 px-3 py-2 text-sm font-semibold tabular-nums`}>
+              <span title="Pontos visitados">
+                <span className="text-violet-300">★</span> {progress.visited.length}/{points}
+              </span>
+              <span title="Ovos de ouro">
+                <span className="text-amber-300">●</span> {progress.collected.length}/{EGGS.length}
+              </span>
             </div>
-            <Minimap world={world} visited={visited} size={compact ? 92 : 132} />
+            <Minimap world={world} visited={visited} size={compact ? 96 : 140} />
           </div>
 
           {/* avisos */}
-          <div className="pointer-events-none absolute left-1/2 top-16 flex -translate-x-1/2 flex-col items-center gap-2 sm:top-6">
+          <div className="pointer-events-none absolute left-1/2 top-16 flex -translate-x-1/2 flex-col items-center gap-2 sm:top-5">
             {toasts.map((toast) => (
               <p
                 key={toast.id}
-                className={`${panel} animate-[world-pop_0.35s_ease-out] whitespace-nowrap px-3 py-2 text-[9px] sm:text-[10px] ${
+                className={`${panel} animate-[world-pop_0.35s_ease-out] whitespace-nowrap px-4 py-2 text-sm font-semibold ${
                   toast.tone === 'win'
-                    ? 'text-[#5ee26b]'
-                    : toast.tone === 'floppy'
-                      ? 'text-[#5ec8f2]'
-                      : 'text-[#ffd166]'
+                    ? 'text-emerald-300'
+                    : toast.tone === 'egg'
+                      ? 'text-amber-300'
+                      : 'text-violet-200'
                 }`}
-                style={pixel}
               >
                 {toast.text}
               </p>
@@ -484,66 +559,76 @@ const World = () => {
           {milestoneNear && !card && (
             <div
               className={`${panel} absolute left-1/2 w-[min(92vw,30rem)] -translate-x-1/2 animate-[world-pop_0.3s_ease-out] p-4 ${
-                touch ? 'bottom-44' : 'bottom-8'
+                touch ? 'bottom-48' : 'bottom-8'
               }`}
             >
-              <p className="text-[9px] text-[#5ec8f2]" style={pixel}>
-                {milestoneNear.subtitle?.toUpperCase()}
+              <p className="text-xs font-semibold uppercase tracking-wider text-sky-300">
+                {milestoneNear.subtitle}
               </p>
-              <p className="mt-2 text-base font-semibold">{milestoneNear.title}</p>
-              <p className="mt-1 text-sm leading-relaxed text-white/75">{milestoneNear.text}</p>
+              <p className="mt-1.5 text-base font-semibold">{milestoneNear.title}</p>
+              <p className="mt-1 text-sm leading-relaxed text-white/80">{milestoneNear.text}</p>
             </div>
           )}
 
-          {/* chamada pra interagir */}
-          {interactive && !card && (
+          {/* chamada pra interagir ou montar */}
+          {promptText && !card && !milestoneNear && (
             <button
               type="button"
-              onClick={() => openCard(interactive)}
-              className={`${panel} absolute left-1/2 -translate-x-1/2 animate-[world-pop_0.3s_ease-out] px-4 py-3 text-[10px] text-white sm:text-xs ${
-                touch ? 'bottom-44' : 'bottom-8'
+              onClick={primary}
+              className={`${panel} absolute left-1/2 flex -translate-x-1/2 animate-[world-pop_0.3s_ease-out] items-center gap-2 px-4 py-2.5 text-sm font-semibold ${
+                touch ? 'bottom-48' : 'bottom-8'
               }`}
-              style={pixel}
             >
-              <span className="text-[#ffd166]">{touch ? '[A]' : '[E]'}</span>{' '}
-              {interactive.label.toUpperCase()}
+              {!touch && (
+                <kbd className="rounded-md bg-amber-300 px-1.5 py-0.5 font-mono text-xs font-bold text-[#140c26]">
+                  {promptKey}
+                </kbd>
+              )}
+              {promptText}
             </button>
           )}
 
-          {!touch && !card && !near && (
-            <p className="absolute bottom-4 left-4 text-[9px] leading-loose text-white/70" style={pixel}>
-              WASD/SETAS ANDAR · SHIFT CORRER
-              <br />
-              ESPAÇO PULAR · E INTERAGIR
+          {!touch && !card && !promptText && !milestoneNear && (
+            <p className="absolute bottom-4 left-4 text-xs leading-relaxed text-white/80 [text-shadow:0_1px_3px_rgba(0,0,0,0.6)]">
+              WASD/setas andam · Shift corre · Espaço pula · arraste pra girar
+              <br />E interage · F monta e desce
             </p>
           )}
 
           {/* controles de toque */}
           {touch && !card && (
             <>
-              <div className="absolute bottom-6 left-5">
+              <div className="absolute bottom-7 left-5">
                 <Joystick onMove={(x, z) => world?.setJoystick(x, z)} />
               </div>
               <div className="absolute bottom-8 right-5 flex items-end gap-3">
-                <button
-                  type="button"
-                  onPointerDown={() => world?.jump()}
-                  className="h-14 w-14 rounded-full border-[3px] border-white/60 bg-[#5ec8f2]/80 text-xs shadow-[3px_3px_0_#000] active:translate-y-0.5"
-                  style={pixel}
-                  aria-label="Pular"
-                >
-                  B
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openCard(interactive)}
-                  disabled={!interactive}
-                  className="mb-6 h-16 w-16 rounded-full border-[3px] border-white/60 bg-[#a78bfa]/90 text-sm shadow-[3px_3px_0_#000] transition-opacity active:translate-y-0.5 disabled:opacity-40"
-                  style={pixel}
-                  aria-label="Interagir"
-                >
-                  A
-                </button>
+                <div className="flex flex-col items-center gap-1">
+                  <button
+                    type="button"
+                    onPointerDown={() => world?.action()}
+                    className="h-14 w-14 rounded-full border-2 border-white/60 bg-sky-500/85 text-lg font-bold shadow-lg active:scale-95"
+                    aria-label={bLabel}
+                  >
+                    B
+                  </button>
+                  <span className="text-[11px] font-medium text-white/85 [text-shadow:0_1px_3px_rgba(0,0,0,0.7)]">
+                    {bLabel}
+                  </span>
+                </div>
+                <div className="mb-7 flex flex-col items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={primary}
+                    disabled={!promptText}
+                    className="h-[4.25rem] w-[4.25rem] rounded-full border-2 border-white/60 bg-violet-500/90 text-xl font-bold shadow-lg transition-opacity active:scale-95 disabled:opacity-40"
+                    aria-label={promptText ?? 'Interagir'}
+                  >
+                    A
+                  </button>
+                  <span className="max-w-[6.5rem] text-center text-[11px] font-medium leading-tight text-white/85 [text-shadow:0_1px_3px_rgba(0,0,0,0.7)]">
+                    {interactive ? 'Abrir' : (rideText ?? 'Interagir')}
+                  </span>
+                </div>
               </div>
             </>
           )}
@@ -557,41 +642,40 @@ const World = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="estacao-titulo"
-            className={`${panel} max-h-[88vh] w-[min(94vw,34rem)] animate-[world-pop_0.3s_ease-out] overflow-y-auto`}
+            className="max-h-[88vh] w-[min(94vw,34rem)] animate-[world-pop_0.3s_ease-out] overflow-y-auto rounded-2xl border border-violet-300/30 bg-[#140c26]/95 shadow-2xl shadow-black/50"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-center justify-between gap-3 border-b-[3px] border-[#a78bfa] bg-[#2a1650] px-4 py-3">
-              <p className="truncate text-[9px] text-[#ffd166] sm:text-[10px]" style={pixel}>
-                ★ {card.subtitle?.toUpperCase()}
+            <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-3">
+              <p className="truncate text-xs font-semibold uppercase tracking-wider text-amber-300">
+                {card.subtitle}
               </p>
               <button
                 type="button"
                 onClick={closeCard}
-                className="shrink-0 text-[10px] text-white/70 hover:text-white"
-                style={pixel}
+                className="shrink-0 rounded-full px-2 py-1 text-sm text-white/70 hover:bg-white/10 hover:text-white"
                 aria-label="Fechar"
               >
-                [X]
+                ✕
               </button>
             </div>
             {card.image && (
               <img
                 src={card.image}
                 alt={`Captura de tela do projeto ${card.title}`}
-                className="aspect-[16/10] w-full border-b-[3px] border-[#a78bfa] object-cover object-top"
+                className="aspect-[16/10] w-full border-b border-white/10 object-cover object-top"
               />
             )}
-            <div className="p-4 sm:p-5">
-              <h2 id="estacao-titulo" className="text-base leading-snug sm:text-lg" style={pixel}>
+            <div className="p-5">
+              <h2 id="estacao-titulo" className="text-xl font-semibold leading-snug">
                 {card.title}
               </h2>
-              <p className="mt-4 text-[15px] leading-relaxed text-white/80">{card.text}</p>
+              <p className="mt-3 text-[15px] leading-relaxed text-white/80">{card.text}</p>
               {card.tags && (
                 <ul className="mt-4 flex flex-wrap gap-1.5">
                   {card.tags.map((tag) => (
                     <li
                       key={tag}
-                      className="border-2 border-white/20 bg-white/5 px-2 py-1 font-mono text-[11px] text-white/80"
+                      className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 font-mono text-xs text-white/80"
                     >
                       {tag}
                     </li>
@@ -605,14 +689,13 @@ const World = () => {
                       key={action.label}
                       type="button"
                       onClick={() => runAction(action)}
-                      className={`border-[3px] px-3 py-2.5 text-[9px] shadow-[3px_3px_0_#000] transition-transform active:translate-y-0.5 sm:text-[10px] ${
+                      className={`rounded-full px-4 py-2 text-sm font-semibold transition active:scale-95 ${
                         index === 0
-                          ? 'border-[#ffd166] bg-[#ffd166] text-[#1a1030]'
-                          : 'border-[#a78bfa] bg-[#2a1650] text-white'
+                          ? 'bg-violet-500 text-white hover:bg-violet-400'
+                          : 'border border-white/20 bg-white/5 text-white hover:bg-white/10'
                       }`}
-                      style={pixel}
                     >
-                      {action.label.toUpperCase()}
+                      {action.label}
                     </button>
                   ))}
                 </div>

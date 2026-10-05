@@ -144,12 +144,12 @@ const CommandPalette = ({ onOpenExperiences }: CommandPaletteProps) => {
           run: () => runInTerminal('git push'),
         },
         {
-          id: 'ilha',
-          label: 'Explorar a ilha 3D',
-          hint: 'retrô',
-          keywords: ['3d', 'mundo', 'ilha', 'jogo', 'explorar'],
+          id: 'sitio',
+          label: 'Explorar o sítio 3D',
+          hint: 'novo',
+          keywords: ['3d', 'mundo', 'sitio', 'fazenda', 'ilha', 'jogo', 'explorar', 'cavalo', 'bugue'],
           icon: MapIcon,
-          run: () => navigate('/ilha'),
+          run: () => navigate('/sitio'),
         },
         {
           id: 'flappy',

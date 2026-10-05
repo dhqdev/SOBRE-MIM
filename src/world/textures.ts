@@ -1,14 +1,18 @@
 import * as THREE from 'three';
 
+export const TEXT_FONT = '"Geist Variable", system-ui, sans-serif';
 export const PIXEL_FONT = '"Press Start 2P", monospace';
 
-/** Textura de canvas com cara de pixel-art (sem suavização). */
+/** Anisotropia máxima da placa de vídeo (fica definida quando o renderer nasce). */
+export const textureQuality = { anisotropy: 4 };
+
+/** Textura de canvas nítida: texto desenhado em alta resolução, com mipmaps. */
 export const canvasTexture = (canvas: HTMLCanvasElement) => {
   const texture = new THREE.CanvasTexture(canvas);
-  texture.magFilter = THREE.NearestFilter;
-  texture.minFilter = THREE.NearestFilter;
-  texture.generateMipmaps = false;
   texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = textureQuality.anisotropy;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
   return texture;
 };
 
@@ -16,48 +20,65 @@ export const makeCanvas = (width: number, height: number) => {
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
-  const ctx = canvas.getContext('2d')!;
-  ctx.imageSmoothingEnabled = false;
-  return { canvas, ctx };
+  return { canvas, ctx: canvas.getContext('2d')! };
+};
+
+const roundRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
 };
 
 interface LabelOptions {
   color?: string;
-  background?: string;
-  border?: string;
-  /** Altura do texto em unidades do mundo. */
+  accent?: string;
+  /** Altura da plaquinha em unidades do mundo. */
   height?: number;
 }
 
-/** Plaquinha flutuante com o texto em fonte pixelada. */
+/** Plaquinha flutuante com o nome da estação (texto bem nítido). */
 export const makeLabel = (text: string, options: LabelOptions = {}) => {
-  const {
-    color = '#ffffff',
-    background = 'rgba(28, 16, 48, 0.88)',
-    border = '#a78bfa',
-    height = 0.9,
-  } = options;
-  const size = 16;
-  const padX = 10;
-  const padY = 8;
+  const { color = '#ffffff', accent = '#a78bfa', height = 0.8 } = options;
+  const size = 44;
   const probe = makeCanvas(8, 8).ctx;
-  probe.font = `${size}px ${PIXEL_FONT}`;
-  const width = Math.ceil(probe.measureText(text).width) + padX * 2;
-  const tall = size + padY * 2;
-  const { canvas, ctx } = makeCanvas(width + 4, tall + 6);
-  ctx.fillStyle = 'rgba(0,0,0,0.35)';
-  ctx.fillRect(4, 6, width, tall);
-  ctx.fillStyle = background;
-  ctx.fillRect(0, 0, width, tall);
-  ctx.fillStyle = border;
-  ctx.fillRect(0, 0, width, 2);
-  ctx.fillRect(0, tall - 2, width, 2);
-  ctx.fillRect(0, 0, 2, tall);
-  ctx.fillRect(width - 2, 0, 2, tall);
-  ctx.font = `${size}px ${PIXEL_FONT}`;
+  probe.font = `650 ${size}px ${TEXT_FONT}`;
+  const textWidth = Math.ceil(probe.measureText(text).width);
+  const padX = 30;
+  const dot = 16;
+  const width = textWidth + padX * 2 + dot + 14;
+  const tall = size + 34;
+  const { canvas, ctx } = makeCanvas(width + 8, tall + 18);
+  // sombra + balão
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  roundRect(ctx, 4, 8, width, tall, tall / 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(20, 14, 34, 0.86)';
+  roundRect(ctx, 0, 0, width, tall, tall / 2);
+  ctx.fill();
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = accent;
+  roundRect(ctx, 2, 2, width - 4, tall - 4, tall / 2 - 2);
+  ctx.stroke();
+  ctx.fillStyle = accent;
+  ctx.beginPath();
+  ctx.arc(padX + dot / 2, tall / 2, dot / 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = `650 ${size}px ${TEXT_FONT}`;
   ctx.fillStyle = color;
   ctx.textBaseline = 'middle';
-  ctx.fillText(text, padX, tall / 2 + 1);
+  ctx.fillText(text, padX + dot + 14, tall / 2 + 2);
+  // perninha do balão
+  ctx.fillStyle = 'rgba(20, 14, 34, 0.86)';
+  ctx.beginPath();
+  ctx.moveTo(width / 2 - 12, tall - 1);
+  ctx.lineTo(width / 2 + 12, tall - 1);
+  ctx.lineTo(width / 2, tall + 14);
+  ctx.closePath();
+  ctx.fill();
 
   const material = new THREE.SpriteMaterial({
     map: canvasTexture(canvas),
@@ -66,42 +87,98 @@ export const makeLabel = (text: string, options: LabelOptions = {}) => {
     fog: false,
   });
   const sprite = new THREE.Sprite(material);
-  const ratio = canvas.width / canvas.height;
-  const h = height * (canvas.height / tall) * 1.6;
-  sprite.scale.set(h * ratio, h, 1);
+  const h = height * (canvas.height / tall);
+  sprite.scale.set((h * canvas.width) / canvas.height, h, 1);
+  sprite.center.set(0.5, 0.1);
   sprite.renderOrder = 10;
   return sprite;
 };
 
-/** Placa de madeira com texto, pra portais e postes. */
+const wrap = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number) => {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let line = '';
+  words.forEach((word) => {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      lines.push(line);
+      line = word;
+    } else line = test;
+  });
+  if (line) lines.push(line);
+  return lines;
+};
+
+/** Madeira com veios, usada nas placas. */
+const paintWood = (ctx: CanvasRenderingContext2D, w: number, h: number, base: string) => {
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, w, h);
+  for (let y = 0; y < h; y += 26) {
+    ctx.fillStyle = 'rgba(0,0,0,0.10)';
+    ctx.fillRect(0, y, w, 3);
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.fillRect(0, y + 10, w, 2);
+  }
+  ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+  ctx.lineWidth = 10;
+  ctx.strokeRect(5, 5, w - 10, h - 10);
+};
+
+/** Placa de madeira com texto grande (portão, setas, nome das barracas). */
 export const makeSignTexture = (
   lines: string[],
-  options: { width?: number; color?: string; bg?: string } = {},
+  options: { width?: number; color?: string; bg?: string; size?: number } = {},
 ) => {
-  const { width = 256, color = '#fff7e6', bg = '#7a4a2a' } = options;
-  const lineH = 22;
-  const { canvas, ctx } = makeCanvas(width, lines.length * lineH + 20);
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  // veios da madeira
-  ctx.fillStyle = 'rgba(0,0,0,0.12)';
-  for (let y = 4; y < canvas.height; y += 7) ctx.fillRect(0, y, canvas.width, 2);
-  ctx.fillStyle = 'rgba(0,0,0,0.3)';
-  ctx.fillRect(0, canvas.height - 4, canvas.width, 4);
-  ctx.font = `14px ${PIXEL_FONT}`;
+  const { width = 1024, color = '#fff7e6', bg = '#7a4a2a', size = 72 } = options;
+  const lineH = size * 1.25;
+  const { canvas, ctx } = makeCanvas(width, Math.round(lines.length * lineH + size * 0.9));
+  paintWood(ctx, canvas.width, canvas.height, bg);
+  ctx.font = `750 ${size}px ${TEXT_FONT}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   lines.forEach((line, index) => {
-    ctx.fillStyle = 'rgba(0,0,0,0.45)';
-    ctx.fillText(line, width / 2 + 2, 12 + lineH * index + lineH / 2 + 2);
+    const y = size * 0.45 + lineH * index + lineH / 2;
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillText(line, width / 2 + 4, y + 4);
     ctx.fillStyle = color;
-    ctx.fillText(line, width / 2, 12 + lineH * index + lineH / 2);
+    ctx.fillText(line, width / 2, y);
   });
   return canvasTexture(canvas);
 };
 
-/** Carrega uma imagem (svg, webp…) e devolve uma textura quadrada nítida. */
-export const iconTexture = (src: string, size = 64, background = '#f4f0ff') => {
+/** Placa de um marco da carreira: data, cargo e lugar, legíveis de perto. */
+export const makeMilestoneTexture = (date: string, title: string, place: string, accent: string) => {
+  const { canvas, ctx } = makeCanvas(768, 480);
+  paintWood(ctx, 768, 480, '#8a5a34');
+  ctx.fillStyle = accent;
+  roundRect(ctx, 44, 40, 260, 70, 35);
+  ctx.fill();
+  ctx.font = `750 40px ${TEXT_FONT}`;
+  ctx.fillStyle = '#1a1030';
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'center';
+  ctx.fillText(date, 174, 77);
+  ctx.textAlign = 'left';
+  ctx.font = `750 54px ${TEXT_FONT}`;
+  ctx.fillStyle = '#fff7e6';
+  const lines = wrap(ctx, title, 680).slice(0, 3);
+  lines.forEach((line, i) => ctx.fillText(line, 44, 170 + i * 64));
+  ctx.font = `500 38px ${TEXT_FONT}`;
+  ctx.fillStyle = '#f4d9b0';
+  ctx.fillText(place, 44, 170 + lines.length * 64 + 28);
+  return canvasTexture(canvas);
+};
+
+/** Imagem de projeto bem nítida (com anisotropia e mipmaps). */
+export const imageTexture = (src: string) => {
+  const texture = new THREE.TextureLoader().load(src);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = textureQuality.anisotropy;
+  return texture;
+};
+
+/** Carrega um ícone (svg, webp…) num quadrado com fundo claro. */
+export const iconTexture = (src: string, size = 256, background = '#f4f0ff') => {
   const { canvas, ctx } = makeCanvas(size, size);
   ctx.fillStyle = background;
   ctx.fillRect(0, 0, size, size);
@@ -116,68 +193,14 @@ export const iconTexture = (src: string, size = 64, background = '#f4f0ff') => {
   return texture;
 };
 
-/** Céu do pôr do sol: gradiente roxo → rosa → laranja no horizonte. */
-export const skyMaterial = () =>
-  new THREE.ShaderMaterial({
-    side: THREE.BackSide,
-    depthWrite: false,
-    fog: false,
-    uniforms: {
-      top: { value: new THREE.Color('#1b1038') },
-      middle: { value: new THREE.Color('#6b2f8f') },
-      horizon: { value: new THREE.Color('#ff8f6b') },
-    },
-    vertexShader: /* glsl */ `
-      varying vec3 vPos;
-      void main() {
-        vPos = normalize(position);
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: /* glsl */ `
-      uniform vec3 top;
-      uniform vec3 middle;
-      uniform vec3 horizon;
-      varying vec3 vPos;
-      void main() {
-        float h = vPos.y;
-        vec3 color = h > 0.18 ? mix(middle, top, smoothstep(0.18, 0.7, h)) : mix(horizon, middle, smoothstep(-0.02, 0.18, h));
-        // faixas de cor, bem anos 90
-        color = floor(color * 24.0) / 24.0;
-        gl_FragColor = vec4(color, 1.0);
-      }
-    `,
-  });
-
-/** Sol retrô com listras que descem. */
-export const sunMaterial = (time: { value: number }) =>
-  new THREE.ShaderMaterial({
-    transparent: true,
-    depthWrite: false,
-    fog: false,
-    uniforms: { uTime: time },
-    vertexShader: /* glsl */ `
-      varying vec2 vUv;
-      void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: /* glsl */ `
-      uniform float uTime;
-      varying vec2 vUv;
-      void main() {
-        vec2 p = vUv - 0.5;
-        float d = length(p);
-        if (d > 0.5) discard;
-        vec3 color = mix(vec3(1.0, 0.35, 0.55), vec3(1.0, 0.86, 0.35), vUv.y);
-        // listras na metade de baixo, cada vez mais grossas
-        if (vUv.y < 0.48) {
-          float band = fract(vUv.y * 9.0 + uTime * 0.25);
-          float gap = mix(0.45, 0.08, vUv.y / 0.48);
-          if (band < gap) discard;
-        }
-        gl_FragColor = vec4(color, 1.0);
-      }
-    `,
-  });
+/** Disco suave (sol, lua, brilho de lâmpada). */
+export const glowTexture = (inner: string, outer = 'rgba(255,255,255,0)') => {
+  const { canvas, ctx } = makeCanvas(256, 256);
+  const gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+  gradient.addColorStop(0, inner);
+  gradient.addColorStop(0.35, inner);
+  gradient.addColorStop(1, outer);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 256, 256);
+  return canvasTexture(canvas);
+};

@@ -29,12 +29,19 @@ const tone = (freq: number, at: number, duration: number, type: OscillatorType =
   osc.stop(start + duration + 0.02);
 };
 
-const slide = (from: number, to: number, duration: number, volume = 0.04) => {
+const slide = (
+  from: number,
+  to: number,
+  duration: number,
+  volume = 0.04,
+  type: OscillatorType = 'square',
+  at = 0,
+) => {
   if (!ctx || muted) return;
-  const start = ctx.currentTime;
+  const start = ctx.currentTime + at;
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
-  osc.type = 'square';
+  osc.type = type;
   osc.frequency.setValueAtTime(from, start);
   osc.frequency.exponentialRampToValueAtTime(to, start + duration);
   gain.gain.setValueAtTime(volume, start);
@@ -54,6 +61,32 @@ export const sfx = {
   open: () => tone(660, 0, 0.08, 'triangle', 0.08),
   close: () => tone(440, 0, 0.08, 'triangle', 0.08),
   jump: () => slide(300, 700, 0.18),
+  /** Buzina do bugue: fon-fon! */
+  horn: () => {
+    tone(392, 0, 0.16, 'square', 0.05);
+    tone(330, 0, 0.16, 'square', 0.04);
+    tone(392, 0.2, 0.22, 'square', 0.05);
+    tone(330, 0.2, 0.22, 'square', 0.04);
+  },
+  engine: () => slide(90, 180, 0.5, 0.05, 'sawtooth'),
+  neigh: () => {
+    slide(700, 1300, 0.18, 0.035, 'sawtooth');
+    slide(1300, 600, 0.5, 0.035, 'sawtooth', 0.18);
+  },
+  moo: () => slide(190, 120, 0.9, 0.05, 'sawtooth'),
+  oink: () => {
+    slide(380, 240, 0.12, 0.05, 'square');
+    slide(380, 220, 0.14, 0.05, 'square', 0.16);
+  },
+  baa: () => {
+    [0, 0.07, 0.14, 0.21, 0.28].forEach((at, i) =>
+      slide(520 + (i % 2) * 40, 480, 0.08, 0.035, 'sawtooth', at),
+    );
+  },
+  bark: () => {
+    slide(620, 300, 0.1, 0.05, 'square');
+    slide(640, 280, 0.1, 0.05, 'square', 0.16);
+  },
   win: () =>
     [523, 659, 784, 1046, 784, 1046, 1319].forEach((f, i) =>
       tone(f, i * 0.12, 0.22, i % 2 ? 'square' : 'triangle'),
