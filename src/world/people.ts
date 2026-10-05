@@ -57,8 +57,8 @@ interface Spec {
 }
 
 const LAKE_BOBBERS: Record<string, [number, number]> = {
-  bank: [83, 61.5],
-  pier: [77.5, 47.5],
+  bank: [60.5, 72.5],
+  pier: [73.5, 47.5],
 };
 
 const SPECS: Spec[] = [
@@ -146,19 +146,22 @@ const SPECS: Spec[] = [
       hat: 'palha',
       hatColor: '#d9b45a',
     },
-    home: { x: 64, z: 80, fx: 76, fz: 70, wall: '#d9f0ff', roof: '#2f6db3' },
+    home: { x: 46, z: 84, fx: 54, fz: 76, wall: '#d9f0ff', roof: '#2f6db3' },
     spots: [
-      { x: 82.5, z: 66.2, fx: 83, fz: 60, stay: 22 },
-      { x: 66, z: 63, stay: 0 },
-      { x: 64.6, z: 47.8, stay: 0 },
-      { x: 73, z: 47.5, fx: 80, fz: 47.5, stay: 22 },
-      { x: 64.6, z: 47.8, stay: 0 },
-      { x: 66, z: 63, stay: 0 },
+      { x: 54.5, z: 76, fx: 60.5, fz: 72.5, stay: 22 },
+      { x: 52, z: 64, stay: 0 },
+      { x: 58, z: 56, stay: 0 },
+      { x: 60.8, z: 47.8, stay: 0 },
+      { x: 68.8, z: 47.5, fx: 75, fz: 47.5, stay: 22 },
+      { x: 60.8, z: 47.8, stay: 0 },
+      { x: 58, z: 56, stay: 0 },
+      { x: 52, z: 64, stay: 0 },
     ],
     lines: [
       'Hoje o lago tá pra peixe!',
       'Tem um tucunaré gigante aqui que ninguém consegue pegar...',
-      'Chega na beira d\'água ou no deque e aperta Pescar. Quando aparecer o "!", puxa!',
+      'Pega o barquinho no deque, rema pro meio do lago e aperta Pescar. Quando aparecer "Fisgou!", puxa!',
+      'Dizem que na Lagoa Escondida, depois do canal, tem peixe que nem cabe no barco.',
       'Peixe grande gosta de silêncio. Shhh.',
     ],
   },
@@ -257,6 +260,7 @@ const SPECS: Spec[] = [
       'As ovelhas comem que nem gente grande.',
       'Dá pra montar no cavalo, sabia? Chega perto e aperta Montar.',
       'Bicho bem tratado é bicho feliz.',
+      'Eles adoram peixe fresquinho! Pesca um no lago e traz pra eles.',
     ],
   },
   {
@@ -823,7 +827,7 @@ class Villager {
   private updateFishing(t: number, show: boolean) {
     const f = this.fishing!;
     const s = this.spec.spots[this.spot];
-    const where = s.stay ? (s.x > 78 ? LAKE_BOBBERS.bank : LAKE_BOBBERS.pier) : null;
+    const where = s.stay ? (s.z > 60 ? LAKE_BOBBERS.bank : LAKE_BOBBERS.pier) : null;
     show = show && Boolean(where);
     f.line.visible = f.bobber.visible = show;
     if (!show || !where) {
@@ -854,7 +858,7 @@ export const villagers = (kit: Kit) => {
   garden(kit, -48, 57);
   cornStand(kit, 40, 17.6, 40, 10);
   easel(kit, -17, 89.6, -17, 80);
-  fishingStool(kit, 81.4, 66.6);
+  fishingStool(kit, 53.4, 76.9);
   const doors = new Map<string, [number, number]>();
   SPECS.forEach((spec) => {
     if (!spec.home) return;
@@ -873,7 +877,7 @@ export const villagers = (kit: Kit) => {
     [-48, 57, 5],
     [40, 17.6, 3],
     [-17, 90, 2.5],
-    [81.4, 66.6, 2],
+    [53.4, 76.9, 2],
     [46, 25.5, 5],
     ...SPECS.flatMap((s) => s.spots.map((p) => [p.x, p.z, 1.2] as [number, number, number])),
   ];

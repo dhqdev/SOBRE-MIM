@@ -35,9 +35,25 @@ const STREAM_POINTS: [number, number][] = (
 ).map(([x, z]) => [S(x), S(z)]);
 
 export const POND = { x: S(-70), z: S(-17), r: 8.5 };
-/** O lago grande no fim do riacho, com uma ilhinha no meio. */
-export const LAKE = { x: 85, z: 47, r: 18 };
+/** O lago grande no fim do riacho, com uma ilhinha no meio, e o braço sul dele. */
+export const LAKE = { x: 85, z: 47, r: 21 };
+export const LAKE_SOUTH = { x: 66, z: 70, r: 11 };
 export const ISLAND = { x: 89, z: 51, r: 4.2 };
+/**
+ * Lagoa Escondida: no meio dos morros, cercada de pedra. Só se chega de barco,
+ * pelo canal que sai do lago grande.
+ */
+export const HIDDEN = { x: 110, z: 20, r: 8.5 };
+export const HIDDEN_ISLAND = { x: 112.4, z: 17.6, r: 2.4 };
+export const CHANNEL: [number, number][] = [
+  [98, 34],
+  [102.5, 31],
+  [105.5, 27],
+  [107.5, 24],
+];
+export const CHANNEL_HALF = 2.5;
+/** Águas paradas (lagos e canal), sem o riacho: pra água, peixes e plantas. */
+export const POOLS = [LAKE, LAKE_SOUTH, HIDDEN];
 
 const curve = new THREE.CatmullRomCurve3(STREAM_POINTS.map(([x, z]) => new THREE.Vector3(x, 0, z)));
 /** Pontos bem juntinhos do riacho (pra medir distância e montar a água). */
@@ -60,7 +76,7 @@ export const BRIDGES: Bridge[] = [
   { x: S(39.6), z: S(25.8), angle: -0.35, length: 13, width: 2.6 },
   { x: S(-33.4), z: S(7.6), angle: 1.0, length: 13, width: 2.2 },
   // deque de pesca entrando no lago pela margem oeste
-  { x: 69.5, z: 47.5, angle: Math.PI / 2, length: 9, width: 2.4, flat: true },
+  { x: 65, z: 47.5, angle: Math.PI / 2, length: 9, width: 2.4, flat: true },
 ];
 
 const smoothstep = (a: number, b: number, x: number) => {
@@ -80,12 +96,33 @@ export const waterDistance = (x: number, z: number) => {
     const d = Math.hypot(x - ax - dx * k, z - az - dz * k) - STREAM_HALF;
     if (d < best) best = d;
   }
-  // o lago com a ilha: dentro da ilha volta a ser terra
-  const lake = Math.max(Math.hypot(x - LAKE.x, z - LAKE.z) - LAKE.r, ISLAND.r - Math.hypot(x - ISLAND.x, z - ISLAND.z));
-  best = Math.min(best, lake);
+  best = Math.min(best, stillWater(x, z));
   best = Math.min(best, Math.hypot(x - POND.x, z - POND.z) - POND.r);
   return best;
 };
+
+/** Distância até os lagos e o canal (sem o riacho). Dentro das ilhas volta a ser terra. */
+export const stillWater = (x: number, z: number) => {
+  let best = Math.min(
+    Math.hypot(x - LAKE.x, z - LAKE.z) - LAKE.r,
+    Math.hypot(x - LAKE_SOUTH.x, z - LAKE_SOUTH.z) - LAKE_SOUTH.r,
+    Math.hypot(x - HIDDEN.x, z - HIDDEN.z) - HIDDEN.r,
+  );
+  for (let i = 0; i < CHANNEL.length - 1; i++) {
+    const [ax, az] = CHANNEL[i];
+    const [bx, bz] = CHANNEL[i + 1];
+    const dx = bx - ax;
+    const dz = bz - az;
+    const k = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz)));
+    best = Math.min(best, Math.hypot(x - ax - dx * k, z - az - dz * k) - CHANNEL_HALF);
+  }
+  for (const island of [ISLAND, HIDDEN_ISLAND])
+    best = Math.max(best, island.r - Math.hypot(x - island.x, z - island.z));
+  return best;
+};
+
+/** Está na Lagoa Escondida (ou no canal dela)? Lá os peixes são maiores. */
+export const inHidden = (x: number, z: number) => Math.hypot(x - HIDDEN.x, z - HIDDEN.z) < HIDDEN.r + 6;
 
 /** Colina da entrada (sul), morro da trilha (nordeste) e serra da cachoeira (oeste). */
 const ENTRANCE = { x: 0, z: 68, top: 13 };

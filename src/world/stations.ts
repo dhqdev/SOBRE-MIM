@@ -1,5 +1,5 @@
 import { projects } from '@/lib/projects';
-import { ISLAND, S } from './terrain';
+import { HIDDEN_ISLAND, ISLAND, S } from './terrain';
 import { milestones } from '@/lib/milestones';
 import { EMAIL, LINKEDIN_URL } from '@/lib/site';
 import { GITHUB_URL } from '@/lib/github';
@@ -293,7 +293,7 @@ const RAW_ROADS: { points: [number, number][]; width: number }[] = [
       [41.6, 20.2],
       [39.6, 25.8],
       [44.5, 30.5],
-      [46.6, 33.9],
+      [44.3, 33.9],
     ],
   },
   {
@@ -344,6 +344,8 @@ export const EGGS: [number, number][] = [
   ...RAW_EGGS.map(([x, z]) => [S(x), S(z)] as [number, number]),
   // um na ilhinha do lago: só chega de barco
   [ISLAND.x - 1.6, ISLAND.z + 1.4],
+  // e um na ilhota da Lagoa Escondida
+  [HIDDEN_ISLAND.x - 0.6, HIDDEN_ISLAND.z + 0.8],
 ];
 
 /* -------------------------------------------------------------- estações */

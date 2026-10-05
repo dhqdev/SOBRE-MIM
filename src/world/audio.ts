@@ -15,6 +15,9 @@ export const setMuted = (value: boolean) => {
   muted = value;
 };
 
+/** O contexto de áudio (depois do primeiro clique), pra música de fundo. */
+export const audioContext = () => ctx;
+
 const tone = (freq: number, at: number, duration: number, type: OscillatorType = 'square', volume = 0.05) => {
   if (!ctx || muted) return;
   const start = ctx.currentTime + at;

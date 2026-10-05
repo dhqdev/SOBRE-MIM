@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Clock, Moon, Shirt, Sun, Sunset, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, Clock, Moon, Music, Shirt, Sun, Sunset, Volume2, VolumeX } from 'lucide-react';
 import FlappyGame from '@/components/FlappyGame';
 import OutfitShop from '@/components/OutfitShop';
 import { burstConfetti } from '@/lib/confetti';
 import { downloadCv, openExternal, openGame } from '@/lib/site';
 import { createWorld, type RideState, type TimeMode, type WorldHandle } from '@/world/engine';
 import { EGGS, PENS, RIDES, ROADS, STATIONS, type Station, type StationAction } from '@/world/stations';
-import { LAKE, POND, STREAM_HALF, STREAM_PATH, WORLD_RADIUS } from '@/world/terrain';
+import { CHANNEL, CHANNEL_HALF, POND, POOLS, STREAM_HALF, STREAM_PATH, WORLD_RADIUS } from '@/world/terrain';
 import { setMuted, sfx, unlockAudio } from '@/world/audio';
+import { music, TRACKS, type TrackId } from '@/world/music';
 import type { RideKind } from '@/world/animals';
 import { outfitById, type Outfit } from '@/world/outfits';
 
@@ -18,6 +19,8 @@ const TIME_KEY = 'sitio:hora';
 const OUTFIT_KEY = 'sitio:roupa';
 const OWNED_KEY = 'sitio:roupas';
 const FISH_KEY = 'sitio:peixes';
+const MUSIC_KEY = 'sitio:musica';
+const AMBIENCE_KEY = 'sitio:ambiente';
 
 const readList = (key: string): string[] => {
   try {
@@ -199,11 +202,15 @@ const Minimap = ({
       STREAM_PATH.forEach(([x, z], i) => (i ? ctx.lineTo(...toMap(x, z)) : ctx.moveTo(...toMap(x, z))));
       ctx.stroke();
       ctx.fillStyle = '#4cb3d9';
-      for (const pool of [LAKE, POND]) {
+      for (const pool of [...POOLS, POND]) {
         ctx.beginPath();
         ctx.arc(...toMap(pool.x, pool.z), pool.r * scale, 0, Math.PI * 2);
         ctx.fill();
       }
+      ctx.lineWidth = Math.max(2, CHANNEL_HALF * 2 * scale);
+      ctx.beginPath();
+      CHANNEL.forEach(([x, z], i) => (i ? ctx.lineTo(...toMap(x, z)) : ctx.moveTo(...toMap(x, z))));
+      ctx.stroke();
       // currais e feira
       ctx.strokeStyle = 'rgba(122,74,42,0.9)';
       ctx.lineWidth = 1;
@@ -290,6 +297,13 @@ const World = () => {
   const [outfitId, setOutfitId] = useState(() => outfitById(readSetting(OUTFIT_KEY)).id);
   const [owned, setOwned] = useState<string[]>(() => readList(OWNED_KEY));
   const [fish, setFish] = useState(() => Number(readSetting(FISH_KEY)) || 0);
+  const [track, setTrack] = useState<TrackId | null>(() => {
+    const saved = readSetting(MUSIC_KEY);
+    if (saved === 'off') return null;
+    return TRACKS.find((t) => t.id === saved)?.id ?? 'manha';
+  });
+  const [ambience, setAmbience] = useState(() => readSetting(AMBIENCE_KEY) !== '0');
+  const [musicMenu, setMusicMenu] = useState(false);
 
   const visited = new Set(progress.visited);
   const points = STATIONS.length;
@@ -307,7 +321,24 @@ const World = () => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  useEffect(() => setMuted(muted), [muted]);
+  useEffect(() => {
+    setMuted(muted);
+    music.setMuted(muted);
+  }, [muted]);
+  useEffect(() => world?.setBag(fish), [world, fish]);
+  useEffect(() => music.setNight(night), [night]);
+  // música e sons da fazenda só começam depois de entrar (o navegador exige um clique)
+  useEffect(() => {
+    if (!started) return;
+    music.play(track);
+    saveSetting(MUSIC_KEY, track ?? 'off');
+  }, [started, track]);
+  useEffect(() => {
+    if (!started) return;
+    music.setAmbience(ambience);
+    saveSetting(AMBIENCE_KEY, ambience ? '1' : '0');
+  }, [started, ambience]);
+  useEffect(() => () => music.stop(), []);
   useEffect(() => {
     world?.setTimeMode(timeMode);
     saveSetting(TIME_KEY, timeMode);
@@ -333,6 +364,14 @@ const World = () => {
           onRide: (state) => setRide(state),
           onNight: (value) => setNight(value),
           onHint: (text) => pushToast(text, 'visit'),
+          onFeed: (name) => {
+            pushToast(`🐟 ${name[0].toUpperCase()}${name.slice(1)} adorou o peixe!`, 'visit');
+            setFish((count) => {
+              const next = Math.max(0, count - 1);
+              saveSetting(FISH_KEY, String(next));
+              return next;
+            });
+          },
           onCatch: (caught) => {
             if (caught.junk) pushToast(`${caught.emoji} Pescou ${caught.name}... 😅`, 'visit');
             else {
@@ -505,7 +544,13 @@ const World = () => {
   const promptText = interactive ? `Abrir · ${interactive.label}` : rideText;
   const promptKey = interactive ? 'E' : 'F';
   /** Perto de um brinquedo aparecem os dois: abrir o projeto e andar nele. */
-  const secondPrompt = interactive && ride.canMount === 'brinquedo' ? rideText : null;
+  /** Segundo botão: andar no brinquedo (F), pescar do barco ou dar peixe pro bicho (G). */
+  const secondPrompt =
+    interactive && ride.canMount === 'brinquedo' && rideText
+      ? { label: rideText, icon: '🎢', key: 'F', run: () => world?.toggleRide() }
+      : ride.extra
+        ? { ...ride.extra, key: 'G', run: () => world?.extra() }
+        : null;
   const bLabel =
     ride.riding === 'bugue'
       ? 'Buzina'
@@ -548,11 +593,27 @@ const World = () => {
             <br />
             David
           </h1>
-          <p className="mt-6 max-w-md text-[15px] leading-relaxed text-white/85 sm:text-base">
-            Desça a colina, atravesse o riacho e visite os {points} pontos. Cada projeto é um brinquedo do
-            parque, e dá pra andar em todos. Converse com o pessoal do sítio, monte nos bichos, dirija o
-            bugue, reme e pesque no lago, troque a roupa do boneco e procure os {EGGS.length} ovos de ouro.
+          <p className="mt-5 text-[15px] text-white/85 sm:text-base">
+            Ande pelo sítio e conheça meu trabalho.
           </p>
+          <ul className="mt-5 grid w-full max-w-md grid-cols-2 gap-2 text-left text-[13px] font-medium sm:text-sm">
+            {[
+              ['🎢', 'Projetos são brinquedos'],
+              ['🐴', 'Monte nos bichos'],
+              ['🚣', 'Reme e pesque no lago'],
+              ['🥚', `Ache ${EGGS.length} ovos de ouro`],
+            ].map(([icon, text]) => (
+              <li
+                key={text}
+                className="flex items-center gap-2 rounded-xl border border-white/15 bg-black/25 px-3 py-2 backdrop-blur-sm"
+              >
+                <span aria-hidden="true" className="text-lg">
+                  {icon}
+                </span>
+                {text}
+              </li>
+            ))}
+          </ul>
           <button
             type="button"
             onClick={start}
@@ -562,8 +623,8 @@ const World = () => {
           </button>
           <p className="mt-5 text-xs leading-relaxed text-white/65 sm:text-sm">
             {touch
-              ? 'Joystick pra andar · arraste a tela pra girar · A interage e monta · B pula'
-              : 'WASD ou setas · arraste pra girar · Shift corre · Espaço pula · E interage · F monta'}
+              ? 'Joystick anda · arraste pra girar · A usa · B pula'
+              : 'WASD anda · E abre · F monta · G pesca'}
           </p>
           {(progress.visited.length > 0 || progress.collected.length > 0) && (
             <p className="mt-3 text-xs text-white/60 sm:text-sm">
@@ -627,6 +688,54 @@ const World = () => {
               <Shirt className="h-4 w-4 text-pink-300" aria-hidden="true" />
               {!compact && 'Roupas'}
             </button>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setMusicMenu((open) => !open)}
+                className={`${panel} grid h-9 w-9 place-items-center`}
+                aria-label="Música de fundo"
+                aria-expanded={musicMenu}
+              >
+                <Music
+                  className={`h-4 w-4 ${track ? 'text-emerald-300' : 'text-white/60'}`}
+                  aria-hidden="true"
+                />
+              </button>
+              {musicMenu && (
+                <div
+                  className={`${panel} absolute left-0 top-11 z-10 w-56 animate-[world-pop_0.2s_ease-out] p-2 text-sm`}
+                >
+                  <p className="px-2 pb-1 pt-0.5 text-[11px] font-semibold uppercase tracking-wider text-amber-300">
+                    Música de fundo
+                  </p>
+                  {[{ id: null, name: 'Sem música', emoji: '🔇' }, ...TRACKS].map((option) => (
+                    <button
+                      key={option.id ?? 'off'}
+                      type="button"
+                      onClick={() => setTrack(option.id)}
+                      className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-white/10 ${
+                        track === option.id ? 'bg-violet-500/30 font-semibold' : ''
+                      }`}
+                    >
+                      <span aria-hidden="true">{option.emoji}</span>
+                      {option.name}
+                    </button>
+                  ))}
+                  <label className="mt-1 flex cursor-pointer items-center gap-2 border-t border-white/10 px-2 pt-2">
+                    <input
+                      type="checkbox"
+                      checked={ambience}
+                      onChange={(event) => setAmbience(event.target.checked)}
+                      className="h-4 w-4 accent-violet-500"
+                    />
+                    🐓 Sons da fazenda
+                  </label>
+                  {muted && (
+                    <p className="px-2 pt-1.5 text-[11px] text-white/55">O som está desligado no 🔈.</p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="absolute right-3 top-3 flex flex-col items-end gap-2 sm:right-4 sm:top-4">
@@ -637,7 +746,7 @@ const World = () => {
               <span title="Ovos de ouro">
                 <span className="text-amber-300">●</span> {progress.collected.length}/{EGGS.length}
               </span>
-              {fish > 0 && <span title="Peixes pescados">🐟 {fish}</span>}
+              {fish > 0 && <span title="Peixes no balde (dá pra dar pros bichos)">🐟 {fish}</span>}
             </div>
             <Minimap world={world} visited={visited} size={compact ? 96 : 140} />
           </div>
@@ -676,45 +785,46 @@ const World = () => {
           )}
 
           {/* chamada pra interagir ou montar */}
-          {promptText && !card && !shop && !milestoneNear && (
+          {(promptText || secondPrompt) && !card && !shop && !milestoneNear && (
             <div
               className={`absolute left-1/2 flex -translate-x-1/2 animate-[world-pop_0.3s_ease-out] flex-col items-center gap-2 sm:flex-row ${
                 touch ? 'bottom-48' : 'bottom-8'
               }`}
             >
-              <button
-                type="button"
-                onClick={primary}
-                className={`${panel} flex items-center gap-2 whitespace-nowrap px-4 py-2.5 text-sm font-semibold`}
-              >
-                {!touch && (
-                  <kbd className="rounded-md bg-amber-300 px-1.5 py-0.5 font-mono text-xs font-bold text-[#140c26]">
-                    {promptKey}
-                  </kbd>
-                )}
-                {promptText}
-              </button>
+              {promptText && (
+                <button
+                  type="button"
+                  onClick={primary}
+                  className={`${panel} flex items-center gap-2 whitespace-nowrap px-4 py-2.5 text-sm font-semibold`}
+                >
+                  {!touch && (
+                    <kbd className="rounded-md bg-amber-300 px-1.5 py-0.5 font-mono text-xs font-bold text-[#140c26]">
+                      {promptKey}
+                    </kbd>
+                  )}
+                  {promptText}
+                </button>
+              )}
               {secondPrompt && (
                 <button
                   type="button"
-                  onClick={() => world?.toggleRide()}
+                  onClick={secondPrompt.run}
                   className="flex items-center gap-2 whitespace-nowrap rounded-2xl border border-amber-200/50 bg-violet-600/90 px-4 py-2.5 text-sm font-semibold shadow-lg shadow-black/30 backdrop-blur-md"
                 >
                   {!touch && (
                     <kbd className="rounded-md bg-amber-300 px-1.5 py-0.5 font-mono text-xs font-bold text-[#140c26]">
-                      F
+                      {secondPrompt.key}
                     </kbd>
                   )}
-                  🎢 {secondPrompt}
+                  {secondPrompt.icon} {secondPrompt.label}
                 </button>
               )}
             </div>
           )}
 
-          {!touch && !card && !promptText && !milestoneNear && (
+          {!touch && !card && !promptText && !secondPrompt && !milestoneNear && (
             <p className="absolute bottom-4 left-4 text-xs leading-relaxed text-white/80 [text-shadow:0_1px_3px_rgba(0,0,0,0.6)]">
-              WASD/setas andam · Shift corre · Espaço pula · arraste pra girar
-              <br />E interage · F monta, pesca e anda nos brinquedos
+              WASD anda · Shift corre · Espaço pula · E abre · F monta · G pesca/dá peixe
             </p>
           )}
 

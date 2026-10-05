@@ -31,8 +31,11 @@ import { Sky, localHour } from './sky';
 import { sfx } from './audio';
 import {
   BRIDGES,
+  HIDDEN,
+  HIDDEN_ISLAND,
   ISLAND,
   LAKE,
+  LAKE_SOUTH,
   POND,
   S,
   STREAM_PATH,
@@ -43,6 +46,8 @@ import {
   terrainHeight,
   WATER_Y,
   WORLD_RADIUS,
+  inHidden,
+  stillWater,
   waterDistance,
 } from './terrain';
 import { EGGS, GATE, PARK, PENS, RIDES, ROADS, SPAWN, STATIONS, TRAIL, YARD, type Station } from './stations';
@@ -59,6 +64,8 @@ export interface RideState {
   canMount: RideKind | null;
   /** Texto do brinquedo (ex.: "Andar na montanha-russa"). */
   label?: string;
+  /** Segunda ação ali (pescar do barco, dar peixe pro bicho): tecla G. */
+  extra?: { label: string; icon: string };
 }
 
 export interface WorldEvents {
@@ -73,6 +80,8 @@ export interface WorldEvents {
   onNight?: (night: boolean) => void;
   /** Recadinho rápido pra pessoa (ex.: "encoste o barco na margem"). */
   onHint?: (text: string) => void;
+  /** Deu um peixe pro bicho (`name` = "o cavalo", "a vaca"...). */
+  onFeed?: (name: string) => void;
   /** Tirou alguma coisa da água (peixe ou tralha). */
   onCatch?: (fish: { name: string; kg: number; emoji: string; junk: boolean }) => void;
 }
@@ -90,6 +99,10 @@ export interface WorldHandle {
   setTimeMode: (mode: TimeMode) => void;
   /** Troca a roupa do boneco. */
   setOutfit: (outfit: Outfit) => void;
+  /** Quantos peixes a pessoa tem no balde (pra dar pros bichos). */
+  setBag: (count: number) => void;
+  /** Segunda ação (botão 🎣/🐟, tecla G). */
+  extra: () => void;
   restore: (visited: string[], collected: number[]) => void;
   player: () => { x: number; z: number; angle: number };
   /** Só pra testes: leva o boneco direto pra um ponto. */
@@ -173,13 +186,42 @@ const CATCHES = [
   { name: 'um patinho de borracha', emoji: '🦆', min: 0.05, max: 0.05, w: 1, color: '#ffd166', junk: true },
 ];
 
-const pickCatch = () => {
-  let roll = Math.random() * CATCHES.reduce((sum, c) => sum + c.w, 0);
+/** Na Lagoa Escondida os peixes grandes aparecem bem mais. */
+const pickCatch = (hidden: boolean) => {
+  const weight = (c: (typeof CATCHES)[number]) => (hidden && c.min >= 2 ? c.w * 4 : c.w);
+  let roll = Math.random() * CATCHES.reduce((sum, c) => sum + weight(c), 0);
   for (const c of CATCHES) {
-    roll -= c.w;
+    roll -= weight(c);
     if (roll <= 0) return c;
   }
   return CATCHES[0];
+};
+
+/** Nome do bicho com artigo, pros recadinhos ("o cavalo", "a vaca"). */
+const ANIMAL_NAME: Record<string, string> = {
+  cavalo: 'o cavalo',
+  vaca: 'a vaca',
+  porco: 'o porquinho',
+  ovelha: 'a ovelha',
+  galinha: 'a galinha',
+  cachorro: 'o cachorro',
+  pato: 'o pato',
+};
+const ANIMAL_TO: Record<string, string> = {
+  cavalo: 'pro cavalo',
+  vaca: 'pra vaca',
+  porco: 'pro porquinho',
+  ovelha: 'pra ovelha',
+  galinha: 'pra galinha',
+  cachorro: 'pro cachorro',
+  pato: 'pro pato',
+};
+const ANIMAL_SOUND: Record<string, () => void> = {
+  cavalo: sfx.neigh,
+  vaca: sfx.moo,
+  porco: sfx.oink,
+  ovelha: sfx.baa,
+  cachorro: sfx.bark,
 };
 
 /** Peixinho (ou bota) pra mostrar em cima da cabeça. */
@@ -517,12 +559,31 @@ const buildWorld = (kit: Kit) => {
   ]);
   D.trough(kit, -63.4, -41.6, Math.PI / 2);
   D.trough(kit, -40.8, -40, Math.PI / 2);
-  D.bench(kit, 72, 69.5, 80, 55);
+  D.bench(kit, 78, 74, 72, 64);
   D.bench(kit, 89.8, 49, 84, 46);
   D.bench(kit, -14, 82, -14, 70);
   D.tireSwing(kit, 56, 13);
   D.pumpkinPile(kit, -6.5, 45);
   G.roundTree(kit, 90.6, 52.6, 0.75, true, 2);
+
+  // Lagoa Escondida: cercada de pedra, só se chega de barco pelo canal
+  {
+    const ring = HIDDEN.r + 2.6;
+    const n = 80;
+    const point = (i: number): [number, number] => [
+      HIDDEN.x + Math.cos((i / n) * Math.PI * 2) * ring,
+      HIDDEN.z + Math.sin((i / n) * Math.PI * 2) * ring,
+    ];
+    for (let i = 0; i < n; i++) {
+      const [ax, az] = point(i);
+      const [bx, bz] = point(i + 1);
+      if (stillWater((ax + bx) / 2, (az + bz) / 2) < -0.3) continue;
+      kit.walls.push({ ax, az, bx, bz });
+      if (i % 3 === 0) G.rock(kit, ax, az, 1.5 + ((i * 7) % 5) * 0.22, false);
+    }
+    G.pine(kit, HIDDEN_ISLAND.x + 0.9, HIDDEN_ISLAND.z - 0.8, 0.8);
+    B.signpost(kit, 104.5, 38, [{ text: 'Lagoa Escondida', toX: HIDDEN.x, toZ: HIDDEN.z }]);
+  }
 
   // roças, moinho e garagem
   G.field(kit, FIELDS.milho, 'milho');
@@ -557,7 +618,7 @@ const buildWorld = (kit: Kit) => {
     [S(-30), S(10.5), false],
     [S(-12), S(-26), false],
     [S(20), S(-22), false],
-    [65, 44, false],
+    [61.5, 43, false],
     [62, 50.5, false],
     [S(48), S(-21), false],
     [S(57), S(-42), false],
@@ -601,7 +662,10 @@ const buildWorld = (kit: Kit) => {
     [44.8, 61.8, 3],
     [-63.4, -41.6, 1.4],
     [-40.8, -40, 1.4],
-    [72, 69.5, 1.2],
+    [78, 74, 1.2],
+    [LAKE_SOUTH.x, LAKE_SOUTH.z, LAKE_SOUTH.r + 3],
+    [HIDDEN.x, HIDDEN.z, HIDDEN.r + 4],
+    [104.5, 38, 1.5],
     [-14, 82, 1.2],
     [56, 13, 3.5],
     [-6.5, 45, 1.5],
@@ -657,12 +721,14 @@ const buildWorld = (kit: Kit) => {
     taken.push([x, z]);
     G.willow(kit, x, z, 0.85 + rand() * 0.3);
   }
-  for (let a = 0; a < Math.PI * 2; a += 0.42) {
-    const x = LAKE.x + Math.cos(a) * (LAKE.r + 3.6);
-    const z = LAKE.z + Math.sin(a) * (LAKE.r + 3.6);
-    if (Math.hypot(x, z) > WORLD_RADIUS - 6 || !free(x, z, 1.4)) continue;
-    taken.push([x, z]);
-    G.willow(kit, x, z, 0.9 + rand() * 0.3);
+  for (const pool of [LAKE, LAKE_SOUTH]) {
+    for (let a = 0; a < Math.PI * 2; a += 9 / pool.r) {
+      const x = pool.x + Math.cos(a) * (pool.r + 3.6);
+      const z = pool.z + Math.sin(a) * (pool.r + 3.6);
+      if (Math.hypot(x, z) > WORLD_RADIUS - 6 || !free(x, z, 1.4)) continue;
+      taken.push([x, z]);
+      G.willow(kit, x, z, 0.9 + rand() * 0.3);
+    }
   }
 
   // mata em volta (mais densa perto da serra)
@@ -834,6 +900,10 @@ export const createWorld = (
     },
     /** Ponto na água pra onde dá pra lançar a linha agora (ou nada). */
     fishSpot: null as [number, number] | null,
+    nextFishCheck: 0,
+    /** Peixes no balde e o bicho ali do lado que pode ganhar um. */
+    bag: 0,
+    feedTarget: null as Animal | null,
   };
   const keys = new Set<string>();
 
@@ -865,14 +935,15 @@ export const createWorld = (
     } else if (state.fishing) {
       riding = 'pesca';
       label = state.fishing.phase === 'bite' ? 'Puxar agora!' : 'Recolher a linha';
-    } else if (!riding && !canMount && state.fishSpot) {
-      canMount = 'pesca';
-      label = 'Pescar';
     }
-    const key = `${riding}:${canMount}:${label}`;
+    let extra: RideState['extra'];
+    if (state.fishing) extra = undefined;
+    else if (state.fishSpot) extra = { label: 'Pescar', icon: '🎣' };
+    else if (state.feedTarget) extra = { label: `Dar peixe ${ANIMAL_TO[state.feedTarget.kind]}`, icon: '🐟' };
+    const key = `${riding}:${canMount}:${label}:${extra?.label}`;
     if (key === state.rideKey) return;
     state.rideKey = key;
-    events.onRide({ riding, canMount, label });
+    events.onRide({ riding, canMount, label, extra });
   };
 
   const board = (attraction: Attraction) => {
@@ -908,13 +979,12 @@ export const createWorld = (
   };
 
   /** Água logo à frente (de quem está na margem, no deque ou na ponte). */
+  /** Pesca só de dentro do barco: procura água em volta (de preferência pelo lado). */
   const castSpot = (): [number, number] | null => {
-    if (state.mount || state.attraction || state.y > 0.01) return null;
-    const onDeck = bridgeAt(state.x, state.z);
-    if (!onDeck && waterDistance(state.x, state.z) > 3.2) return null;
-    for (const off of [0, 0.35, -0.35, 0.7, -0.7, 1.1, -1.1]) {
+    if (!(state.mount instanceof Boat)) return null;
+    for (const off of [1.57, -1.57, 0.9, -0.9, 0, 2.3, -2.3, 3.14]) {
       const a = state.angle + off;
-      for (const d of [3.5, 4.5, 2.6, 5.5]) {
+      for (const d of [3.6, 4.6, 2.8]) {
         const x = state.x + Math.sin(a) * d;
         const z = state.z + Math.cos(a) * d;
         if (waterDistance(x, z) < -0.5 && !bridgeAt(x, z)) return [x, z];
@@ -958,8 +1028,10 @@ export const createWorld = (
     if (!fishing) return;
     const t = kit.time.value;
     if (fishing.phase === 'bite') {
-      const c = pickCatch();
-      const kg = Math.round((c.min + Math.random() * (c.max - c.min)) * 100) / 100;
+      const hidden = inHidden(fishing.x, fishing.z);
+      const c = pickCatch(hidden);
+      const kg =
+        Math.round((c.min + Math.random() * (c.max - c.min)) * (hidden && !c.junk ? 1.3 : 1) * 100) / 100;
       fishing.phase = 'show';
       fishing.at = t;
       bang.visible = false;
@@ -984,13 +1056,20 @@ export const createWorld = (
     if (!fishing) return;
     const p = player;
     const [right, left] = [p.arms[1], p.arms[0]];
+    const base = p.root.position.y;
+    // sentado no barco, vira o corpo pro lado da boia
+    if (state.mount instanceof Boat) {
+      const want = Math.atan2(fishing.x - state.x, fishing.z - state.z);
+      p.root.rotateY(want - state.mount.angle);
+      p.torso.rotation.x = 0;
+    }
     if (fishing.phase === 'show') {
       // mostra o peixe com os dois braços pra cima
       left.rotation.set(-2.9, 0, -0.2);
       right.rotation.set(-2.9, 0, 0.2);
       p.rod.visible = false;
       const fish = fishing.fish!;
-      fish.position.set(state.x, groundHeight(state.x, state.z) + 3.25 + Math.sin(t * 6) * 0.05, state.z);
+      fish.position.set(state.x, base + 3.1 + Math.sin(t * 6) * 0.05, state.z);
       fish.rotation.set(0, state.angle + Math.PI / 2 + Math.sin(t * 9) * 0.25, Math.sin(t * 12) * 0.15);
       if (t - fishing.at > 2.2) stopFishing();
       return;
@@ -1035,8 +1114,29 @@ export const createWorld = (
         emitRide();
       }
     }
-    bang.position.set(state.x, groundHeight(state.x, state.z) + 3.3, state.z);
+    bang.position.set(state.x, base + 3.2, state.z);
     stretchLine(rod.line, tip, rod.bobber.position);
+  };
+
+  /** Dá um peixe do balde pro bicho do lado: ele pula, faz barulho e solta coração. */
+  const feed = (animal: Animal) => {
+    if (state.bag <= 0) return;
+    state.bag--;
+    animal.hop();
+    (ANIMAL_SOUND[animal.kind] ?? sfx.talk)();
+    const y = groundHeight(animal.x, animal.z);
+    kit.particles.burst([animal.x, y + 1.6, animal.z], ['#ff4d6d', '#ff7eb6', '#ffd1e3'], 14, 2);
+    kit.particles.burst([animal.x, y + 0.6, animal.z], ['#c9d6e3', '#8aa0a8'], 6, 1.2);
+    events.onFeed?.(ANIMAL_NAME[animal.kind] ?? 'o bicho');
+    state.rideKey = '';
+    emitRide();
+  };
+
+  const extra = () => {
+    if (state.mode !== 'play' || state.paused) return;
+    if (state.fishing) reel();
+    else if (state.fishSpot) cast(state.fishSpot);
+    else if (state.feedTarget) feed(state.feedTarget);
   };
 
   const action = () => {
@@ -1126,7 +1226,7 @@ export const createWorld = (
       else if (target instanceof Boat) sfx.splash();
       else SOUND[target.kind as RideKind]?.();
       state.mountable = null;
-    } else if (state.fishSpot) cast(state.fishSpot);
+    }
     emitRide();
   };
 
@@ -1136,6 +1236,7 @@ export const createWorld = (
     if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(key)) event.preventDefault();
     if (key === ' ' && !event.repeat) action();
     if (key === 'f' && !event.repeat) toggleRide();
+    if (key === 'g' && !event.repeat) extra();
     keys.add(key);
   };
   const onKeyUp = (event: KeyboardEvent) => keys.delete(event.key.toLowerCase());
@@ -1279,7 +1380,11 @@ export const createWorld = (
       }
       state.lastThrill = thrill;
     } else if (mount instanceof Buggy || mount instanceof Boat) {
-      mount.drive(dt, t, ix, iz, boost);
+      if (mount instanceof Boat && state.fishing) {
+        // pescando o barco fica parado; remar recolhe a linha
+        if (Math.hypot(ix, iz) > 0.2 && state.fishing.phase !== 'show') stopFishing();
+        mount.idle(t, dt);
+      } else mount.drive(dt, t, ix, iz, boost);
       state.x = mount.x;
       state.z = mount.z;
       state.angle = mount.angle;
@@ -1299,6 +1404,7 @@ export const createWorld = (
         player.arms[1].rotation.x = -1.15;
       }
       player.head.rotation.y = -mount.steer * 0.6;
+      if (state.fishing) updateFishing(t);
     } else {
       const speed = mount ? (mount.spec.ride ?? 7) * (boost ? 1.15 : 1) : boost ? 11 : 7.5;
       const blend = 1 - Math.exp(-dt * (mount ? 4 : 10));
@@ -1352,10 +1458,6 @@ export const createWorld = (
         player.root.position.set(state.x, groundY + state.y, state.z);
         player.root.rotation.set(0, state.angle, 0);
         pose(0, t, moving, k);
-        if (state.fishing) {
-          if (Math.hypot(ix, iz) > 0.2 && state.fishing.phase !== 'show') stopFishing();
-          else updateFishing(t);
-        }
         if (moving > 3 && state.y === 0 && t > state.nextDust) {
           state.nextDust = t + 0.13;
           kit.particles.spawn([state.x - state.vx * 0.04, groundY + 0.1, state.z - state.vz * 0.04], {
@@ -1407,8 +1509,28 @@ export const createWorld = (
         const dBoat = Math.hypot(boat.x - state.x, boat.z - state.z) - boat.radius;
         if (dBoat < 2.0 && dBoat < bestD) best = boat;
         state.mountable = best;
-        state.fishSpot = !best && !state.fishing && !nearAttraction() ? castSpot() : null;
-      } else state.fishSpot = null;
+        // bicho ali do lado que pode ganhar um peixe do balde
+        let feed: Animal | null = null;
+        if (state.bag > 0 && !nearAttraction()) {
+          let near = 2.6;
+          for (const animal of animals) {
+            const d = Math.hypot(animal.x - state.x, animal.z - state.z);
+            if (d < near) {
+              near = d;
+              feed = animal;
+            }
+          }
+        }
+        state.feedTarget = feed;
+        state.fishSpot = null;
+      } else {
+        state.feedTarget = null;
+        // no barco: dá pra pescar onde tiver água em volta
+        if (mount instanceof Boat && !state.fishing && t > state.nextFishCheck) {
+          state.nextFishCheck = t + 0.3;
+          state.fishSpot = castSpot();
+        } else if (!(mount instanceof Boat)) state.fishSpot = null;
+      }
       emitRide();
 
       // estação mais perto
@@ -1577,6 +1699,10 @@ export const createWorld = (
     setTimeMode: (mode) => {
       state.timeMode = mode;
     },
+    setBag: (count) => {
+      state.bag = count;
+    },
+    extra,
     setOutfit: (next) => {
       stopFishing();
       const old = player;

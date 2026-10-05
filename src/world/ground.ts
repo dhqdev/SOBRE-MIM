@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import {
   BRIDGES,
-  ISLAND,
-  LAKE,
+  CHANNEL,
+  POOLS,
   POND,
   S,
   STREAM_HALF,
@@ -13,6 +13,7 @@ import {
   terrainFrom,
   terrainHeight,
   waterDistance,
+  stillWater,
 } from './terrain';
 import { box, glow, group, lambert, live, mesh, seeded, shared, type Kit } from './props';
 
@@ -288,8 +289,53 @@ export const buildWater = (kit: Kit) => {
   stream.renderOrder = 1;
   kit.scene.add(stream);
 
-  // lago e poço da cachoeira
-  for (const pool of [LAKE, POND]) {
+  // lagos, canal e Lagoa Escondida: uma malha só, recortada pela margem
+  {
+    const step = kit.env.mobile ? 1.4 : 1;
+    const [x0, x1, z0, z1] = [40, 124, 0, 86];
+    const nx = Math.ceil((x1 - x0) / step);
+    const nz = Math.ceil((z1 - z0) / step);
+    const pos: number[] = [];
+    const edge: number[] = [];
+    const ids = new Map<number, number>();
+    const dist: number[] = [];
+    for (let j = 0; j <= nz; j++)
+      for (let i = 0; i <= nx; i++) dist.push(stillWater(x0 + i * step, z0 + j * step));
+    const vertex = (i: number, j: number) => {
+      const key = j * (nx + 1) + i;
+      let id = ids.get(key);
+      if (id === undefined) {
+        id = pos.length / 3;
+        ids.set(key, id);
+        pos.push(x0 + i * step, WATER_Y - 0.01, z0 + j * step);
+        edge.push(Math.min(1.2, Math.max(0, 1 + dist[key] / 7)));
+      }
+      return id;
+    };
+    const tris: number[] = [];
+    for (let j = 0; j < nz; j++)
+      for (let i = 0; i < nx; i++) {
+        const k = j * (nx + 1) + i;
+        if (Math.min(dist[k], dist[k + 1], dist[k + nx + 1], dist[k + nx + 2]) > 0.9) continue;
+        const a = vertex(i, j);
+        const b = vertex(i + 1, j);
+        const c = vertex(i, j + 1);
+        const d = vertex(i + 1, j + 1);
+        tris.push(a, c, b, b, c, d);
+      }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geometry.setAttribute('across', new THREE.Float32BufferAttribute(edge, 1));
+    geometry.setAttribute('along', new THREE.Float32BufferAttribute(new Float32Array(edge.length), 1));
+    geometry.setIndex(tris);
+    const material = waterShader(0);
+    materials.push(material);
+    const lakes = new THREE.Mesh(geometry, material);
+    lakes.renderOrder = 1;
+    kit.scene.add(lakes);
+  }
+  // poço da cachoeira
+  for (const pool of [POND]) {
     const disc = new THREE.CircleGeometry(pool.r + 0.9, 56);
     disc.rotateX(-Math.PI / 2);
     const count = disc.attributes.position.count;
@@ -345,13 +391,16 @@ export const buildWater = (kit: Kit) => {
         rand,
       );
   }
-  for (let i = 0; i < 40; i++) {
-    const a = rand() * Math.PI * 2;
-    const r = LAKE.r + 0.2 + rand() * 0.6;
-    const x = LAKE.x + Math.cos(a) * r;
-    const z = LAKE.z + Math.sin(a) * r;
-    if (!nearBridge(x, z, 3)) reeds(kit, x, z, rand);
-  }
+  POOLS.forEach((pool) => {
+    for (let i = 0; i < pool.r * 2.2; i++) {
+      const a = rand() * Math.PI * 2;
+      const r = pool.r + 0.2 + rand() * 0.6;
+      const x = pool.x + Math.cos(a) * r;
+      const z = pool.z + Math.sin(a) * r;
+      const w = stillWater(x, z);
+      if (w > -0.4 && w < 1 && !nearBridge(x, z, 3)) reeds(kit, x, z, rand);
+    }
+  });
   // pedras dentro do riacho: a água espirra em volta (corredeira)
   for (let i = 10; i < STREAM_PATH.length - 20; i += 13) {
     const [x, z] = STREAM_PATH[i];
@@ -366,14 +415,18 @@ export const buildWater = (kit: Kit) => {
   const pad = shared(new THREE.CircleGeometry(0.55, 9, 0.4, Math.PI * 2 - 0.4));
   pad.rotateX(-Math.PI / 2);
   const spots: [number, number, number][] = [];
-  for (let i = 0; i < 44; i++) {
-    const a = rand() * Math.PI * 2;
-    const r = 2 + rand() * (LAKE.r - 3);
-    const x = LAKE.x + Math.cos(a) * r;
-    const z = LAKE.z + Math.sin(a) * r;
-    if (Math.hypot(x - ISLAND.x, z - ISLAND.z) < ISLAND.r + 1.6 || nearBridge(x, z, 2.5)) continue;
-    spots.push([x, z, rand()]);
-  }
+  POOLS.forEach((pool) => {
+    for (let i = 0; i < pool.r * 2.6; i++) {
+      const a = rand() * Math.PI * 2;
+      const r = 2 + rand() * (pool.r - 3);
+      const x = pool.x + Math.cos(a) * r;
+      const z = pool.z + Math.sin(a) * r;
+      if (stillWater(x, z) > -1.6 || nearBridge(x, z, 2.5)) continue;
+      // deixa a passagem do canal livre pro barco
+      if (Math.hypot(x - CHANNEL[0][0], z - CHANNEL[0][1]) < 6) continue;
+      spots.push([x, z, rand()]);
+    }
+  });
   for (let i = 0; i < 6; i++) {
     const a = rand() * Math.PI * 2;
     const r = 1.5 + rand() * (POND.r - 2.5);
@@ -1088,7 +1141,12 @@ export const willow = (kit: Kit, x: number, z: number, scale = 1) => {
   const g = group(kit, x, z);
   g.scale.setScalar(scale);
   g.rotation.y = x * 0.37 + z;
-  const trunk = mesh(g, shared(new THREE.CylinderGeometry(0.28, 0.4, 3.4, 6)), lambert('#6b4a33'), [0, 1.7, 0]);
+  const trunk = mesh(
+    g,
+    shared(new THREE.CylinderGeometry(0.28, 0.4, 3.4, 6)),
+    lambert('#6b4a33'),
+    [0, 1.7, 0],
+  );
   trunk.rotation.z = 0.08;
   const crown = mesh(g, shared(new THREE.IcosahedronGeometry(1, 0)), lambert('#7fbf55'), [0, 3.9, 0]);
   crown.scale.set(2.3, 1.2, 2.3);
