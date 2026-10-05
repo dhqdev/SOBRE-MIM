@@ -128,10 +128,13 @@ const TerminalHero = () => {
 
               <Link
                 to="/ilha"
-                className="inline-flex h-12 items-center gap-2 rounded-xl px-4 text-[15px] text-accent transition-opacity hover:opacity-80"
+                className="group inline-flex h-12 items-center gap-2.5 rounded-xl border border-accent/30 bg-accent/10 px-5 text-[15px] font-medium text-accent transition-colors hover:bg-accent/20"
               >
                 <MapIcon className="w-4 h-4" aria-hidden="true" />
-                Explorar em 3D
+                Explorar a ilha 3D
+                <span className="rounded-md bg-accent px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-background">
+                  novo
+                </span>
               </Link>
             </div>
           </div>
