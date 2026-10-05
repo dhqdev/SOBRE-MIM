@@ -180,11 +180,11 @@ const waterShader = (flow: number, opacity = 0.9) => {
       #include <fog_pars_vertex>
       attribute float across;
       attribute float along;
-      varying float vEdge;
+      varying float vAcross;
       varying float vAlong;
       varying vec3 vWorld;
       void main() {
-        vEdge = abs(across);
+        vAcross = across;
         vAlong = along;
         vec4 world = modelMatrix * vec4(position, 1.0);
         vWorld = world.xyz;
@@ -199,21 +199,35 @@ const waterShader = (flow: number, opacity = 0.9) => {
       uniform float uDay;
       uniform float uFlow;
       uniform float uOpacity;
-      varying float vEdge;
+      varying float vAcross;
       varying float vAlong;
       varying vec3 vWorld;
       vec3 lin(vec3 c) { return pow(c, vec3(2.2)); }
+      float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float noise(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        f = f * f * (3.0 - 2.0 * f);
+        return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+      }
       void main() {
-        vec3 deep = mix(lin(vec3(0.05, 0.09, 0.22)), lin(vec3(0.12, 0.48, 0.68)), uDay);
-        vec3 shallow = mix(lin(vec3(0.12, 0.19, 0.38)), lin(vec3(0.36, 0.78, 0.84)), uDay);
-        float edge = clamp(vEdge, 0.0, 1.2);
+        vec3 deep = mix(lin(vec3(0.05, 0.09, 0.22)), lin(vec3(0.1, 0.42, 0.62)), uDay);
+        vec3 shallow = mix(lin(vec3(0.12, 0.19, 0.38)), lin(vec3(0.34, 0.76, 0.82)), uDay);
+        float edge = clamp(abs(vAcross), 0.0, 1.2);
         vec3 col = mix(deep, shallow, smoothstep(0.15, 0.95, edge));
-        float ripple = sin(vWorld.x * 1.7 + uTime * 1.6) * sin(vWorld.z * 1.5 - uTime * 1.2);
-        float flow = sin(vAlong * 0.9 - uTime * uFlow * 2.6 + ripple * 1.4 + vWorld.x * 0.15 * (1.0 - uFlow));
-        float streak = smoothstep(0.72, 1.0, flow * 0.55 + ripple * 0.55);
         vec3 sparkle = mix(lin(vec3(0.6, 0.66, 1.0)), vec3(1.0), uDay);
-        col += sparkle * streak * 0.42;
-        float foam = smoothstep(0.84, 1.02, edge + ripple * 0.05);
+        // correnteza: manchas alongadas descendo o riacho
+        vec2 p = uFlow > 0.5
+          ? vec2(vAlong * 0.4 - uTime * 1.6, vAcross * 2.6)
+          : vWorld.xz * 0.3 + vec2(uTime * 0.06, uTime * 0.04);
+        float n = noise(p) * 0.6 + noise(p * 2.3 + vec2(-uTime * 1.1 * uFlow, 3.1)) * 0.4;
+        float patches = smoothstep(0.58, 0.85, n);
+        // risquinhos finos de espuma correndo junto
+        float lines = uFlow * smoothstep(0.86, 1.0, sin(vAcross * 11.0 + noise(vec2(vAlong * 0.15 - uTime * 0.5, 0.0)) * 5.0))
+          * smoothstep(0.45, 0.8, noise(vec2(vAlong * 0.7 - uTime * 2.4, vAcross * 1.7)));
+        float ripple = sin(vWorld.x * 1.7 + uTime * 1.6) * sin(vWorld.z * 1.5 - uTime * 1.2);
+        col += sparkle * (patches * 0.32 + lines * 0.55 + smoothstep(0.8, 1.0, ripple) * 0.12 * (1.0 - uFlow));
+        float foam = smoothstep(0.8, 1.02, edge + (n - 0.5) * 0.25);
         col = mix(col, sparkle * 0.95, foam * 0.7);
         gl_FragColor = vec4(col, uOpacity);
         #include <colorspace_fragment>
@@ -248,7 +262,8 @@ export const buildWater = (kit: Kit) => {
     along.push(distance, distance);
     if (i > 0) {
       const a = (i - 1) * 2;
-      index.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+      // sentido anti-horário visto de cima, senão a fita fica de costas e some
+      index.push(a, a + 2, a + 1, a + 1, a + 2, a + 3);
     }
   });
   const ribbon = new THREE.BufferGeometry();
@@ -282,6 +297,7 @@ export const buildWater = (kit: Kit) => {
   }
 
   kit.ticks.push((t) => materials.forEach((m) => (m.uniforms.uTime.value = t)));
+  driftingBits(kit);
   kit.night.hooks.push((night) => materials.forEach((m) => (m.uniforms.uDay.value = 1 - night)));
 
   // pedras, taboas e vitórias-régias nas margens
@@ -969,3 +985,69 @@ export const steppingStones = (kit: Kit, points: [number, number][]) => {
 
 export const glowStone = (kit: Kit, x: number, z: number, color: string) =>
   box(kit.statics, [0.2, 0.2, 0.2], [x, terrainHeight(x, z) + 0.15, z], glow(color));
+
+/** Folhinhas e espuma descendo o riacho com a correnteza. */
+const driftingBits = (kit: Kit) => {
+  const cumulative = [0];
+  for (let i = 1; i < STREAM_PATH.length; i++) {
+    const [ax, az] = STREAM_PATH[i - 1];
+    const [bx, bz] = STREAM_PATH[i];
+    cumulative.push(cumulative[i - 1] + Math.hypot(bx - ax, bz - az));
+  }
+  const total = cumulative[cumulative.length - 1];
+  const count = kit.env.mobile ? 36 : 60;
+  const bits = new THREE.InstancedMesh(
+    new THREE.BoxGeometry(0.28, 0.03, 0.2),
+    new THREE.MeshLambertMaterial({ flatShading: true }),
+    count,
+  );
+  const colors = ['#ffffff', '#e8f6ff', '#7fbf45', '#d9a441', '#ffffff', '#b56cf0'].map(
+    (c) => new THREE.Color(c),
+  );
+  const seeds = Array.from({ length: count }, (_, i) => ({
+    start: (i / count) * total,
+    across: (Math.random() - 0.5) * 1.6 * STREAM_HALF,
+    speed: 1.6 + Math.random() * 0.8,
+    spin: Math.random() * 6,
+    scale: i % 6 < 2 ? 0.7 + Math.random() * 0.6 : 1,
+  }));
+  seeds.forEach((_, i) => bits.setColorAt(i, colors[i % colors.length]));
+  bits.frustumCulled = false;
+  kit.scene.add(bits);
+  const matrix = new THREE.Matrix4();
+  const quaternion = new THREE.Quaternion();
+  const euler = new THREE.Euler();
+  const position = new THREE.Vector3();
+  const scale = new THREE.Vector3();
+  let segment = 0;
+  kit.ticks.push((t) => {
+    seeds.forEach((seed, i) => {
+      const d = (seed.start + t * seed.speed) % total;
+      segment = 0;
+      let lo = 0;
+      let hi = cumulative.length - 1;
+      while (lo < hi - 1) {
+        const mid = (lo + hi) >> 1;
+        if (cumulative[mid] <= d) lo = mid;
+        else hi = mid;
+      }
+      segment = lo;
+      const [ax, az] = STREAM_PATH[segment];
+      const [bx, bz] = STREAM_PATH[segment + 1];
+      const k = (d - cumulative[segment]) / (cumulative[segment + 1] - cumulative[segment] || 1);
+      const tx = bx - ax;
+      const tz = bz - az;
+      const length = Math.hypot(tx, tz) || 1;
+      const wobble = Math.sin(t * 1.3 + i) * 0.25;
+      position.set(
+        ax + tx * k + (-tz / length) * (seed.across + wobble),
+        WATER_Y + 0.04,
+        az + tz * k + (tx / length) * (seed.across + wobble),
+      );
+      quaternion.setFromEuler(euler.set(0, seed.spin + t * 0.6, 0));
+      matrix.compose(position, quaternion, scale.setScalar(seed.scale));
+      bits.setMatrixAt(i, matrix);
+    });
+    bits.instanceMatrix.needsUpdate = true;
+  });
+};
