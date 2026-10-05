@@ -228,3 +228,56 @@ export const softGlowTexture = (r: number, g: number, b: number) => {
   ctx.fillRect(0, 0, 256, 256);
   return canvasTexture(canvas);
 };
+
+/** Balão de fala (morador conversando): nome em cima e o texto quebrando linha. */
+export const makeBubble = (name: string, text: string, height = 1.3) => {
+  const W = 620;
+  const probe = makeCanvas(8, 8).ctx;
+  probe.font = `500 34px ${TEXT_FONT}`;
+  const lines = wrap(probe, text, W - 60);
+  const tall = 74 + lines.length * 42 + 22;
+  const { canvas, ctx } = makeCanvas(W + 8, tall + 30);
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  roundRect(ctx, 6, 8, W, tall, 28);
+  ctx.fill();
+  ctx.fillStyle = '#fffdf6';
+  roundRect(ctx, 0, 0, W, tall, 28);
+  ctx.fill();
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = '#7c3aed';
+  roundRect(ctx, 2.5, 2.5, W - 5, tall - 5, 26);
+  ctx.stroke();
+  ctx.fillStyle = '#6d28d9';
+  ctx.font = `700 32px ${TEXT_FONT}`;
+  ctx.textBaseline = 'top';
+  ctx.fillText(name, 30, 22);
+  ctx.fillStyle = '#1f1530';
+  ctx.font = `500 34px ${TEXT_FONT}`;
+  lines.forEach((line, i) => ctx.fillText(line, 30, 70 + i * 42));
+  ctx.fillStyle = '#fffdf6';
+  ctx.beginPath();
+  ctx.moveTo(W / 2 - 18, tall - 3);
+  ctx.lineTo(W / 2 + 18, tall - 3);
+  ctx.lineTo(W / 2, tall + 24);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#7c3aed';
+  ctx.beginPath();
+  ctx.moveTo(W / 2 - 18, tall - 1);
+  ctx.lineTo(W / 2, tall + 24);
+  ctx.lineTo(W / 2 + 18, tall - 1);
+  ctx.stroke();
+  const material = new THREE.SpriteMaterial({
+    map: canvasTexture(canvas),
+    transparent: true,
+    depthWrite: false,
+    depthTest: false,
+    fog: false,
+  });
+  const sprite = new THREE.Sprite(material);
+  const w = height * (canvas.width / 260);
+  sprite.scale.set(w, (w * canvas.height) / canvas.width, 1);
+  sprite.center.set(0.5, 0);
+  sprite.renderOrder = 12;
+  return sprite;
+};

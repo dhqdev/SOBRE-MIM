@@ -6,27 +6,38 @@ import * as THREE from 'three';
  */
 
 export const WATER_Y = -0.7;
-export const STREAM_HALF = 2.1;
-export const WORLD_RADIUS = 88;
+/**
+ * O sítio foi desenhado numa escala menor e depois espalhado: tudo que é
+ * posição passa por `S` (os tamanhos das coisas continuam os mesmos), então
+ * sobra mais espaço entre uma área e outra.
+ */
+export const K = 1.4;
+export const S = (v: number) => v * K;
+export const STREAM_HALF = 3.3;
+export const WORLD_RADIUS = S(88);
 
 /** O riacho desce da cachoeira (oeste) e deságua no lago (leste). */
-const STREAM_POINTS: [number, number][] = [
-  [-68, -16],
-  [-58, -9],
-  [-46, 0],
-  [-33, 8],
-  [-20, 13],
-  [-8, 18],
-  [4, 19.5],
-  [16, 17],
-  [28, 21],
-  [40, 26],
-  [52, 24],
-  [62, 22],
-];
+const STREAM_POINTS: [number, number][] = (
+  [
+    [-68, -16],
+    [-58, -9],
+    [-46, 0],
+    [-33, 8],
+    [-20, 13],
+    [-8, 18],
+    [4, 19.5],
+    [16, 17],
+    [28, 21],
+    [40, 26],
+    [50, 29],
+    [57, 32.5],
+  ] as [number, number][]
+).map(([x, z]) => [S(x), S(z)]);
 
-export const POND = { x: -70, z: -17, r: 6.5 };
-export const LAKE = { x: 66, z: 22, r: 10 };
+export const POND = { x: S(-70), z: S(-17), r: 8.5 };
+/** O lago grande no fim do riacho, com uma ilhinha no meio. */
+export const LAKE = { x: 85, z: 47, r: 18 };
+export const ISLAND = { x: 89, z: 51, r: 4.2 };
 
 const curve = new THREE.CatmullRomCurve3(STREAM_POINTS.map(([x, z]) => new THREE.Vector3(x, 0, z)));
 /** Pontos bem juntinhos do riacho (pra medir distância e montar a água). */
@@ -45,10 +56,11 @@ export interface Bridge {
 
 /** Pontes: a da estrada principal, a da trilha leste e uma de tronco no oeste. */
 export const BRIDGES: Bridge[] = [
-  { x: 0.8, z: 19.3, angle: 0.08, length: 10, width: 4.6 },
-  { x: 39.6, z: 25.8, angle: -0.35, length: 9, width: 2.6 },
-  { x: -33.4, z: 7.6, angle: 1.0, length: 9, width: 2.2 },
-  { x: 57.2, z: 28.6, angle: 2.214, length: 8, width: 2.2, flat: true },
+  { x: S(0.8), z: S(19.3), angle: 0.08, length: 14, width: 4.6 },
+  { x: S(39.6), z: S(25.8), angle: -0.35, length: 13, width: 2.6 },
+  { x: S(-33.4), z: S(7.6), angle: 1.0, length: 13, width: 2.2 },
+  // deque de pesca entrando no lago pela margem oeste
+  { x: 69.5, z: 47.5, angle: Math.PI / 2, length: 9, width: 2.4, flat: true },
 ];
 
 const smoothstep = (a: number, b: number, x: number) => {
@@ -68,17 +80,22 @@ export const waterDistance = (x: number, z: number) => {
     const d = Math.hypot(x - ax - dx * k, z - az - dz * k) - STREAM_HALF;
     if (d < best) best = d;
   }
-  best = Math.min(best, Math.hypot(x - LAKE.x, z - LAKE.z) - LAKE.r);
+  // o lago com a ilha: dentro da ilha volta a ser terra
+  const lake = Math.max(Math.hypot(x - LAKE.x, z - LAKE.z) - LAKE.r, ISLAND.r - Math.hypot(x - ISLAND.x, z - ISLAND.z));
+  best = Math.min(best, lake);
   best = Math.min(best, Math.hypot(x - POND.x, z - POND.z) - POND.r);
   return best;
 };
 
 /** Colina da entrada (sul), morro da trilha (nordeste) e serra da cachoeira (oeste). */
-export const ENTRANCE = { x: 0, z: 68, top: 13 };
-export const LOOKOUT_HILL = { x: 56, z: -54, top: 10 };
+const ENTRANCE = { x: 0, z: 68, top: 13 };
+const LOOKOUT_HILL = { x: 56, z: -54, top: 10 };
 const WEST_HILL = { x: -90, z: -18, top: 15 };
 
-const baseHeight = (x: number, z: number) => {
+/** Relevo desenhado na escala antiga, esticado por K (morros mais largos). */
+const baseHeight = (wx: number, wz: number) => {
+  const x = wx / K;
+  const z = wz / K;
   let h = 0.35 * Math.sin(x * 0.07 + 1.3) * Math.cos(z * 0.06) + 0.25 * Math.sin((x + z) * 0.11);
   // o terreiro em volta da casa é plano
   const yard = 1 - smoothstep(20, 36, Math.hypot(x - 4, z + 14));

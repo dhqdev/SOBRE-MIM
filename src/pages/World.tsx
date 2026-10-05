@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Clock, Moon, Sun, Sunset, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, Clock, Moon, Shirt, Sun, Sunset, Volume2, VolumeX } from 'lucide-react';
 import FlappyGame from '@/components/FlappyGame';
+import OutfitShop from '@/components/OutfitShop';
 import { burstConfetti } from '@/lib/confetti';
 import { downloadCv, openExternal, openGame } from '@/lib/site';
 import { createWorld, type RideState, type TimeMode, type WorldHandle } from '@/world/engine';
@@ -9,10 +10,23 @@ import { EGGS, PENS, RIDES, ROADS, STATIONS, type Station, type StationAction } 
 import { LAKE, POND, STREAM_HALF, STREAM_PATH, WORLD_RADIUS } from '@/world/terrain';
 import { setMuted, sfx, unlockAudio } from '@/world/audio';
 import type { RideKind } from '@/world/animals';
+import { outfitById, type Outfit } from '@/world/outfits';
 
 const STORAGE_KEY = 'sitio:progresso';
 const MUTE_KEY = 'sitio:mudo';
 const TIME_KEY = 'sitio:hora';
+const OUTFIT_KEY = 'sitio:roupa';
+const OWNED_KEY = 'sitio:roupas';
+const FISH_KEY = 'sitio:peixes';
+
+const readList = (key: string): string[] => {
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(key) ?? '[]') as unknown;
+    return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : [];
+  } catch {
+    return [];
+  }
+};
 
 interface Progress {
   visited: string[];
@@ -66,6 +80,7 @@ const MOUNT_TEXT: Record<RideKind, { on: string; off: string }> = {
   bugue: { on: 'Dirigir o bugue', off: 'Sair do bugue' },
   barco: { on: 'Andar de barco', off: 'Descer do barco' },
   brinquedo: { on: 'Andar no brinquedo', off: 'Descer do brinquedo' },
+  pesca: { on: 'Pescar', off: 'Recolher a linha' },
 };
 
 const TIME_LABEL: Record<TimeMode, string> = {
@@ -271,6 +286,10 @@ const World = () => {
   const [touch] = useState(() => window.matchMedia('(pointer: coarse)').matches);
   const [compact, setCompact] = useState(() => window.innerWidth < 640);
   const toastId = useRef(0);
+  const [shop, setShop] = useState(false);
+  const [outfitId, setOutfitId] = useState(() => outfitById(readSetting(OUTFIT_KEY)).id);
+  const [owned, setOwned] = useState<string[]>(() => readList(OWNED_KEY));
+  const [fish, setFish] = useState(() => Number(readSetting(FISH_KEY)) || 0);
 
   const visited = new Set(progress.visited);
   const points = STATIONS.length;
@@ -307,30 +326,44 @@ const World = () => {
       ]).catch(() => undefined) ?? Promise.resolve();
     void Promise.race([fontReady, new Promise((resolve) => setTimeout(resolve, 2500))]).then(() => {
       if (cancelled) return;
-      handle = createWorld(canvas, {
-        onNear: (station) => setNear(station),
-        onRide: (state) => setRide(state),
-        onNight: (value) => setNight(value),
-        onHint: (text) => pushToast(text, 'visit'),
-        onVisit: (station) => {
-          sfx.visit();
-          setProgress((current) => {
-            if (current.visited.includes(station.id)) return current;
-            const next = { ...current, visited: [...current.visited, station.id] };
-            writeProgress(next);
-            return next;
-          });
+      handle = createWorld(
+        canvas,
+        {
+          onNear: (station) => setNear(station),
+          onRide: (state) => setRide(state),
+          onNight: (value) => setNight(value),
+          onHint: (text) => pushToast(text, 'visit'),
+          onCatch: (caught) => {
+            if (caught.junk) pushToast(`${caught.emoji} Pescou ${caught.name}... 😅`, 'visit');
+            else {
+              pushToast(`${caught.emoji} ${caught.name} · ${caught.kg.toLocaleString('pt-BR')} kg!`, 'egg');
+              setFish((count) => {
+                saveSetting(FISH_KEY, String(count + 1));
+                return count + 1;
+              });
+            }
+          },
+          onVisit: (station) => {
+            sfx.visit();
+            setProgress((current) => {
+              if (current.visited.includes(station.id)) return current;
+              const next = { ...current, visited: [...current.visited, station.id] };
+              writeProgress(next);
+              return next;
+            });
+          },
+          onCollect: (index) => {
+            sfx.collect();
+            setProgress((current) => {
+              if (current.collected.includes(index)) return current;
+              const next = { ...current, collected: [...current.collected, index] };
+              writeProgress(next);
+              return next;
+            });
+          },
         },
-        onCollect: (index) => {
-          sfx.collect();
-          setProgress((current) => {
-            if (current.collected.includes(index)) return current;
-            const next = { ...current, collected: [...current.collected, index] };
-            writeProgress(next);
-            return next;
-          });
-        },
-      });
+        outfitById(readSetting(OUTFIT_KEY)),
+      );
       handle.restore(readProgress().visited, readProgress().collected);
       if (import.meta.env.DEV) (window as unknown as { __sitio: WorldHandle }).__sitio = handle;
       setWorld(handle);
@@ -383,7 +416,30 @@ const World = () => {
     setCard(null);
   }, []);
 
-  useEffect(() => world?.setPaused(Boolean(card)), [world, card]);
+  useEffect(() => world?.setPaused(Boolean(card) || shop), [world, card, shop]);
+
+  const wear = useCallback(
+    (outfit: Outfit) => {
+      setOutfitId(outfit.id);
+      saveSetting(OUTFIT_KEY, outfit.id);
+      world?.setOutfit(outfit);
+    },
+    [world],
+  );
+  const unlock = useCallback(
+    (outfit: Outfit) => {
+      setOwned((list) => {
+        const next = list.includes(outfit.id) ? list : [...list, outfit.id];
+        saveSetting(OWNED_KEY, JSON.stringify(next));
+        return next;
+      });
+      wear(outfit);
+      sfx.win();
+      burstConfetti(window.innerWidth / 2, window.innerHeight / 3, 70);
+      pushToast(`Valeu pela força! ${outfit.emoji} ${outfit.name} liberada`, 'win');
+    },
+    [wear, pushToast],
+  );
 
   const interactive = near && near.kind !== 'milestone' ? near : null;
 
@@ -408,11 +464,15 @@ const World = () => {
         if (key === 'escape' || key === 'e') closeCard();
         return;
       }
+      if (shop) {
+        if (key === 'escape') setShop(false);
+        return;
+      }
       if (key === 'e' || key === 'enter') primary();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [started, card, start, closeCard, primary]);
+  }, [started, card, shop, start, closeCard, primary]);
 
   const runAction = (action: StationAction) => {
     if (action.href) openExternal(action.href);
@@ -453,7 +513,9 @@ const World = () => {
         ? 'Remar'
         : ride.riding === 'brinquedo'
           ? 'Gritar'
-          : 'Pular';
+          : ride.riding === 'pesca'
+            ? 'Puxar'
+            : 'Pular';
   const TimeIcon = TIME_ICON[timeMode];
 
   return (
@@ -488,8 +550,8 @@ const World = () => {
           </h1>
           <p className="mt-6 max-w-md text-[15px] leading-relaxed text-white/85 sm:text-base">
             Desça a colina, atravesse o riacho e visite os {points} pontos. Cada projeto é um brinquedo do
-            parque, e dá pra andar em todos. Também dá pra montar nos bichos, dirigir o bugue, remar no lago e
-            procurar os {EGGS.length} ovos de ouro.
+            parque, e dá pra andar em todos. Converse com o pessoal do sítio, monte nos bichos, dirija o
+            bugue, reme e pesque no lago, troque a roupa do boneco e procure os {EGGS.length} ovos de ouro.
           </p>
           <button
             type="button"
@@ -553,6 +615,18 @@ const World = () => {
               />
               {!compact && TIME_LABEL[timeMode]}
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                sfx.open();
+                setShop(true);
+              }}
+              className={`${panel} flex h-9 items-center gap-1.5 px-3 text-sm font-medium`}
+              aria-label="Trocar a roupa do boneco"
+            >
+              <Shirt className="h-4 w-4 text-pink-300" aria-hidden="true" />
+              {!compact && 'Roupas'}
+            </button>
           </div>
 
           <div className="absolute right-3 top-3 flex flex-col items-end gap-2 sm:right-4 sm:top-4">
@@ -563,6 +637,7 @@ const World = () => {
               <span title="Ovos de ouro">
                 <span className="text-amber-300">●</span> {progress.collected.length}/{EGGS.length}
               </span>
+              {fish > 0 && <span title="Peixes pescados">🐟 {fish}</span>}
             </div>
             <Minimap world={world} visited={visited} size={compact ? 96 : 140} />
           </div>
@@ -601,7 +676,7 @@ const World = () => {
           )}
 
           {/* chamada pra interagir ou montar */}
-          {promptText && !card && !milestoneNear && (
+          {promptText && !card && !shop && !milestoneNear && (
             <div
               className={`absolute left-1/2 flex -translate-x-1/2 animate-[world-pop_0.3s_ease-out] flex-col items-center gap-2 sm:flex-row ${
                 touch ? 'bottom-48' : 'bottom-8'
@@ -639,12 +714,12 @@ const World = () => {
           {!touch && !card && !promptText && !milestoneNear && (
             <p className="absolute bottom-4 left-4 text-xs leading-relaxed text-white/80 [text-shadow:0_1px_3px_rgba(0,0,0,0.6)]">
               WASD/setas andam · Shift corre · Espaço pula · arraste pra girar
-              <br />E interage · F monta, desce e anda nos brinquedos
+              <br />E interage · F monta, pesca e anda nos brinquedos
             </p>
           )}
 
           {/* controles de toque */}
-          {touch && !card && (
+          {touch && !card && !shop && (
             <>
               <div className="absolute bottom-7 left-5">
                 <Joystick onMove={(x, z) => world?.setJoystick(x, z)} />
@@ -681,6 +756,19 @@ const World = () => {
             </>
           )}
         </>
+      )}
+
+      {shop && (
+        <OutfitShop
+          current={outfitId}
+          owned={owned}
+          onWear={wear}
+          onUnlock={unlock}
+          onClose={() => {
+            sfx.close();
+            setShop(false);
+          }}
+        />
       )}
 
       {/* janela da estação */}

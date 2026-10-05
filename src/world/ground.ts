@@ -1,8 +1,10 @@
 import * as THREE from 'three';
 import {
   BRIDGES,
+  ISLAND,
   LAKE,
   POND,
+  S,
   STREAM_HALF,
   STREAM_PATH,
   WATER_Y,
@@ -107,9 +109,9 @@ export const buildTerrain = (kit: Kit, roads: Road[], patches: Patch[]) => {
   const jitter = Array.from({ length: 64 }, () => rand());
 
   // miolo detalhado (onde se anda)
-  const INNER = 200;
-  const inner = buildPlane(INNER, kit.env.mobile ? 160 : 200, (x, z) => {
-    const far = Math.hypot(x, z) > 112;
+  const INNER = 280;
+  const inner = buildPlane(INNER, kit.env.mobile ? 200 : 270, (x, z) => {
+    const far = Math.hypot(x, z) > S(112);
     const w = far ? 40 : waterDistance(x, z);
     const h = terrainFrom(x, z, w);
     grassColor(x, z, h, color);
@@ -166,7 +168,7 @@ export const buildTerrain = (kit: Kit, roads: Road[], patches: Patch[]) => {
 
 /* -------------------------------------------------------------------- água */
 
-const waterShader = (flow: number, opacity = 0.9) => {
+const waterShader = (flow: number, opacity = 0.8) => {
   const uniforms = THREE.UniformsUtils.merge([
     THREE.UniformsLib.fog,
     {
@@ -317,7 +319,7 @@ export const buildWater = (kit: Kit) => {
   // pedras, taboas e vitórias-régias nas margens
   const rand = seeded(31);
   const rockGeometry = shared(new THREE.DodecahedronGeometry(1, 0));
-  for (let i = 4; i < STREAM_PATH.length - 4; i += 7) {
+  for (let i = 4; i < STREAM_PATH.length - 4; i += 4) {
     const [x, z] = STREAM_PATH[i];
     const [nx, nz] = STREAM_PATH[i + 1];
     const tx = nx - x;
@@ -343,19 +345,34 @@ export const buildWater = (kit: Kit) => {
         rand,
       );
   }
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 40; i++) {
     const a = rand() * Math.PI * 2;
     const r = LAKE.r + 0.2 + rand() * 0.6;
-    reeds(kit, LAKE.x + Math.cos(a) * r, LAKE.z + Math.sin(a) * r, rand);
+    const x = LAKE.x + Math.cos(a) * r;
+    const z = LAKE.z + Math.sin(a) * r;
+    if (!nearBridge(x, z, 3)) reeds(kit, x, z, rand);
+  }
+  // pedras dentro do riacho: a água espirra em volta (corredeira)
+  for (let i = 10; i < STREAM_PATH.length - 20; i += 13) {
+    const [x, z] = STREAM_PATH[i];
+    const ox = (rand() - 0.5) * STREAM_HALF * 1.2;
+    const oz = (rand() - 0.5) * STREAM_HALF * 1.2;
+    if (nearBridge(x + ox, z + oz, 4)) continue;
+    const rock = mesh(kit.statics, rockGeometry, lambert('#8f8c84'), [x + ox, WATER_Y + 0.05, z + oz]);
+    rock.scale.set(0.45 + rand() * 0.4, 0.3 + rand() * 0.25, 0.45 + rand() * 0.4);
+    rock.rotation.y = rand() * 6;
   }
   // vitórias-régias
   const pad = shared(new THREE.CircleGeometry(0.55, 9, 0.4, Math.PI * 2 - 0.4));
   pad.rotateX(-Math.PI / 2);
   const spots: [number, number, number][] = [];
-  for (let i = 0; i < 16; i++) {
+  for (let i = 0; i < 44; i++) {
     const a = rand() * Math.PI * 2;
     const r = 2 + rand() * (LAKE.r - 3);
-    spots.push([LAKE.x + Math.cos(a) * r, LAKE.z + Math.sin(a) * r, rand()]);
+    const x = LAKE.x + Math.cos(a) * r;
+    const z = LAKE.z + Math.sin(a) * r;
+    if (Math.hypot(x - ISLAND.x, z - ISLAND.z) < ISLAND.r + 1.6 || nearBridge(x, z, 2.5)) continue;
+    spots.push([x, z, rand()]);
   }
   for (let i = 0; i < 6; i++) {
     const a = rand() * Math.PI * 2;
@@ -976,7 +993,7 @@ export const farHills = (kit: Kit) => {
   const tones = ['#5b8a63', '#4f7d5f', '#678f6a'];
   for (let i = 0; i < 34; i++) {
     const a = (i / 34) * Math.PI * 2 + rand() * 0.15;
-    const r = 225 + rand() * 50;
+    const r = 300 + rand() * 60;
     const h = 22 + rand() * 26;
     const m = mesh(kit.statics, BLOB, lambert(tones[i % 3]), [Math.cos(a) * r, 16, Math.sin(a) * r]);
     m.scale.set(h * 2.4, h, h * 1.8);
@@ -1064,4 +1081,24 @@ const driftingBits = (kit: Kit) => {
     });
     bits.instanceMatrix.needsUpdate = true;
   });
+};
+
+/** Salgueiro-chorão: fica lindo na beira d'água, com os galhos caindo. */
+export const willow = (kit: Kit, x: number, z: number, scale = 1) => {
+  const g = group(kit, x, z);
+  g.scale.setScalar(scale);
+  g.rotation.y = x * 0.37 + z;
+  const trunk = mesh(g, shared(new THREE.CylinderGeometry(0.28, 0.4, 3.4, 6)), lambert('#6b4a33'), [0, 1.7, 0]);
+  trunk.rotation.z = 0.08;
+  const crown = mesh(g, shared(new THREE.IcosahedronGeometry(1, 0)), lambert('#7fbf55'), [0, 3.9, 0]);
+  crown.scale.set(2.3, 1.2, 2.3);
+  const strand = lambert('#8fcc5f');
+  const dark = lambert('#6aa848');
+  for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * Math.PI * 2;
+    const r = 1.7 + (i % 3) * 0.35;
+    const h = 1.8 + ((i * 7) % 5) * 0.35;
+    box(g, [0.38, h, 0.38], [Math.cos(a) * r, 4.1 - h / 2, Math.sin(a) * r], i % 2 ? strand : dark);
+  }
+  kit.obstacles.push({ x, z, r: 0.45 * scale });
 };

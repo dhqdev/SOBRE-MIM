@@ -1,4 +1,5 @@
 import { projects } from '@/lib/projects';
+import { ISLAND, S } from './terrain';
 import { milestones } from '@/lib/milestones';
 import { EMAIL, LINKEDIN_URL } from '@/lib/site';
 import { GITHUB_URL } from '@/lib/github';
@@ -57,19 +58,22 @@ const place = (bx: number, bz: number, faceX: number, faceZ: number, distance: n
 /* ------------------------------------------------------------------ mapa */
 
 /** Entrada no alto da colina, ao sul. */
-export const SPAWN = { x: 0, z: 81 };
-export const GATE = { x: 0, z: 77 };
+export const SPAWN = { x: 0, z: S(83) };
+export const GATE = { x: 0, z: S(77) };
 /** Terreiro com o poço, no meio do sítio. */
-export const YARD = { x: 2, z: -5 };
+export const YARD = { x: S(2), z: S(-5) };
 
 /**
  * Parque dos projetos: uma avenida saindo do terreiro pro leste, com um
  * brinquedo de cada lado. Cada projeto é um brinquedo.
  */
-export const PARK = { x: 38, z: 1.5, from: 15, to: 54 };
+export const PARK = { x: S(38), z: S(1.5), from: S(15), to: S(54) };
 
 /** Brinquedos na ordem dos projetos: centro do brinquedo e onde a pessoa embarca. */
-export const RIDES: (RideInfo & { bx: number; bz: number; x: number; z: number; plaza: number })[] = [
+type RideSpot = RideInfo & { bx: number; bz: number; x: number; z: number; plaza: number };
+
+/** Na escala de desenho; o `RIDES` de verdade espalha os brinquedos ao longo da avenida. */
+const RIDE_LAYOUT: RideSpot[] = [
   {
     type: 'coaster',
     name: 'Montanha-russa',
@@ -138,8 +142,14 @@ export const RIDES: (RideInfo & { bx: number; bz: number; x: number; z: number; 
   },
 ];
 
+export const RIDES: RideSpot[] = RIDE_LAYOUT.map((ride) => ({
+  ...ride,
+  bx: S(ride.bx),
+  x: S(ride.bx) + (ride.x - ride.bx),
+}));
+
 /** Trilha da carreira subindo o morro do nordeste até o mirante. */
-export const TRAIL: [number, number][] = [
+const RAW_TRAIL: [number, number][] = [
   [42, -11],
   [46, -17],
   [49, -23],
@@ -150,15 +160,16 @@ export const TRAIL: [number, number][] = [
   [57.5, -49],
   [55, -53],
 ];
+export const TRAIL = RAW_TRAIL.map(([x, z]) => [S(x), S(z)] as [number, number]);
 
 export const PENS = {
-  pigs: { x: -36, z: -30, w: 12, d: 9 },
-  sheep: { x: -53, z: -27, w: 17, d: 13 },
-  horses: { x: 3, z: -46, w: 16, d: 11 },
+  pigs: { x: S(-36), z: S(-30), w: 13, d: 10 },
+  sheep: { x: S(-53), z: S(-27), w: 19, d: 14 },
+  horses: { x: S(3), z: S(-46), w: 18, d: 12 },
 };
 
 /** Estradinhas de terra (desenhadas no próprio chão). */
-export const ROADS: { points: [number, number][]; width: number }[] = [
+const RAW_ROADS: { points: [number, number][]; width: number }[] = [
   {
     width: 3.4,
     points: [
@@ -171,7 +182,7 @@ export const ROADS: { points: [number, number][]; width: number }[] = [
       [0.4, 25],
       [0.8, 19.3],
       [1.2, 13],
-      [YARD.x, YARD.z + 3],
+      [2, -2],
     ],
   },
   {
@@ -241,9 +252,9 @@ export const ROADS: { points: [number, number][]; width: number }[] = [
   {
     width: 3.4,
     points: [
-      [PARK.from, 0.8],
+      [15, 0.8],
       [28, 1.5],
-      [PARK.to, 1.5],
+      [54, 1.5],
     ],
   },
   {
@@ -253,9 +264,9 @@ export const ROADS: { points: [number, number][]; width: number }[] = [
       [57.2, 1.5],
     ],
   },
-  { width: 2, points: [[43, 1.5], [43, -6], TRAIL[0]] },
-  { width: 1.8, points: TRAIL },
-  { width: 1.8, points: [TRAIL[8], [55.5, -57]] },
+  { width: 2, points: [[43, 1.5], [43, -6], RAW_TRAIL[0]] },
+  { width: 1.8, points: RAW_TRAIL },
+  { width: 1.8, points: [RAW_TRAIL[8], [55.5, -57]] },
   {
     width: 2,
     points: [
@@ -281,8 +292,8 @@ export const ROADS: { points: [number, number][]; width: number }[] = [
       [44.5, 11],
       [41.6, 20.2],
       [39.6, 25.8],
-      [45, 31],
-      [52, 33],
+      [44.5, 30.5],
+      [46.6, 33.9],
     ],
   },
   {
@@ -310,12 +321,15 @@ export const ROADS: { points: [number, number][]; width: number }[] = [
     ],
   },
 ];
+export const ROADS = RAW_ROADS.map((road) => ({
+  width: road.width,
+  points: road.points.map(([x, z]) => [S(x), S(z)] as [number, number]),
+}));
 
 /** Ovos de ouro escondidos pelo sítio. */
-export const EGGS: [number, number][] = [
+const RAW_EGGS: [number, number][] = [
   [-8, 72],
   [-66, -4],
-  [62, 36],
   [-56, 40],
   [62, -58],
   [-26, 49],
@@ -325,6 +339,11 @@ export const EGGS: [number, number][] = [
   [14, -56],
   [-15, 6],
   [46, 6],
+];
+export const EGGS: [number, number][] = [
+  ...RAW_EGGS.map(([x, z]) => [S(x), S(z)] as [number, number]),
+  // um na ilhinha do lago: só chega de barco
+  [ISLAND.x - 1.6, ISLAND.z + 1.4],
 ];
 
 /* -------------------------------------------------------------- estações */
@@ -383,7 +402,7 @@ export const STATIONS: Station[] = [
     id: 'inicio',
     kind: 'info',
     label: 'Bem-vindo',
-    ...place(5.6, 70, 0.5, 70, 2.8),
+    ...place(S(5.6), S(70), S(0.5), S(70), 2.8),
     title: 'Bem-vindo ao Sítio do David!',
     subtitle: 'Desenvolvedor Full-Stack',
     text: 'Oi! Eu sou o David, desenvolvedor full-stack apaixonado por automação e IA. Este sítio é o meu portfólio: desça a colina, atravesse o riacho e visite cada ponto roxo. Cada projeto meu virou um brinquedo no parque. Dá pra montar nos bichos, dirigir o bugue, remar no lago e procurar os ovos de ouro escondidos.',
@@ -393,7 +412,7 @@ export const STATIONS: Station[] = [
     id: 'sobre',
     kind: 'info',
     label: 'Casa do David',
-    ...place(-17, -24, 0, -8, 6),
+    ...place(S(-17), S(-24), S(0), S(-8), 6),
     title: 'Apresentação',
     subtitle: 'Software Engineer na GRV Software',
     text: 'Comecei consertando rede e servidor e hoje lidero o módulo financeiro de um ERP: contas a pagar e receber, faturamento, fluxo de caixa e conciliação bancária. Nas horas vagas eu crio agentes de IA, automações e jogos. Sou bacharel em Ciência da Computação e estou na pós em Agentes de IA na FIAP.',
@@ -403,7 +422,7 @@ export const STATIONS: Station[] = [
     id: 'contato',
     kind: 'info',
     label: 'Correio',
-    ...place(-6, -12.5, 0, -6, 1.9),
+    ...place(S(-6), S(-12.5), S(0), S(-6), 1.9),
     title: 'Caixa de correio',
     subtitle: 'Bora conversar?',
     text: 'Estou disponível para projetos freelance e oportunidades full-time. O jeito mais rápido de falar comigo é pelo WhatsApp.',
@@ -417,7 +436,7 @@ export const STATIONS: Station[] = [
     id: 'cafe',
     kind: 'info',
     label: 'Fogão a lenha',
-    ...place(-30, -14, -12, -10, 3.4),
+    ...place(S(-30), S(-14), S(-12), S(-10), 3.4),
     title: 'Cafezinho no fogão a lenha',
     subtitle: 'Combustível de desenvolvedor',
     text: 'Todo código deste sítio foi movido a café passado no coador. No site tem um café-o-metro onde dá pra me pagar um cafezinho virtual (de graça, prometo).',
@@ -426,7 +445,7 @@ export const STATIONS: Station[] = [
     id: 'github',
     kind: 'info',
     label: 'Ipê do GitHub',
-    ...place(-22, -1, 0, -5, 4.6),
+    ...place(S(-22), S(-1), S(0), S(-5), 4.6),
     title: 'O ipê dos commits',
     subtitle: 'Código aberto toda semana',
     text: 'Cada flor deste ipê é um repositório e cada quadradinho no chão é um dia de commits. Meus projetos pessoais, experimentos e automações ficam todos no GitHub.',
@@ -436,7 +455,7 @@ export const STATIONS: Station[] = [
     id: 'stack',
     kind: 'info',
     label: 'Silo da stack',
-    ...place(31, -25, 14, -10, 4.4),
+    ...place(S(31), S(-25), S(14), S(-10), 4.4),
     title: 'O silo das tecnologias',
     subtitle: 'O que eu uso no dia a dia',
     text: 'Os cubos que giram em volta do silo são as ferramentas que eu mais uso: do front ao back, do banco ao deploy, e as automações no meio do caminho.',
@@ -459,7 +478,7 @@ export const STATIONS: Station[] = [
     id: 'curriculo',
     kind: 'info',
     label: 'Celeiro',
-    ...place(14, -31, 9, -12, 5.6),
+    ...place(S(14), S(-31), S(9), S(-12), 5.6),
     title: 'O baú do celeiro',
     subtitle: 'Você achou o currículo!',
     text: 'Tudo o que tem neste sítio, só que em PDF: experiência, formação e projetos.',
@@ -469,7 +488,7 @@ export const STATIONS: Station[] = [
     id: 'redes',
     kind: 'info',
     label: 'Mirante',
-    ...place(57, -61, 55.5, -55, 3.6),
+    ...place(S(57), S(-61), S(55.5), S(-55), 3.6),
     title: 'O mirante',
     subtitle: 'Me acompanhe por aí',
     text: 'Daqui de cima dá pra ver o sítio inteiro, o riacho e o lago. Também dá pra me achar nas redes.',

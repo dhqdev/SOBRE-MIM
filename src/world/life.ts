@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { WATER_Y, terrainHeight } from './terrain';
-import { bake, box, glow, lambert, mesh, type Kit } from './props';
+import { ISLAND, LAKE, STREAM_HALF, STREAM_PATH, WATER_Y, terrainHeight, waterDistance } from './terrain';
+import { bake, box, glow, instancedFrom, lambert, mesh, type Kit } from './props';
 
 /** Vida em volta: passarinhos, nuvens, peixes, borboletas e vaga-lumes. */
 
@@ -173,5 +173,109 @@ export const fireflies = (kit: Kit, spots: [number, number][]) => {
     });
     geometry.attributes.position.needsUpdate = true;
     material.opacity = night * (0.65 + Math.sin(t * 4) * 0.3);
+  });
+};
+
+/** Cardume: peixes coloridos nadando no lago e subindo e descendo o riacho. */
+export const swimmers = (kit: Kit) => {
+  const template = new THREE.Group();
+  box(template, [0.22, 0.3, 0.75], [0, 0, 0], lambert('#ffffff'));
+  box(template, [0.18, 0.22, 0.25], [0, 0, 0.42], lambert('#ffffff'));
+  const tail = box(template, [0.05, 0.34, 0.26], [0, 0, -0.5], lambert('#ffffff'));
+  tail.rotation.x = 0.2;
+  box(template, [0.04, 0.16, 0.3], [0, 0.2, 0], lambert('#ffffff'));
+  const count = kit.env.mobile ? 26 : 44;
+  const fish = instancedFrom(template, count);
+  const tints = ['#ff8c42', '#ffb347', '#c0c8d8', '#ff6b6b', '#ffd166', '#9fb8c8', '#f4a261'];
+  const rand = (() => {
+    let seed = 7;
+    return () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+  })();
+  type Swim = {
+    lake: boolean;
+    cx: number;
+    cz: number;
+    r: number;
+    speed: number;
+    phase: number;
+    size: number;
+    lane: number;
+  };
+  const swims: Swim[] = [];
+  for (let i = 0; i < count; i++) {
+    fish.setColorAt(i, new THREE.Color(tints[i % tints.length]));
+    if (i < count * 0.6) {
+      // no lago: voltinhas em torno de pontos longe da ilha e da margem
+      let cx = LAKE.x;
+      let cz = LAKE.z;
+      for (let k = 0; k < 20; k++) {
+        const a = rand() * Math.PI * 2;
+        const r = 3 + rand() * (LAKE.r - 7);
+        cx = LAKE.x + Math.cos(a) * r;
+        cz = LAKE.z + Math.sin(a) * r;
+        if (Math.hypot(cx - ISLAND.x, cz - ISLAND.z) > ISLAND.r + 4) break;
+      }
+      swims.push({
+        lake: true,
+        cx,
+        cz,
+        r: 1.2 + rand() * 2.2,
+        speed: (0.5 + rand() * 0.6) * (i % 2 ? 1 : -1),
+        phase: rand() * 6,
+        size: 0.8 + rand() * 0.7,
+        lane: 0,
+      });
+    } else {
+      swims.push({
+        lake: false,
+        cx: 0,
+        cz: 0,
+        r: 0,
+        speed: (1 + rand() * 1.2) * (i % 2 ? 1 : -1),
+        phase: rand() * STREAM_PATH.length,
+        size: 0.7 + rand() * 0.5,
+        lane: (rand() - 0.5) * STREAM_HALF * 1.1,
+      });
+    }
+  }
+  kit.scene.add(fish);
+  const matrix = new THREE.Matrix4();
+  const quaternion = new THREE.Quaternion();
+  const euler = new THREE.Euler();
+  const position = new THREE.Vector3();
+  const scale = new THREE.Vector3();
+  const n = STREAM_PATH.length - 1;
+  kit.ticks.push((t) => {
+    swims.forEach((swim, i) => {
+      let heading = 0;
+      if (swim.lake) {
+        const a = (t * swim.speed) / swim.r + swim.phase;
+        position.set(swim.cx + Math.cos(a) * swim.r, 0, swim.cz + Math.sin(a) * swim.r);
+        heading = Math.atan2(-Math.sin(a) * Math.sign(swim.speed), Math.cos(a) * Math.sign(swim.speed));
+      } else {
+        // vai e volta no riacho, uma faixa pra cada peixe
+        const span = n - 40;
+        const u = (((swim.phase + t * swim.speed * 1.5) % (span * 2)) + span * 2) % (span * 2);
+        const k = 20 + (u < span ? u : span * 2 - u);
+        const i0 = Math.floor(k);
+        const [ax, az] = STREAM_PATH[i0];
+        const [bx, bz] = STREAM_PATH[Math.min(n, i0 + 1)];
+        const f = k - i0;
+        const tx = bx - ax;
+        const tz = bz - az;
+        const length = Math.hypot(tx, tz) || 1;
+        const lane = swim.lane + Math.sin(t * 0.7 + i) * 0.4;
+        position.set(ax + tx * f + (-tz / length) * lane, 0, az + tz * f + (tx / length) * lane);
+        const forward = (u < span ? 1 : -1) * Math.sign(swim.speed);
+        heading = Math.atan2(tx * forward, tz * forward);
+      }
+      // fundo raso perto da margem: o peixe some
+      const deep = waterDistance(position.x, position.z) < -0.9;
+      position.y = WATER_Y - 0.28 + Math.sin(t * 2 + i) * 0.05;
+      quaternion.setFromEuler(euler.set(0, heading + Math.sin(t * 6 + i) * 0.15, 0));
+      matrix.compose(position, quaternion, scale.setScalar(deep ? swim.size : 0.001));
+      fish.setMatrixAt(i, matrix);
+    });
+    fish.instanceMatrix.needsUpdate = true;
   });
 };

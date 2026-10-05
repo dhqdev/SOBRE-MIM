@@ -1379,3 +1379,147 @@ export const goldenEgg = (kit: Kit, x: number, z: number) => {
     },
   };
 };
+
+/* ------------------------------------------------------ casinhas e portaria */
+
+/**
+ * Casinha de morador: paredes coloridas, telhado, porta, janelas que acendem
+ * de noite, chaminé, floreira e plaquinha com o nome. Devolve a porta (no mundo).
+ */
+export const cottage = (
+  kit: Kit,
+  x: number,
+  z: number,
+  faceX: number,
+  faceZ: number,
+  options: { wall: string; roof: string; trim?: string; name: string },
+) => {
+  const g = group(kit, x, z);
+  faceTo(g, faceX, faceZ);
+  const W = 4.6;
+  const D = 3.8;
+  const trim = lambert(options.trim ?? '#f4f0ff');
+  footing(g, W + 0.4, D + 0.4, '#9b8f7f', 0.2);
+  box(g, [W, 2.5, D], [0, 1.45, 0], lambert(options.wall));
+  for (const [cx, cz] of [
+    [-W / 2, -D / 2],
+    [W / 2, -D / 2],
+    [-W / 2, D / 2],
+    [W / 2, D / 2],
+  ])
+    box(g, [0.22, 2.55, 0.22], [cx, 1.45, cz], trim);
+  gableRoof(g, W + 0.7, D + 0.9, 1.7, 2.7, options.roof);
+  // porta com degrau e luminária
+  box(g, [0.95, 1.75, 0.08], [0, 1.08, D / 2 + 0.02], lambert('#6b4423'));
+  box(g, [0.08, 0.08, 0.06], [0.3, 1.1, D / 2 + 0.08], lambert('#ffd166'));
+  box(g, [1.4, 0.18, 0.7], [0, 0.25, D / 2 + 0.35], lambert('#9b8f7f'));
+  box(g, [0.22, 0.26, 0.22], [0.8, 2.25, D / 2 + 0.15], kit.night.bulbs);
+  halo(kit, g, [0.8, 2.25, D / 2 + 0.2], 1.6);
+  // janelas (frente e lados) com floreira
+  for (const sx of [-1.45, 1.45]) {
+    box(g, [0.85, 0.75, 0.08], [sx, 1.65, D / 2 + 0.02], kit.night.windows);
+    box(g, [1.0, 0.1, 0.12], [sx, 1.24, D / 2 + 0.06], trim);
+    box(g, [0.95, 0.22, 0.28], [sx, 1.12, D / 2 + 0.18], lambert('#8a5a34'));
+    for (let i = 0; i < 4; i++)
+      box(
+        g,
+        [0.16, 0.16, 0.16],
+        [sx - 0.33 + i * 0.22, 1.3, D / 2 + 0.2],
+        lambert(['#ff7eb6', '#ffd166', '#ff4d6d', '#c4b5fd'][i]),
+      );
+  }
+  for (const side of [-1, 1])
+    box(g, [0.08, 0.75, 0.85], [side * (W / 2 + 0.01), 1.65, -0.4], kit.night.windows);
+  // chaminé
+  box(g, [0.55, 1.6, 0.55], [-1.2, 3.6, -0.6], lambert('#9b5a43'));
+  // plaquinha com o nome do dono
+  box(g, [0.05, 1.0, 0.05], [1.9, 0.5, D / 2 + 1.3], lambert('#5a3a20'));
+  const plate = signBoard(g, [options.name], 1.3, [1.9, 1.15, D / 2 + 1.33], {
+    bg: '#5a3417',
+    color: '#ffe9b0',
+    size: 60,
+    canvas: 512,
+  });
+  void plate;
+  wallRect(kit, g, W + 0.3, D + 0.3);
+  lightPool(kit, ...worldXZ(g, 0.8, D / 2 + 1.4), 3.6);
+  return worldXZ(g, 0, D / 2 + 1.3);
+};
+
+const worldXZ = (g: THREE.Object3D, lx: number, lz: number): [number, number] => {
+  g.updateMatrixWorld(true);
+  const p = new THREE.Vector3(lx, 0, lz).applyMatrix4(g.matrixWorld);
+  return [p.x, p.z];
+};
+
+/**
+ * Portaria na entrada: guarita com janelão, placa e a cancela listrada que
+ * sobe sozinha quando alguém chega perto. `side` = de que lado da estrada fica a guarita.
+ */
+export const gatehouse = (kit: Kit, x: number, z: number, roadX: number, side = 1) => {
+  const g = group(kit, x, z);
+  g.rotation.y = side > 0 ? -Math.PI / 2 : Math.PI / 2;
+  const wall = lambert('#f4f0ff');
+  const purple = lambert('#6d28d9');
+  footing(g, 3.4, 3.2, '#9b8f7f', 0.25);
+  box(g, [3.0, 0.9, 2.8], [0, 0.7, 0], wall);
+  // janelões de vidro em volta
+  box(
+    g,
+    [3.0, 1.2, 2.8],
+    [0, 1.75, 0],
+    new THREE.MeshLambertMaterial({ color: '#9fd6ef', transparent: true, opacity: 0.55 }),
+  );
+  for (const [cx, cz] of [
+    [-1.45, -1.35],
+    [1.45, -1.35],
+    [-1.45, 1.35],
+    [1.45, 1.35],
+  ])
+    box(g, [0.14, 2.6, 0.14], [cx, 1.4, cz], purple);
+  box(g, [3.0, 0.12, 0.12], [0, 2.4, 1.35], purple);
+  box(g, [3.0, 0.12, 0.12], [0, 2.4, -1.35], purple);
+  // mesinha e luzinha lá dentro
+  box(g, [1.6, 0.1, 0.6], [0, 1.15, 0.95], lambert('#8a5a34'));
+  box(g, [0.5, 0.35, 0.3], [-0.3, 1.38, 0.95], lambert('#2a2a33'));
+  box(g, [0.42, 0.25, 0.02], [-0.3, 1.4, 1.1], glow('#5ec8f2'));
+  // telhado que sobra pros lados
+  box(g, [4.2, 0.25, 4.0], [0, 2.75, 0], lambert('#3b3350'));
+  box(g, [4.3, 0.1, 4.1], [0, 2.92, 0], purple);
+  box(g, [3.6, 0.7, 0.12], [0, 3.35, 1.9], lambert('#2a1650'));
+  signBoard(g, ['PORTARIA'], 3.4, [0, 3.35, 1.97], {
+    bg: '#2a1650',
+    color: '#ffd166',
+    size: 110,
+    basic: true,
+  });
+  box(g, [0.24, 0.24, 0.24], [1.6, 2.5, 2.05], kit.night.bulbs);
+  halo(kit, g, [1.6, 2.5, 2.1], 2);
+  nightLight(kit, g, [0, 2.4, 2.6], '#ffc977', 9, 13);
+  wallRect(kit, g, 3.2, 3.0);
+  // cancela: poste, contrapeso e o braço listrado
+  const postX = roadX + side * 2.3;
+  const post = group(kit, postX, z - 2.6);
+  box(post, [0.45, 1.2, 0.45], [0, 0.6, 0], lambert('#ffd166'));
+  box(post, [0.5, 0.2, 0.5], [0, 1.25, 0], lambert('#2a1650'));
+  kit.obstacles.push({ x: postX, z: z - 2.6, r: 0.35 });
+  const arm = live(new THREE.Group());
+  arm.position.set(postX, terrainHeight(postX, z - 2.6) + 1.1, z - 2.6);
+  kit.scene.add(arm);
+  const reach = 5.2;
+  for (let i = 0; i < 8; i++)
+    box(
+      arm,
+      [reach / 8, 0.16, 0.16],
+      [-side * (reach / 16 + (i * reach) / 8), 0, 0],
+      lambert(i % 2 ? '#ffffff' : '#ff4d6d'),
+    );
+  box(arm, [0.6, 0.3, 0.3], [side * 0.45, 0, 0], lambert('#3b3350'));
+  box(arm, [0.14, 0.14, 0.14], [-side * (reach - 0.1), 0.15, 0], kit.night.bulbs);
+  let lift = 0;
+  /** `near` = alguém perto da cancela: ela sobe; senão desce devagar. */
+  return (dt: number, near: boolean) => {
+    lift += ((near ? 1 : 0) - lift) * Math.min(1, dt * 2.5);
+    arm.rotation.z = side * lift * 1.35;
+  };
+};

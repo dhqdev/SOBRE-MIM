@@ -91,6 +91,15 @@ export const sfx = {
   ride: () => [784, 988, 1175, 1568].forEach((f, i) => tone(f, i * 0.07, 0.14, 'triangle', 0.06)),
   /** Grito de alegria na descida: um "uiii" que cai. */
   whee: () => slide(900, 380, 0.7, 0.03, 'triangle'),
+  /** Morador puxando conversa: um "hm-hm" de dois tons. */
+  talk: () => {
+    tone(587, 0, 0.09, 'triangle', 0.06);
+    tone(784, 0.1, 0.12, 'triangle', 0.06);
+  },
+  /** Peixe beliscando a isca. */
+  bite: () => [1319, 1568, 1319].forEach((f, i) => tone(f, i * 0.08, 0.08, 'square', 0.04)),
+  /** Pegou o peixe! */
+  catch: () => [523, 784, 1046, 1568].forEach((f, i) => tone(f, i * 0.08, 0.16, 'triangle', 0.06)),
   /** Remada e respingo. */
   splash: () => {
     slide(1800, 300, 0.22, 0.03, 'sawtooth');

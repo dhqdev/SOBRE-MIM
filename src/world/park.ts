@@ -767,7 +767,12 @@ const TRACK: [number, number, number][] = [
 ];
 
 const coaster = (kit: Kit, station: Station) => {
-  const points = TRACK.map(([x, z, h]) => new THREE.Vector3(x, terrainHeight(x, z) + h, z));
+  // a pista foi desenhada com o centro em (67, -1): desloca pro lugar do brinquedo
+  const ox = station.bx - 67;
+  const oz = station.bz + 1;
+  const points = TRACK.map(
+    ([x, z, h]) => new THREE.Vector3(x + ox, terrainHeight(x + ox, z + oz) + h, z + oz),
+  );
   const curve = new THREE.CatmullRomCurve3(points, true, 'centripetal');
   const length = curve.getLength();
   const N = 420;
@@ -824,7 +829,7 @@ const coaster = (kit: Kit, station: Station) => {
   });
 
   // estação de embarque
-  const st = group(kit, 54.6, 2);
+  const st = group(kit, 54.6 + ox, 2 + oz);
   footing(st, 2.2, 10.5, '#c9b8f0', 0.95);
   for (const [sx, sz] of [
     [-0.9, -5],
@@ -852,7 +857,7 @@ const coaster = (kit: Kit, station: Station) => {
     basic: true,
   }).plane.rotation.y = -Math.PI / 2;
   wallRect(kit, st, 2.2, 10.5);
-  lightPool(kit, 54.6, 2, 6, '#ffcf8a', 0.5);
+  lightPool(kit, 54.6 + ox, 2 + oz, 6, '#ffcf8a', 0.5);
   nightLight(kit, st, [0.2, 3.6, 0], '#ffc977', 8, 12);
 
   // trenzinho
@@ -962,7 +967,8 @@ export const buildPark = (kit: Kit, stations: Station[]) =>
       const dx = station.bx - station.x;
       const dz = station.bz - station.z;
       const length = Math.hypot(dx, dz) || 1;
-      if (station.ride!.type === 'coaster') rideSign(kit, 51, -1.9, 49, 1.5, station);
+      if (station.ride!.type === 'coaster')
+        rideSign(kit, station.x - 2.2, station.z - 3.4, station.x - 4.2, station.z, station);
       else {
         const sx = station.x + (-dz / length) * 3.3 + (dx / length) * 0.6;
         const sz = station.z + (dx / length) * 3.3 + (dz / length) * 0.6;
