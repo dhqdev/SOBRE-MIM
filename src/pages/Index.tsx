@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
 import TerminalHero from '@/components/TerminalHero';
 import AboutSection from '@/components/AboutSection';
+import TimelineSection from '@/components/TimelineSection';
+import CommandPalette from '@/components/CommandPalette';
 import ProjectsSection from '@/components/ProjectsSection';
 import TechStackSection from '@/components/TechStackSection';
 import GitHubSection from '@/components/GitHubSection';
@@ -51,6 +53,7 @@ const Index = () => {
 
       <Navbar onOpenExperiences={openExperiences} />
       <ExperiencesPanel isOpen={isExperiencesOpen} onClose={closeExperiences} />
+      <CommandPalette onOpenExperiences={openExperiences} />
 
       <main id="conteudo" className="relative z-[2]">
         <div id="home">
@@ -64,6 +67,7 @@ const Index = () => {
 
         <ProjectsSection />
         <AboutSection />
+        <TimelineSection />
         <TechStackSection />
         <GitHubSection />
       </main>

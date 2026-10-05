@@ -118,7 +118,7 @@ const GitHubSection = () => {
     <section id="github" className="relative scroll-mt-20 py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
         <SectionHeading
-          index="04"
+          index="05"
           eyebrow="GitHub"
           title="Código aberto,"
           highlight="toda semana."

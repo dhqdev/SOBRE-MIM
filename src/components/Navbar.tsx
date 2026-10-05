@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, Search, X } from 'lucide-react';
 import { WHATSAPP_URL } from '@/lib/contact';
+import { openPalette, shortcutLabel } from '@/lib/site';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 const NAV_LINKS = [
   { href: '#projetos', label: 'Projetos' },
   { href: '#sobre', label: 'Sobre' },
+  // Some da barra entre md e lg, onde não cabe; no menu mobile aparece sempre.
+  { href: '#trajetoria', label: 'Trajetória', wide: true },
   { href: '#tecnologias', label: 'Stack' },
   { href: '#github', label: 'GitHub' },
 ];
@@ -94,7 +97,7 @@ const Navbar = ({ onOpenExperiences }: NavbarProps) => {
             {NAV_LINKS.map((link) => {
               const isActive = activeSection === link.href;
               return (
-                <li key={link.href}>
+                <li key={link.href} className={'wide' in link ? 'hidden lg:block' : undefined}>
                   <a
                     href={link.href}
                     onClick={(event) => handleNavClick(event, link.href)}
@@ -121,26 +124,51 @@ const Navbar = ({ onOpenExperiences }: NavbarProps) => {
             </li>
           </ul>
 
-          <a
-            href={WHATSAPP_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden md:inline-flex items-center h-9 px-4 rounded-xl bg-foreground text-background text-sm font-medium transition-opacity hover:opacity-85"
-          >
-            Contato
-          </a>
+          <div className="hidden md:flex items-center gap-2">
+            <button
+              type="button"
+              onClick={openPalette}
+              aria-label="Abrir paleta de comandos"
+              aria-keyshortcuts="Control+K Meta+K"
+              className="inline-flex h-9 items-center gap-2 rounded-xl border border-white/10 px-2.5 text-sm text-muted-foreground transition-colors hover:border-accent/40 hover:text-foreground"
+            >
+              <Search className="h-4 w-4" aria-hidden="true" />
+              <kbd className="hidden lg:inline font-mono text-[11px] tracking-wide">{shortcutLabel()}</kbd>
+            </button>
+            <a
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center h-9 px-4 rounded-xl bg-foreground text-background text-sm font-medium transition-opacity hover:opacity-85"
+            >
+              Contato
+            </a>
+          </div>
 
           {/* Mobile */}
-          <button
-            type="button"
-            onClick={() => setIsMobileOpen((open) => !open)}
-            aria-label={isMobileOpen ? 'Fechar menu' : 'Abrir menu'}
-            aria-expanded={isMobileOpen}
-            aria-controls="menu-mobile"
-            className="md:hidden p-2.5 rounded-xl text-foreground hover:bg-white/[0.06] transition-colors"
-          >
-            {isMobileOpen ? <X className="w-5 h-5" aria-hidden="true" /> : <Menu className="w-5 h-5" aria-hidden="true" />}
-          </button>
+          <div className="md:hidden flex items-center">
+            <button
+              type="button"
+              onClick={() => {
+                setIsMobileOpen(false);
+                openPalette();
+              }}
+              aria-label="Buscar no site"
+              className="p-2.5 rounded-xl text-foreground hover:bg-white/[0.06] transition-colors"
+            >
+              <Search className="w-5 h-5" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsMobileOpen((open) => !open)}
+              aria-label={isMobileOpen ? 'Fechar menu' : 'Abrir menu'}
+              aria-expanded={isMobileOpen}
+              aria-controls="menu-mobile"
+              className="p-2.5 rounded-xl text-foreground hover:bg-white/[0.06] transition-colors"
+            >
+              {isMobileOpen ? <X className="w-5 h-5" aria-hidden="true" /> : <Menu className="w-5 h-5" aria-hidden="true" />}
+            </button>
+          </div>
         </nav>
 
         <div

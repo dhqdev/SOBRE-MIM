@@ -22,7 +22,7 @@ const TechStackSection = () => (
   <section id="tecnologias" className="relative scroll-mt-20 py-20 md:py-28">
     <div className="mx-auto max-w-7xl px-6 lg:px-10">
       <SectionHeading
-        index="03"
+        index="04"
         eyebrow="Stack"
         title="Tecnologias que eu"
         highlight="domino."

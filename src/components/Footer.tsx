@@ -21,7 +21,7 @@ const Footer = () => {
       {/* Chamada final */}
       <div className="mx-auto max-w-7xl px-6 lg:px-10 py-20 md:py-28">
         <p className="scroll-reveal flex items-center gap-3 font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
-          <span className="text-accent">05</span>
+          <span className="text-accent">06</span>
           <span className="h-px w-8 bg-border" aria-hidden="true" />
           Contato
         </p>

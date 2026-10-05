@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { CornerDownLeft, Play, RotateCcw } from 'lucide-react';
 import TiltedCard from './effects/TiltedCard';
 import { useInView } from '@/hooks/useInView';
@@ -12,6 +12,8 @@ import {
   type GitHubData,
 } from '@/lib/github';
 import { MESSAGE_MAX, NAME_MAX, sendPush, type VisitorPush } from '@/lib/guestbook';
+import { TERMINAL_EVENT, downloadCv, openExternal, openPalette, scrollToSection } from '@/lib/site';
+import { QUICK_COMMANDS, complete, runCommand, type OutLine, type Tone } from '@/lib/terminal';
 
 const COMMAND = 'git log --oneline -5';
 const TYPE_MS = 45;
@@ -26,7 +28,6 @@ const LEVEL_COLORS = [
   'rgba(196,181,253,1)',
 ];
 
-type Tone = 'muted' | 'ok' | 'accent' | 'error';
 /** Resposta do mural: o push salvo ou o motivo de não ter salvado. */
 type PushResult = { push?: VisitorPush; error?: string };
 
@@ -42,12 +43,18 @@ const PUSH_LINES: { text: string; tone: Tone }[] = [
 const resultLines = (result: PushResult): { text: string; tone: Tone }[] =>
   result.push
     ? [
-        { text: `   main -> main  ✓ ${result.push.name}, seu push está no mural!`, tone: 'ok' },
+        {
+          text: `   main -> main  ✓ ${result.push.name}, seu push está no mural!`,
+          tone: 'ok',
+        },
         { text: 'Obrigado pela visita 💜 bora conversar?', tone: 'accent' },
       ]
     : [
         { text: `   ✗ ${result.error}`, tone: 'error' },
-        { text: 'Obrigado pela visita 💜 tenta de novo daqui a pouco?', tone: 'accent' },
+        {
+          text: 'Obrigado pela visita 💜 tenta de novo daqui a pouco?',
+          tone: 'accent',
+        },
       ];
 
 const TONE_CLASS: Record<Tone, string> = {
@@ -55,6 +62,36 @@ const TONE_CLASS: Record<Tone, string> = {
   ok: 'text-online',
   accent: 'text-accent',
   error: 'text-red-400',
+  text: 'text-foreground/90',
+};
+
+/** Um comando digitado pelo visitante e o que ele respondeu. */
+type Entry = { id: number; command: string; lines: OutLine[] };
+
+const OutputLine = ({ line }: { line: OutLine }) => {
+  const tone = TONE_CLASS[line.tone ?? 'text'];
+  const content = line.value ? (
+    <span className="flex gap-3">
+      <span className={`w-24 shrink-0 sm:w-28 ${tone}`}>{line.text}</span>
+      <span className="min-w-0 break-words text-muted-foreground">{line.value}</span>
+    </span>
+  ) : (
+    <span className={`break-words ${tone}`}>{line.text}</span>
+  );
+
+  if (!line.href) return <p className="animate-in fade-in duration-200">{content}</p>;
+  return (
+    <p className="animate-in fade-in duration-200">
+      <a
+        href={line.href}
+        target={line.href.startsWith('mailto:') ? undefined : '_blank'}
+        rel="noopener noreferrer"
+        className="block rounded underline-offset-2 hover:bg-white/[0.03] hover:underline"
+      >
+        {content}
+      </a>
+    </p>
+  );
 };
 
 const lastWeeks = (days: ContributionDay[]) => {
@@ -81,6 +118,13 @@ const HeroTerminal = () => {
   const nameRef = useRef<HTMLInputElement>(null);
   const pushButtonRef = useRef<HTMLButtonElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const entryId = useRef(0);
+  const [entries, setEntries] = useState<Entry[]>([]);
+  const [input, setInput] = useState('');
+  const [history, setHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState<number | null>(null);
+  const [cleared, setCleared] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -143,17 +187,118 @@ const HeroTerminal = () => {
   useEffect(() => {
     const body = bodyRef.current;
     if (body) body.scrollTop = body.scrollHeight;
-  }, [pushStep, linesShown, formOpen]);
+  }, [pushStep, linesShown, formOpen, entries]);
 
   const isPushing = pushStep >= 0 && pushStep < totalLines - 1;
   const pushDone = pushStep >= totalLines - 1;
 
-  const openForm = () => {
+  const openForm = useCallback(() => {
+    setEntries([]);
     setFormOpen(true);
     setPushStep(-1);
     setSent(null);
     setResult(null);
     window.setTimeout(() => nameRef.current?.focus({ preventScroll: true }), 0);
+  }, []);
+
+  // Roda um comando: mostra a resposta e faz o que ele pedir (rolar, abrir…).
+  const execute = useCallback(
+    (raw: string) => {
+      const command = raw.trim();
+      if (command) setHistory((items) => [...items, command].slice(-50));
+      setHistoryIndex(null);
+      const result = command ? runCommand(command, history) : { lines: [] };
+      const action = result.action;
+
+      if (action?.type === 'clear') {
+        setEntries([]);
+        setCleared(true);
+        setPushStep(-1);
+        setSent(null);
+        return;
+      }
+      if (action?.type === 'push') {
+        setCleared(false);
+        openForm();
+        return;
+      }
+      if (action?.type === 'log') {
+        setEntries([]);
+        setCleared(false);
+        setPushStep(-1);
+        setSent(null);
+        return;
+      }
+
+      entryId.current += 1;
+      setEntries((items) => [...items.slice(-30), { id: entryId.current, command, lines: result.lines }]);
+
+      if (!action) return;
+      if (action.type === 'scroll') window.setTimeout(() => scrollToSection(action.to), 350);
+      if (action.type === 'open') openExternal(action.url);
+      if (action.type === 'download') downloadCv();
+      if (action.type === 'palette') window.setTimeout(openPalette, 250);
+      if (action.type === 'confetti') {
+        const rect = (inputRef.current ?? bodyRef.current)?.getBoundingClientRect();
+        if (rect) window.setTimeout(() => burstConfetti(rect.left + 80, rect.top), 900);
+      }
+    },
+    [history, openForm],
+  );
+
+  // A paleta de comandos manda comandos pra cá (ex.: "git push").
+  useEffect(() => {
+    const onCommand = (event: Event) => {
+      const command = (event as CustomEvent<string>).detail;
+      if (typeof command === 'string') execute(command);
+    };
+    window.addEventListener(TERMINAL_EVENT, onCommand);
+    return () => window.removeEventListener(TERMINAL_EVENT, onCommand);
+  }, [execute]);
+
+  const submitCommand = (event: React.FormEvent) => {
+    event.preventDefault();
+    execute(input);
+    setInput('');
+  };
+
+  const onInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Tab') {
+      const completion = complete(input);
+      if (completion) {
+        event.preventDefault();
+        setInput(
+          `${completion}${completion === 'open' || completion === 'cd' || completion === 'cat' || completion === 'echo' ? ' ' : ''}`,
+        );
+      }
+      return;
+    }
+    if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+      if (history.length === 0) return;
+      event.preventDefault();
+      const current = historyIndex ?? history.length;
+      const next = event.key === 'ArrowUp' ? Math.max(0, current - 1) : current + 1;
+      if (next >= history.length) {
+        setHistoryIndex(null);
+        setInput('');
+      } else {
+        setHistoryIndex(next);
+        setInput(history[next]);
+      }
+      return;
+    }
+    if (event.key === 'l' && event.ctrlKey) {
+      event.preventDefault();
+      execute('clear');
+    }
+  };
+
+  // Clicar no terminal (com mouse) foca o prompt, como num terminal de verdade.
+  const focusPrompt = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!window.matchMedia('(pointer: fine)').matches) return;
+    if ((event.target as HTMLElement).closest('a, button, input, form')) return;
+    if (window.getSelection()?.toString()) return;
+    inputRef.current?.focus({ preventScroll: true });
   };
 
   const submitPush = (event: React.FormEvent) => {
@@ -208,53 +353,58 @@ const HeroTerminal = () => {
             ref={bodyRef}
             className="h-[248px] overflow-y-auto px-4 py-4 font-mono text-[12.5px] leading-relaxed [scrollbar-width:none] sm:h-[264px] sm:px-5 sm:text-[13px]"
             aria-live="polite"
+            onClick={focusPrompt}
           >
-            <p className="text-foreground">
-              <span className="text-accent">❯</span> {COMMAND.slice(0, typed)}
-              {typed < COMMAND.length && <span className="animate-pulse text-accent">▌</span>}
-            </p>
+            {!cleared && (
+              <>
+                <p className="text-foreground">
+                  <span className="text-accent">❯</span> {COMMAND.slice(0, typed)}
+                  {typed < COMMAND.length && <span className="animate-pulse text-accent">▌</span>}
+                </p>
 
-            {typed >= COMMAND.length && !data && !failed && (
-              <p className="mt-2 animate-pulse text-muted-foreground">buscando commits…</p>
+                {typed >= COMMAND.length && !data && !failed && (
+                  <p className="mt-2 animate-pulse text-muted-foreground">buscando commits…</p>
+                )}
+
+                {failed && (
+                  <p className="mt-2 text-muted-foreground">
+                    sem conexão com a API agora.{' '}
+                    <a
+                      href={GITHUB_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-accent underline-offset-2 hover:underline"
+                    >
+                      ver no GitHub ↗
+                    </a>
+                  </p>
+                )}
+
+                <ul className="mt-2 space-y-1 list-none p-0">
+                  {commits.slice(0, linesShown).map((commit) => (
+                    <li
+                      key={commit.url}
+                      className="flex gap-3 animate-in fade-in slide-in-from-left-1 duration-300"
+                    >
+                      <a
+                        href={commit.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group flex min-w-0 flex-1 gap-3"
+                      >
+                        <span className="shrink-0 text-accent">{commit.sha}</span>
+                        <span className="truncate text-foreground/85 group-hover:text-foreground">
+                          {commit.message}
+                        </span>
+                        <span className="ml-auto hidden shrink-0 text-muted-foreground/70 sm:inline">
+                          {timeAgo(commit.date)}
+                        </span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </>
             )}
-
-            {failed && (
-              <p className="mt-2 text-muted-foreground">
-                sem conexão com a API agora.{' '}
-                <a
-                  href={GITHUB_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-accent underline-offset-2 hover:underline"
-                >
-                  ver no GitHub ↗
-                </a>
-              </p>
-            )}
-
-            <ul className="mt-2 space-y-1 list-none p-0">
-              {commits.slice(0, linesShown).map((commit) => (
-                <li
-                  key={commit.url}
-                  className="flex gap-3 animate-in fade-in slide-in-from-left-1 duration-300"
-                >
-                  <a
-                    href={commit.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group flex min-w-0 flex-1 gap-3"
-                  >
-                    <span className="shrink-0 text-accent">{commit.sha}</span>
-                    <span className="truncate text-foreground/85 group-hover:text-foreground">
-                      {commit.message}
-                    </span>
-                    <span className="ml-auto hidden shrink-0 text-muted-foreground/70 sm:inline">
-                      {timeAgo(commit.date)}
-                    </span>
-                  </a>
-                </li>
-              ))}
-            </ul>
 
             {formOpen && (
               <form id="push-form" onSubmit={submitPush} className="mt-3 space-y-2">
@@ -332,12 +482,60 @@ const HeroTerminal = () => {
               </div>
             )}
 
-            {ready && !isPushing && !formOpen && (
-              <p className="mt-3 text-foreground">
-                <span className="text-accent">❯</span> <span className="animate-pulse text-accent">▌</span>
-              </p>
+            {entries.map((entry) => (
+              <div key={entry.id} className="mt-3">
+                <p className="break-words text-foreground">
+                  <span className="text-accent">❯</span> {entry.command}
+                </p>
+                {entry.lines.map((line, index) => (
+                  <OutputLine key={index} line={line} />
+                ))}
+              </div>
+            ))}
+
+            {(ready || cleared) && !isPushing && !formOpen && (
+              <form
+                onSubmit={submitCommand}
+                className={`flex items-center gap-2 ${cleared && entries.length === 0 ? '' : 'mt-3'}`}
+              >
+                <label htmlFor="terminal-prompt" className="text-accent">
+                  ❯<span className="sr-only">Digite um comando no terminal</span>
+                </label>
+                <input
+                  id="terminal-prompt"
+                  ref={inputRef}
+                  value={input}
+                  onChange={(event) => setInput(event.target.value)}
+                  onKeyDown={onInputKeyDown}
+                  placeholder={entries.length === 0 ? 'digite help e aperte enter' : ''}
+                  autoComplete="off"
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  enterKeyHint="send"
+                  maxLength={80}
+                  className="min-w-0 flex-1 bg-transparent text-base text-foreground caret-accent outline-none placeholder:text-muted-foreground/45 sm:text-[13px]"
+                />
+              </form>
             )}
           </div>
+
+          {/* Atalhos: no celular é bem mais fácil tocar do que digitar */}
+          {(ready || cleared) && (
+            <div className="flex gap-1.5 overflow-x-auto border-t border-white/[0.06] px-4 py-2.5 [scrollbar-width:none] sm:px-5 [&::-webkit-scrollbar]:hidden">
+              {QUICK_COMMANDS.map((command) => (
+                <button
+                  key={command}
+                  type="button"
+                  onClick={() => execute(command)}
+                  disabled={isPushing}
+                  className="shrink-0 rounded-md border border-white/[0.08] bg-white/[0.02] px-2.5 py-1.5 font-mono text-[11px] text-muted-foreground transition-colors hover:border-accent/40 hover:text-accent disabled:opacity-40 sm:py-1"
+                >
+                  {command}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Rodapé: mini gráfico + botão */}
           <div className="flex items-center justify-between gap-4 border-t border-white/[0.06] px-4 py-3 sm:px-5">
