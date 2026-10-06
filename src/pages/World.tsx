@@ -31,6 +31,7 @@ const MUSIC_KEY = 'sitio:musica';
 const AMBIENCE_KEY = 'sitio:ambiente';
 const WELCOME_KEY = 'sitio:boas-vindas';
 const RECORDS_KEY = 'sitio:desafios';
+const VIEW_KEY = 'sitio:visao';
 
 const readList = (key: string): string[] => {
   try {
@@ -258,7 +259,10 @@ const World = () => {
           onRide: (state) => setRide(state),
           onNight: (value) => setNight(value),
           onHint: (text) => pushToast(text, 'visit'),
-          onView: (value) => setFirstPerson(value),
+          onView: (value) => {
+            setFirstPerson(value);
+            saveSetting(VIEW_KEY, value ? 'olhos' : 'fora');
+          },
           onGuide: (target) => setGuide(target),
           onChallenge: (event) => {
             const { course } = event;
@@ -354,10 +358,11 @@ const World = () => {
     lastCounts.current = { visited: progress.visited.length, collected: progress.collected.length };
   }, [progress, points, pushToast]);
 
-  const start = useCallback(() => {
+  const start = useCallback((eyes?: boolean) => {
     if (!world || started) return;
     unlockAudio();
     sfx.start();
+    world.setView(eyes ?? readSetting(VIEW_KEY) === 'olhos');
     world.start();
     setStarted(true);
     if (readSetting(WELCOME_KEY) !== '1') {
@@ -570,13 +575,22 @@ const World = () => {
               </li>
             ))}
           </ul>
-          <button
-            type="button"
-            onClick={start}
-            className="mt-8 rounded-full bg-violet-500 px-8 py-3.5 text-base font-semibold shadow-lg shadow-violet-900/50 transition hover:bg-violet-400 active:scale-95"
-          >
-            Entrar no sítio
-          </button>
+          <div className="mt-8 flex flex-col items-center gap-2.5 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => start(false)}
+              className="rounded-full bg-violet-500 px-8 py-3.5 text-base font-semibold shadow-lg shadow-violet-900/50 transition hover:bg-violet-400 active:scale-95"
+            >
+              Entrar no sítio
+            </button>
+            <button
+              type="button"
+              onClick={() => start(true)}
+              className="rounded-full border border-white/40 bg-black/30 px-6 py-3.5 text-base font-semibold backdrop-blur-sm transition hover:bg-white/10 active:scale-95"
+            >
+              👀 Entrar pelos olhos
+            </button>
+          </div>
           <p className="mt-5 text-xs leading-relaxed text-white/65 sm:text-sm">
             {touch
               ? 'Joystick anda · arraste pra girar e subir a câmera · A usa · B pula'
@@ -640,6 +654,17 @@ const World = () => {
             >
               <MapIcon className="h-4 w-4 text-emerald-300" aria-hidden="true" />
               {!narrow && 'Mapa'}
+            </button>
+            <button
+              type="button"
+              onClick={() => world?.toggleView()}
+              className={`${panel} flex h-9 items-center gap-1.5 px-3 text-sm font-medium ${firstPerson ? 'bg-violet-600/90' : ''}`}
+              aria-label={firstPerson ? 'Voltar pra visão de fora (V)' : 'Ver pelos olhos do personagem (V)'}
+              aria-pressed={firstPerson}
+              title="Visão dos olhos (V)"
+            >
+              <span aria-hidden="true">👀</span>
+              {!narrow && 'Olhos'}
             </button>
             <button
               type="button"

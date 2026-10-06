@@ -111,7 +111,7 @@ export type ChallengeEvent =
   | null;
 
 /** Altura de cada argola: acima do morro (ou da água) mais alto ali em volta. */
-const ringHeight = (x: number, z: number, h: number) => {
+export const ringHeight = (x: number, z: number, h: number) => {
   let floor = WATER_Y;
   for (const [ox, oz] of [
     [0, 0],

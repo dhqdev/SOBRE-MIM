@@ -281,6 +281,14 @@ export const Minimap = ({
       ctx.font = "11px system-ui";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
+      // outros aviões no céu: pontinhos brancos
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      world.others().forEach((o) => {
+        const [ox, oy] = toMap(o.x, o.z);
+        ctx.beginPath();
+        ctx.arc(ox, oy, 2, 0, Math.PI * 2);
+        ctx.fill();
+      });
       const plane = world.locate("aviao");
       if (plane) ctx.fillText("✈️", ...toMap(plane.x, plane.z));
       if (guide) {

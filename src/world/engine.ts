@@ -60,6 +60,7 @@ import { makeLabel, textureQuality } from './textures';
 import { Challenges, COURSES, type ChallengeEvent } from './challenges';
 import { mapBoard } from './mapboard';
 import { buildTraffic } from './traffic';
+import { buildPilots } from './pilots';
 
 const PORTFOLIO_SIGN = '#6d3fc0';
 const AIRPORT_SIGN = '#2f5fae';
@@ -162,6 +163,8 @@ export interface WorldHandle {
   player: () => { x: number; z: number; angle: number };
   /** Só pra testes: leva o boneco direto pra um ponto. */
   teleport: (x: number, z: number) => void;
+  /** Onde estão os aviões dos outros pilotos (pro mapa). */
+  others: () => { x: number; z: number }[];
   /** Só pra testes: adianta o relógio do mundo (tráfego do aeroporto etc.). */
   skip: (seconds: number) => void;
   /** Só pra testes: onde está o bicho (ou o bugue) mais perto desse tipo. */
@@ -192,6 +195,8 @@ export interface WorldHandle {
   setThrottle: (dir: number) => void;
   /** Visão dos olhos do personagem liga/desliga (tecla V). */
   toggleView: () => void;
+  /** Escolhe a visão (dos olhos ou de fora) sem recadinho. */
+  setView: (firstPerson: boolean) => void;
   /** Botões de câmera (segurando): `yaw` gira, `pitch` sobe (+1) ou desce (-1). */
   setCamera: (yaw: number, pitch: number) => void;
   /** Aproxima (<1) ou afasta (>1) a câmera. */
@@ -953,6 +958,8 @@ const buildWorld = (kit: Kit) => {
   const planes = PLANE_SPOTS.map((spot) => new Plane(kit, spot.kind, spot.x, spot.z, spot.angle));
   // aviões de carga pousando e decolando, e o caminhão da colheita
   const traffic = buildTraffic(kit);
+  // "outros jogadores" voando por aí
+  const pilots = buildPilots(kit);
   // barquinho amarrado no deque do lago
   const deck = BRIDGES.find((bridge) => bridge.flat)!;
   const boat = new Boat(
@@ -967,7 +974,7 @@ const buildWorld = (kit: Kit) => {
   buildPools(kit, groundHeight);
   buildHalos(kit);
   mergeStatics(kit);
-  return { hooks, labels, eggs, animals, buggy, boat, planes, traffic, attractions, gatehouse, people };
+  return { hooks, labels, eggs, animals, buggy, boat, planes, traffic, pilots, attractions, gatehouse, people };
 };
 
 /* ---------------------------------------------------------------- motor */
@@ -993,7 +1000,7 @@ export const createWorld = (
 
   const kit = createKit(scene, mobile);
   const sky = new Sky(scene);
-  const { hooks, labels, eggs, animals, buggy, boat, planes, traffic, attractions, gatehouse, people } =
+  const { hooks, labels, eggs, animals, buggy, boat, planes, traffic, pilots, attractions, gatehouse, people } =
     buildWorld(kit);
   /** Liga sombra (projeta e recebe) em tudo que é fosco; o chão só recebe. */
   const shade = (root: THREE.Object3D) => {
@@ -1019,7 +1026,7 @@ export const createWorld = (
     sun.shadow.normalBias = 0.06;
     sun.shadow.radius = 2.5;
     shade(scene);
-    planes.forEach((plane) => (plane.blobShadow = false));
+    [...planes, ...pilots.planes].forEach((plane) => (plane.blobShadow = false));
   }
   let player = buildPlayer(scene, outfit);
   shade(player.root);
@@ -1497,16 +1504,23 @@ export const createWorld = (
   };
 
   /** Liga/desliga a visão dos olhos do personagem. */
-  const toggleView = () => {
-    state.firstPerson = !state.firstPerson;
+  const setView = (firstPerson: boolean, quiet = false) => {
+    if (firstPerson === state.firstPerson) return;
+    state.firstPerson = firstPerson;
     state.pitch = 0;
-    events.onView?.(state.firstPerson);
+    if (!firstPerson && document.pointerLockElement === canvas) document.exitPointerLock();
+    events.onView?.(firstPerson);
+    if (quiet) return;
+    const touchOnly = window.matchMedia('(pointer: coarse)').matches;
     events.onHint?.(
-      state.firstPerson
-        ? 'Visão dos olhos! Arraste (ou X/C) pra olhar em volta · V volta'
+      firstPerson
+        ? touchOnly
+          ? 'Visão dos olhos! Joystick anda, arraste pra olhar em volta'
+          : 'Visão dos olhos! Clique na tela pra olhar com o mouse (Esc solta) · V volta'
         : 'Visão de fora · arraste pra girar e subir/descer · roda do mouse aproxima',
     );
   };
+  const toggleView = () => setView(!state.firstPerson);
 
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
@@ -1570,7 +1584,18 @@ export const createWorld = (
   // Dois dedos fazem pinça (zoom).
   const pointers = new Map<number, { x: number; y: number }>();
   let pinch = 0;
+  // visão dos olhos no computador: clicar trava o mouse e ele vira o olhar (Esc solta)
+  const coarse = window.matchMedia('(pointer: coarse)').matches;
+  const onMouseLook = (event: MouseEvent) => {
+    if (document.pointerLockElement !== canvas) return;
+    state.yaw -= event.movementX * 0.0022;
+    tiltCamera(event.movementY * 0.0016);
+  };
+  document.addEventListener('mousemove', onMouseLook);
   const onPointerDown = (event: PointerEvent) => {
+    if (state.firstPerson && !coarse && event.pointerType === 'mouse' && state.mode === 'play' && !state.paused) {
+      canvas.requestPointerLock?.()?.catch?.(() => undefined);
+    }
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     canvas.setPointerCapture(event.pointerId);
     pinch = 0;
@@ -1653,8 +1678,12 @@ export const createWorld = (
   const readInput = () => {
     let ix = state.joyX;
     let iz = state.joyZ;
-    if (keys.has('arrowleft') || keys.has('a')) ix -= 1;
-    if (keys.has('arrowright') || keys.has('d')) ix += 1;
+    // na visão dos olhos (a pé) as setinhas viram o olhar; A/D andam de lado
+    const turnKeys = state.firstPerson && !state.mount && !state.attraction;
+    if (keys.has('a') || (!turnKeys && keys.has('arrowleft'))) ix -= 1;
+    if (keys.has('d') || (!turnKeys && keys.has('arrowright'))) ix += 1;
+    if (turnKeys && keys.has('arrowleft')) state.yaw += 0.035;
+    if (turnKeys && keys.has('arrowright')) state.yaw -= 0.035;
     if (keys.has('arrowup') || keys.has('w')) iz -= 1;
     if (keys.has('arrowdown') || keys.has('s')) iz += 1;
     const length = Math.hypot(ix, iz);
@@ -1817,6 +1846,7 @@ export const createWorld = (
     }
     // tráfego do aeroporto; perto dele a torre avisa no rádio
     const news = traffic.update(t, dt);
+    pilots.update(t, dt);
     if (news.length && state.mode === 'play' && Math.hypot(state.x, state.z + 160) < 120 && t - state.radioAt > 16) {
       const { code, phase } = news[0];
       const line =
@@ -2052,6 +2082,11 @@ export const createWorld = (
     if (eyes) {
       player.head.getWorldPosition(camPos);
       camPos.y += 0.42;
+      // passinho: a cabeça balança de leve andando
+      if (!mount && !attraction) {
+        const walking = Math.min(1, Math.hypot(state.vx, state.vz) / 6);
+        camPos.y += Math.abs(Math.sin(state.phase)) * 0.09 * walking - 0.04 * walking;
+      }
       const look = Math.max(-1.2, Math.min(1.2, -state.pitch * 1.6));
       if (mount instanceof Plane || attraction) {
         // no avião e nos brinquedos o olhar acompanha o veículo (com o giro que a pessoa deu)
@@ -2205,6 +2240,7 @@ export const createWorld = (
       state.z = z;
       camera.position.set(x, groundHeight(x, z), z).add(followOffset());
     },
+    others: () => [...pilots.positions(), ...traffic.positions().map((p) => ({ x: p.x, z: p.z }))],
     skip: (seconds) => {
       kit.time.value += seconds;
     },
@@ -2286,6 +2322,7 @@ export const createWorld = (
       state.throttleDir = dir;
     },
     toggleView,
+    setView: (firstPerson) => setView(firstPerson, true),
     setCamera: (yaw, pitch) => {
       state.camYaw = yaw;
       state.camPitch = pitch;
@@ -2303,6 +2340,8 @@ export const createWorld = (
       canvas.removeEventListener('pointerup', onPointerUp);
       canvas.removeEventListener('pointercancel', onPointerUp);
       canvas.removeEventListener('wheel', onWheel);
+      document.removeEventListener('mousemove', onMouseLook);
+      if (document.pointerLockElement === canvas) document.exitPointerLock();
       scene.traverse((object) => {
         if (
           object instanceof THREE.Mesh ||
