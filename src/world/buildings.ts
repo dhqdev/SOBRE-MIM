@@ -1231,23 +1231,28 @@ export const signpost = (
   kit: Kit,
   x: number,
   z: number,
-  arrows: { text: string; toX: number; toZ: number }[],
+  arrows: { text: string; toX: number; toZ: number; color?: string }[],
 ) => {
   const g = group(kit, x, z);
-  box(g, [0.18, 3.2, 0.18], [0, 1.6, 0], lambert('#6b4423'));
-  arrows.forEach(({ text, toX, toZ }, index) => {
+  const tall = 2.95 + arrows.length * 0.56;
+  box(g, [0.2, tall, 0.2], [0, tall / 2, 0], lambert('#6b4423'));
+  box(g, [0.34, 0.12, 0.34], [0, tall + 0.04, 0], lambert('#4a2e18'));
+  arrows.forEach(({ text, toX, toZ, color = '#9b6b3e' }, index) => {
     const holder = new THREE.Group();
-    holder.position.y = 2.75 - index * 0.5;
+    holder.position.y = tall - 0.3 - index * 0.56;
     holder.rotation.y = Math.atan2(toX - x, toZ - z) - Math.PI / 2;
     g.add(holder);
-    box(holder, [1.9, 0.4, 0.08], [1.05, 0, 0], lambert('#9b6b3e'));
-    const tip = box(holder, [0.29, 0.29, 0.08], [2.0, 0, 0], lambert('#9b6b3e'));
+    // placa em forma de flecha, com a distância (dá pra saber se é longe)
+    const meters = Math.round(Math.hypot(toX - x, toZ - z) / 10) * 10;
+    const label = meters >= 20 ? `${text} · ${meters} m` : text;
+    box(holder, [2.75, 0.5, 0.08], [1.45, 0, 0], lambert(color));
+    const tip = box(holder, [0.36, 0.36, 0.08], [2.83, 0, 0], lambert(color));
     tip.rotation.z = Math.PI / 4;
     for (const side of [1, -1]) {
-      const { plane } = signBoard(holder, [text], 1.75, [1.0, 0, side * 0.045], {
-        bg: '#9b6b3e',
-        size: 92,
-        canvas: 768,
+      const { plane } = signBoard(holder, [label], 2.6, [1.4, 0, side * 0.045], {
+        bg: color,
+        size: 76,
+        canvas: 1024,
       });
       if (side < 0) plane.rotation.y = Math.PI;
     }

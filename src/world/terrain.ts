@@ -21,15 +21,14 @@ export const WORLD_RADIUS = S(97);
  * Aeroporto: um vale plano depois da serra, ao norte, com a pista no sentido
  * leste-oeste. Chega-se nele por uma passagem (PASS) que corta a serra.
  */
-export const AIRPORT = { x: 0, z: -232, w: 320, d: 112 };
+export const AIRPORT = { x: 0, z: -160, w: 320, d: 112 };
 export const AIRPORT_Y = 0.6;
-export const RUNWAY = { x: 0, z: -262, length: 236, width: 16 };
+export const RUNWAY = { x: 0, z: -190, length: 236, width: 16 };
 /** Estrada que sai do sítio, corta a serra e chega no aeroporto. */
 export const PASS: [number, number][] = [
-  [-14, -112],
-  [-6, -140],
-  [0, -166],
-  [0, -180],
+  [-12.5, -80],
+  [-4, -96],
+  [0, -108],
 ];
 export const PASS_HALF = 9;
 /** Até onde o avião pode ir (fora disso ele faz a curva sozinho). */

@@ -10,6 +10,7 @@ import {
   createKit,
   disposeMaterials,
   glow,
+  group,
   keep,
   lambert,
   mergeStatics,
@@ -23,8 +24,8 @@ import * as L from './life';
 import { Animal, ducks, type RideKind } from './animals';
 import { Buggy } from './buggy';
 import { Boat } from './boat';
-import { Plane, type PlaneEvent } from './plane';
-import { airportGround, buildAirport, PLANE_SPOT } from './airport';
+import { Plane, type PlaneEvent, type PlaneKind } from './plane';
+import { airportGround, buildAirport, PLANE_SPOTS } from './airport';
 import { DEFAULT_OUTFIT, type Outfit } from './outfits';
 import * as D from './details';
 import { fishingLine, stretchLine, villagers } from './people';
@@ -56,6 +57,12 @@ import {
 } from './terrain';
 import { EGGS, GATE, PARK, PENS, RIDES, ROADS, SPAWN, STATIONS, TRAIL, YARD, type Station } from './stations';
 import { makeLabel, textureQuality } from './textures';
+import { Challenges, COURSES, type ChallengeEvent } from './challenges';
+import { mapBoard } from './mapboard';
+import { buildTraffic } from './traffic';
+
+const PORTFOLIO_SIGN = '#6d3fc0';
+const AIRPORT_SIGN = '#2f5fae';
 
 export type TimeMode = 'auto' | 'dia' | 'tarde' | 'noite';
 
@@ -82,12 +89,56 @@ export interface WorldEvents {
   onRide: (state: RideState) => void;
   /** Mudou entre dia e noite (pro HUD trocar o ícone). */
   onNight?: (night: boolean) => void;
+  /** Trocou entre a visão de fora e a dos olhos. */
+  onView?: (firstPerson: boolean) => void;
   /** Recadinho rápido pra pessoa (ex.: "encoste o barco na margem"). */
   onHint?: (text: string) => void;
   /** Deu um peixe pro bicho (`name` = "o cavalo", "a vaca"...). */
   onFeed?: (name: string) => void;
   /** Tirou alguma coisa da água (peixe ou tralha). */
   onCatch?: (fish: { name: string; kg: number; emoji: string; junk: boolean }) => void;
+  /** Desafio de voo começou, passou argola, terminou ou falhou. */
+  onChallenge?: (event: NonNullable<ChallengeEvent>) => void;
+  /** Chegou (ou desistiu) do destino escolhido no mapa. */
+  onGuide?: (target: GuideTarget | null) => void;
+}
+
+/** Lugar escolhido no mapa pra seta mostrar o caminho. */
+export interface GuideTarget {
+  x: number;
+  z: number;
+  label: string;
+}
+
+/** O que o HUD mostra a cada instante (consultado umas 8 vezes por segundo). */
+export interface HudState {
+  flight: FlightState | null;
+  challenge: null | {
+    name: string;
+    emoji: string;
+    color: string;
+    /** Argolas já atravessadas e o total. */
+    ring: number;
+    total: number;
+    time: number;
+  };
+  /** Pra onde a seta aponta: distância (m) e direção em relação à câmera (rad, + = direita). */
+  guide: null | { label: string; distance: number; bearing: number };
+}
+
+/** O que o painel de voo mostra. Velocidade em m/s do jogo (o HUD converte pra km/h). */
+export interface FlightState {
+  kind: PlaneKind;
+  name: string;
+  emoji: string;
+  /** Altura acima do chão. */
+  alt: number;
+  speed: number;
+  /** Acelerador escolhido, 0 a 1. */
+  power: number;
+  grounded: boolean;
+  takeoff: number;
+  maxSpeed: number;
 }
 
 export interface WorldHandle {
@@ -111,6 +162,8 @@ export interface WorldHandle {
   player: () => { x: number; z: number; angle: number };
   /** Só pra testes: leva o boneco direto pra um ponto. */
   teleport: (x: number, z: number) => void;
+  /** Só pra testes: adianta o relógio do mundo (tráfego do aeroporto etc.). */
+  skip: (seconds: number) => void;
   /** Só pra testes: onde está o bicho (ou o bugue) mais perto desse tipo. */
   locate: (kind: RideKind) => { x: number; z: number } | null;
   /** Só pra testes: chamadas de desenho, triângulos e fps. */
@@ -119,11 +172,30 @@ export interface WorldHandle {
     triangles: number;
     fps: number;
     mode: string;
-    /** O avião: altura acima do chão, velocidade e se está no chão. */
-    flight: { alt: number; speed: number; grounded: boolean };
+    /** O avião (o pilotado, ou o biplano): altura acima do chão, velocidade... */
+    flight: FlightState;
     hour: number;
     timeMode: string;
+    /** Aviões de carga visíveis agora: [x, y, z]. */
+    traffic: number[][];
+    time: number;
   };
+  /** Painel de voo, desafio e seta (consultado pelo HUD). */
+  hud: () => HudState;
+  /** Viaja na hora pra um lugar (desce do que estiver montado antes). */
+  travel: (x: number, z: number) => void;
+  /** Escolhe (ou limpa) o destino da seta de guia. */
+  setGuide: (target: GuideTarget | null) => void;
+  /** Largada de cada desafio de voo (pro mapa). */
+  challengeStarts: () => { id: string; name: string; emoji: string; x: number; z: number }[];
+  /** Botões +/- do acelerador: 1 acelera, -1 desacelera, 0 solta. */
+  setThrottle: (dir: number) => void;
+  /** Visão dos olhos do personagem liga/desliga (tecla V). */
+  toggleView: () => void;
+  /** Botões de câmera (segurando): `yaw` gira, `pitch` sobe (+1) ou desce (-1). */
+  setCamera: (yaw: number, pitch: number) => void;
+  /** Aproxima (<1) ou afasta (>1) a câmera. */
+  zoom: (factor: number) => void;
   dispose: () => void;
 }
 
@@ -443,18 +515,25 @@ const buildWorld = (kit: Kit) => {
     [17, GATE.z - 3.5],
   ]);
   B.overlook(kit, S(-7), S(61.5), S(-7), S(40));
+  // placas: roxo = portfólio, azul = aeroporto, madeira = passeio
   B.signpost(kit, 4.2, S(73.5), [
+    { text: 'Projetos', toX: PARK.x, toZ: PARK.z, color: PORTFOLIO_SIGN },
+    { text: 'Sobre mim', toX: S(-17), toZ: S(-24), color: PORTFOLIO_SIGN },
+    { text: 'Aeroporto', toX: PASS[0][0], toZ: PASS[0][1], color: AIRPORT_SIGN },
     { text: 'Terreiro', toX: YARD.x, toZ: YARD.z },
-    { text: 'Garagem', toX: S(8), toZ: S(39) },
+    { text: 'Bugue', toX: S(8), toZ: S(39) },
     { text: 'Lago', toX: LAKE.x, toZ: LAKE.z },
   ]);
+  mapBoard(kit, -8, 101, 0.35);
   B.signpost(kit, S(5.5), S(-1), [
-    { text: 'Casa', toX: S(-17), toZ: S(-24) },
-    { text: 'Parque', toX: PARK.x, toZ: PARK.z },
-    { text: 'Celeiro', toX: S(14), toZ: S(-31) },
-    { text: 'Trilha', toX: TRAIL[0][0], toZ: TRAIL[0][1] },
+    { text: 'Projetos', toX: PARK.x, toZ: PARK.z, color: PORTFOLIO_SIGN },
+    { text: 'Sobre mim', toX: S(-17), toZ: S(-24), color: PORTFOLIO_SIGN },
+    { text: 'Carreira', toX: TRAIL[0][0], toZ: TRAIL[0][1], color: PORTFOLIO_SIGN },
+    { text: 'Currículo', toX: S(14), toZ: S(-31), color: PORTFOLIO_SIGN },
+    { text: 'Aeroporto', toX: PASS[0][0], toZ: PASS[0][1], color: AIRPORT_SIGN },
     { text: 'Cachoeira', toX: POND.x, toZ: POND.z },
   ]);
+  mapBoard(kit, 13, -12, -0.5);
 
   // estações
   const hooks = new Map<string, (() => void)[]>();
@@ -595,13 +674,29 @@ const buildWorld = (kit: Kit) => {
   // aeroporto no vale do norte (a estrada sai do curral dos cavalos e corta a serra)
   buildAirport(kit);
   B.signpost(kit, -2.5, -50, [
-    { text: 'Aeroporto', toX: PASS[0][0], toZ: PASS[0][1] },
+    { text: 'Aeroporto', toX: PASS[0][0], toZ: PASS[0][1], color: AIRPORT_SIGN },
     { text: 'Terreiro', toX: YARD.x, toZ: YARD.z },
+    { text: 'Projetos', toX: PARK.x, toZ: PARK.z, color: PORTFOLIO_SIGN },
   ]);
-  B.signpost(kit, 7, -190, [
-    { text: 'Sítio', toX: 0, toZ: -150 },
-    { text: 'Avião', toX: PLANE_SPOT.x, toZ: PLANE_SPOT.z },
+  B.signpost(kit, 7, -116, [
+    { text: 'Fazenda', toX: 0, toZ: -60 },
+    { text: 'Aviões', toX: PLANE_SPOTS[1].x, toZ: PLANE_SPOTS[1].z, color: AIRPORT_SIGN },
+    { text: 'Desafios', toX: 30, toZ: -132, color: AIRPORT_SIGN },
   ]);
+  mapBoard(kit, 14, -119, 0);
+  // quadro dos desafios de voo, na frente dos aviões
+  {
+    const g = group(kit, 30, -132);
+    for (const side of [-1, 1]) box(g, [0.2, 3.4, 0.2], [side * 1.9, 1.7, -0.05], lambert('#5a3a20'));
+    B.signBoard(
+      g,
+      ['DESAFIOS DE VOO', ...COURSES.map((c) => `${c.emoji} ${c.name}`), 'Voe pela argola grande', 'Shift acelera · Z freia'],
+      3.8,
+      [0, 2.3, 0.02],
+      { bg: '#24477f', size: 64, canvas: 1024 },
+    );
+    kit.obstacles.push({ x: 28.6, z: -132, r: 0.6 }, { x: 31.4, z: -132, r: 0.6 });
+  }
 
   // roças, moinho e garagem
   G.field(kit, FIELDS.milho, 'milho');
@@ -646,6 +741,10 @@ const buildWorld = (kit: Kit) => {
   // o que não pode ser coberto por árvore, pedra ou flor
   const reserved: [number, number, number][] = [
     [GATE.x, GATE.z, 7],
+    [-8, 101, 3.2],
+    [13, -12, 3.2],
+    [14, -119, 3.2],
+    [30, -132, 2.6],
     [S(0), S(70), 6],
     [S(-7), S(61.5), 2.5],
     [YARD.x, YARD.z, 6],
@@ -710,6 +809,7 @@ const buildWorld = (kit: Kit) => {
       return Math.hypot(x - (ax + dx * k), z - (az + dz * k)) < margin + width / 2;
     });
   const free = (x: number, z: number, margin = 1.6) =>
+    airportDistance(x, z) > 4 &&
     !nearRoad(x, z, margin) &&
     waterDistance(x, z) > margin + 0.4 &&
     reserved.every(([rx, rz, r]) => Math.hypot(x - rx, z - rz) > r + margin * 0.5);
@@ -794,7 +894,7 @@ const buildWorld = (kit: Kit) => {
   // mato em volta do aeroporto (no pé da serra) e grama no gramado dele
   for (let i = 0; i < (mobile ? 70 : 130); i++) {
     const x = (rand() - 0.5) * 400;
-    const z = -150 - rand() * 180;
+    const z = -80 - rand() * 190;
     const edge = airportDistance(x, z);
     if (edge < 5 || edge > 45 || nearRoad(x, z, 6) || Math.hypot(x, z) < WORLD_RADIUS + 8) continue;
     if (terrainHeight(x, z) > 9 || i % 3 === 0) G.pine(kit, x, z, 0.9 + rand() * 0.6);
@@ -802,7 +902,7 @@ const buildWorld = (kit: Kit) => {
   }
   for (let i = 0; i < (mobile ? 500 : 1100); i++) {
     const x = (rand() - 0.5) * 316;
-    const z = -178 - rand() * 108;
+    const z = -106 - rand() * 108;
     if (!airportGround(x, z) || nearRoad(x, z, 1)) continue;
     if (i % 4 === 0) flowers.push([x, z]);
     else tufts.push([x, z]);
@@ -850,7 +950,9 @@ const buildWorld = (kit: Kit) => {
   ];
   ducks(kit);
   const buggy = new Buggy(kit, S(12.2) - 6.8, S(39) + 0.4, -1.5);
-  const plane = new Plane(kit, PLANE_SPOT.x, PLANE_SPOT.z, PLANE_SPOT.angle);
+  const planes = PLANE_SPOTS.map((spot) => new Plane(kit, spot.kind, spot.x, spot.z, spot.angle));
+  // aviões de carga pousando e decolando, e o caminhão da colheita
+  const traffic = buildTraffic(kit);
   // barquinho amarrado no deque do lago
   const deck = BRIDGES.find((bridge) => bridge.flat)!;
   const boat = new Boat(
@@ -865,7 +967,7 @@ const buildWorld = (kit: Kit) => {
   buildPools(kit, groundHeight);
   buildHalos(kit);
   mergeStatics(kit);
-  return { hooks, labels, eggs, animals, buggy, boat, plane, attractions, gatehouse, people };
+  return { hooks, labels, eggs, animals, buggy, boat, planes, traffic, attractions, gatehouse, people };
 };
 
 /* ---------------------------------------------------------------- motor */
@@ -891,7 +993,8 @@ export const createWorld = (
 
   const kit = createKit(scene, mobile);
   const sky = new Sky(scene);
-  const { hooks, labels, eggs, animals, buggy, boat, plane, attractions, gatehouse, people } = buildWorld(kit);
+  const { hooks, labels, eggs, animals, buggy, boat, planes, traffic, attractions, gatehouse, people } =
+    buildWorld(kit);
   /** Liga sombra (projeta e recebe) em tudo que é fosco; o chão só recebe. */
   const shade = (root: THREE.Object3D) => {
     if (!shadows) return;
@@ -916,7 +1019,7 @@ export const createWorld = (
     sun.shadow.normalBias = 0.06;
     sun.shadow.radius = 2.5;
     shade(scene);
-    plane.blobShadow = false;
+    planes.forEach((plane) => (plane.blobShadow = false));
   }
   let player = buildPlayer(scene, outfit);
   shade(player.root);
@@ -926,6 +1029,21 @@ export const createWorld = (
   bang.visible = false;
   scene.add(bang);
   const rideable = animals.filter((animal) => animal.rideable);
+  const challenges = new Challenges(kit);
+  // seta flutuante que aponta pro destino (argola do desafio ou lugar do mapa)
+  const arrow = new THREE.Group();
+  {
+    const material = new THREE.MeshBasicMaterial({ color: '#ffd166', transparent: true, opacity: 0.92, fog: false });
+    const head = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.1, 4), material);
+    head.rotation.x = Math.PI / 2;
+    head.position.z = 0.55;
+    const tail = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.12, 0.9), material);
+    tail.position.z = -0.35;
+    arrow.add(head, tail);
+    arrow.visible = false;
+    arrow.renderOrder = 11;
+    scene.add(arrow);
+  }
 
   const state = {
     mode: 'intro' as 'intro' | 'fly' | 'play',
@@ -976,6 +1094,21 @@ export const createWorld = (
     feedTarget: null as Animal | null,
     /** Quanto a névoa já recuou (voando alto). */
     fogLift: 0,
+    /** Botões +/- do acelerador no HUD (segurando). */
+    throttleDir: 0,
+    /** Altura da câmera em volta do boneco (+ mais do alto, - mais rente ao chão). */
+    pitch: 0,
+    /** Distância da câmera (1 = normal). */
+    zoom: 1,
+    /** Visão dos olhos do personagem. */
+    firstPerson: false,
+    /** Botões de câmera do HUD (segurando): giro e altura. */
+    camYaw: 0,
+    camPitch: 0,
+    /** Destino escolhido no mapa. */
+    guide: null as GuideTarget | null,
+    /** Último recado da torre (pra não falar sem parar). */
+    radioAt: -100,
   };
   const keys = new Set<string>();
 
@@ -1008,6 +1141,8 @@ export const createWorld = (
       label = near.station.ride!.on;
     } else if (state.mount instanceof Plane && !state.mount.parked) {
       label = state.mount.grounded ? 'Pare o avião pra descer' : 'Pouse pra descer';
+    } else if (!state.mount && state.mountable instanceof Plane) {
+      label = `Pilotar ${state.mountable.spec.the}`;
     } else if (state.fishing) {
       riding = 'pesca';
       label = state.fishing.phase === 'bite' ? 'Puxar agora!' : 'Recolher a linha';
@@ -1208,6 +1343,19 @@ export const createWorld = (
     emitRide();
   };
 
+  /** Painel de voo: velocidade, altura e acelerador. */
+  const flightOf = (plane: Plane): FlightState => ({
+    kind: plane.spec.kind,
+    name: plane.spec.name,
+    emoji: plane.spec.emoji,
+    alt: Math.round((plane.alt - terrainHeight(plane.x, plane.z)) * 10) / 10,
+    speed: Math.round(plane.speed * 10) / 10,
+    power: plane.power,
+    grounded: plane.grounded,
+    takeoff: plane.spec.takeoff,
+    maxSpeed: plane.spec.maxSpeed,
+  });
+
   /** Som e recadinho do que o avião fez nesse quadro. */
   const onPlane = (event: PlaneEvent) => {
     if (event === 'takeoff') {
@@ -1267,7 +1415,7 @@ export const createWorld = (
     const mount = state.mount;
     if (!mount) return true;
     const radius =
-      mount instanceof Buggy || mount instanceof Boat || mount instanceof Plane ? mount.radius : mount.spec.radius;
+      mount instanceof Buggy || mount instanceof Boat ? mount.radius : mount.spec.radius;
     let spot: [number, number] | null = null;
     if (mount instanceof Plane && !mount.parked && !force) {
       events.onHint?.(mount.grounded ? 'Pare o avião pra descer (segure S)' : 'Pouse o avião primeiro');
@@ -1275,7 +1423,7 @@ export const createWorld = (
     }
     if (mount instanceof Plane && !mount.grounded) {
       // trocando de brinquedo lá no alto: o avião volta pra vaga dele
-      mount.park(PLANE_SPOT.x, PLANE_SPOT.z, PLANE_SPOT.angle);
+      mount.park(mount.home.x, mount.home.z, mount.home.angle);
     }
     if (mount instanceof Boat) {
       // do barco: procura chão firme (ou o deque) em volta, cada vez mais longe
@@ -1338,12 +1486,26 @@ export const createWorld = (
       else if (target instanceof Plane) {
         sfx.engine();
         state.boardYaw = state.yaw;
-        events.onHint?.('W acelera e sobe · S freia e desce · A/D vira · Espaço solta fumaça');
+        events.onHint?.(
+          `${target.spec.name}: W acelera e sobe · S freia e desce · A/D vira · Shift/Z mais rápido/devagar`,
+        );
       }
       else SOUND[target.kind as RideKind]?.();
       state.mountable = null;
     }
     emitRide();
+  };
+
+  /** Liga/desliga a visão dos olhos do personagem. */
+  const toggleView = () => {
+    state.firstPerson = !state.firstPerson;
+    state.pitch = 0;
+    events.onView?.(state.firstPerson);
+    events.onHint?.(
+      state.firstPerson
+        ? 'Visão dos olhos! Arraste (ou X/C) pra olhar em volta · V volta'
+        : 'Visão de fora · arraste pra girar e subir/descer · roda do mouse aproxima',
+    );
   };
 
   const onKeyDown = (event: KeyboardEvent) => {
@@ -1353,6 +1515,9 @@ export const createWorld = (
     if (key === ' ' && !event.repeat) action();
     if (key === 'f' && !event.repeat) toggleRide();
     if (key === 'g' && !event.repeat) extra();
+    if (key === 'v' && !event.repeat) toggleView();
+    if ((key === '+' || key === '=') && !event.repeat) zoomCamera(0.85);
+    if ((key === '-' || key === '_') && !event.repeat) zoomCamera(1.18);
     keys.add(key);
   };
   const onKeyUp = (event: KeyboardEvent) => keys.delete(event.key.toLowerCase());
@@ -1376,8 +1541,22 @@ export const createWorld = (
   resizeObserver.observe(canvas);
 
   const UP = new THREE.Vector3(0, 1, 0);
+  const PITCH_MIN = -0.5;
+  const PITCH_MAX = 0.95;
+  const ZOOM_MIN = 0.45;
+  const ZOOM_MAX = 2.4;
+  const tiltCamera = (amount: number) => {
+    state.pitch = Math.max(PITCH_MIN, Math.min(PITCH_MAX, state.pitch + amount));
+  };
+  const zoomCamera = (factor: number) => {
+    state.zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, state.zoom * factor));
+  };
   const followOffset = () => {
     const base = portrait ? new THREE.Vector3(0, 9, 14) : new THREE.Vector3(0, 6.6, 12.5);
+    // sobe/desce a câmera girando em volta do boneco (arrastar pra cima e pra baixo)
+    const reach = base.length() * state.zoom;
+    const elevation = Math.max(0.02, Math.min(1.45, Math.atan2(base.y, base.z) + state.pitch));
+    base.set(0, Math.sin(elevation) * reach, Math.cos(elevation) * reach);
     if (state.attraction) base.multiplyScalar(state.attraction.view);
     else if (state.mount instanceof Buggy) base.multiplyScalar(1.3);
     else if (state.mount instanceof Boat) base.multiplyScalar(1.2);
@@ -1387,21 +1566,43 @@ export const createWorld = (
     return base.applyAxisAngle(UP, state.yaw);
   };
 
-  // arrastar na tela (ou com o mouse) gira a câmera em volta do boneco
-  const drag = { id: -1, x: 0 };
+  // arrastar na tela (ou com o mouse) gira a câmera em volta do boneco: pros lados e pra cima/baixo.
+  // Dois dedos fazem pinça (zoom).
+  const pointers = new Map<number, { x: number; y: number }>();
+  let pinch = 0;
   const onPointerDown = (event: PointerEvent) => {
-    drag.id = event.pointerId;
-    drag.x = event.clientX;
+    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     canvas.setPointerCapture(event.pointerId);
+    pinch = 0;
   };
   const onPointerMove = (event: PointerEvent) => {
-    if (event.pointerId !== drag.id) return;
-    state.yaw -= (event.clientX - drag.x) * (event.pointerType === 'touch' ? 0.009 : 0.006);
-    drag.x = event.clientX;
+    const last = pointers.get(event.pointerId);
+    if (!last) return;
+    const dx = event.clientX - last.x;
+    const dy = event.clientY - last.y;
+    last.x = event.clientX;
+    last.y = event.clientY;
+    if (pointers.size >= 2) {
+      const [a, b] = [...pointers.values()];
+      const spread = Math.hypot(a.x - b.x, a.y - b.y);
+      if (pinch) zoomCamera(pinch / Math.max(1, spread));
+      pinch = spread;
+      return;
+    }
+    const k = event.pointerType === 'touch' ? 0.009 : 0.006;
+    state.yaw -= dx * k;
+    // na visão dos olhos, arrastar pra cima olha pra cima (como celular)
+    tiltCamera(dy * k * (state.firstPerson ? -0.8 : 0.8));
   };
   const onPointerUp = (event: PointerEvent) => {
-    if (event.pointerId === drag.id) drag.id = -1;
+    pointers.delete(event.pointerId);
+    pinch = 0;
   };
+  const onWheel = (event: WheelEvent) => {
+    event.preventDefault();
+    zoomCamera(Math.exp(event.deltaY * 0.0012));
+  };
+  canvas.addEventListener('wheel', onWheel, { passive: false });
   canvas.addEventListener('pointerdown', onPointerDown);
   canvas.addEventListener('pointermove', onPointerMove);
   canvas.addEventListener('pointerup', onPointerUp);
@@ -1413,6 +1614,9 @@ export const createWorld = (
   const seat = new THREE.Vector3();
   const seatQuat = new THREE.Quaternion();
   const forward = new THREE.Vector3();
+  const eyeEuler = new THREE.Euler();
+  const planeAt = new THREE.Vector3();
+  const eyeQuat = new THREE.Quaternion();
 
   /** Sobe a câmera se o morro ficar entre ela e o boneco. */
   const clearHills = (target: THREE.Vector3, focusY: number, fx: number, fz: number) => {
@@ -1460,6 +1664,10 @@ export const createWorld = (
     }
     if (keys.has('q')) state.yaw += 0.03;
     if (keys.has('r')) state.yaw -= 0.03;
+    state.yaw -= state.camYaw * 0.03;
+    // X sobe a câmera, C desce (na visão dos olhos: olha pra baixo/cima)
+    const tilt = (keys.has('x') || keys.has('pagedown') ? 1 : 0) - (keys.has('c') || keys.has('pageup') ? 1 : 0);
+    if (tilt || state.camPitch) tiltCamera((tilt + state.camPitch) * 0.025 * (state.firstPerson ? -1 : 1));
     if (state.mode !== 'play' || state.paused) return [0, 0, 0, 0];
     // a direção é relativa à câmera (o avião usa a direção crua: W sobe, A/D vira)
     const c = Math.cos(state.yaw);
@@ -1471,6 +1679,8 @@ export const createWorld = (
     const [ix, iz, rawX, rawZ] = readInput();
     const boost = keys.has('shift');
     const mount = state.mount;
+    // acelerador do avião: Shift (ou botão +) acelera, Z (ou botão -) desacelera
+    if (mount instanceof Plane) mount.adjust((keys.has('shift') ? 1 : 0) - (keys.has('z') ? 1 : 0) + state.throttleDir, dt);
     const attraction = state.attraction;
     let groundY = 0;
 
@@ -1497,7 +1707,7 @@ export const createWorld = (
       }
       state.lastThrill = thrill;
     } else if (mount instanceof Plane) {
-      onPlane(mount.drive(dt, t, rawX, rawZ, boost));
+      onPlane(mount.drive(dt, t, rawX, rawZ));
       state.x = mount.x;
       state.z = mount.z;
       state.angle = mount.angle;
@@ -1605,9 +1815,63 @@ export const createWorld = (
         }
       }
     }
+    // tráfego do aeroporto; perto dele a torre avisa no rádio
+    const news = traffic.update(t, dt);
+    if (news.length && state.mode === 'play' && Math.hypot(state.x, state.z + 160) < 120 && t - state.radioAt > 16) {
+      const { code, phase } = news[0];
+      const line =
+        phase === 'pousando'
+          ? `${code}, pista livre, autorizado a pousar`
+          : phase === 'decolando'
+            ? `${code}, autorizado a decolar. Boa viagem!`
+            : phase === 'carregando'
+              ? `${code} na vaga de carga, embarcando a colheita do sítio`
+              : '';
+      if (line) {
+        state.radioAt = t;
+        events.onHint?.(`🗼 Torre: ${line}`);
+      }
+    }
+
+    // desafios de voo: só contam voando
+    const flying = mount instanceof Plane && !mount.grounded;
+    let challenge: ChallengeEvent = null;
+    if (challenges.active && !flying)
+      challenge = challenges.abort(mount instanceof Plane ? 'Pousou antes da última argola' : 'Desceu do avião');
+    else challenge = challenges.update(t, flying ? planeAt.set(mount.x, mount.alt + 1, mount.z) : null);
+    if (challenge) {
+      if (challenge.type === 'start') sfx.start();
+      else if (challenge.type === 'ring') sfx.collect();
+      else if (challenge.type === 'done') {
+        sfx.visit();
+        kit.particles.burst([state.x, (mount as Plane).alt + 2, state.z], ['#ffd166', '#ff7eb6', '#a78bfa', '#5eead4'], 40, 6);
+      } else sfx.close();
+      events.onChallenge?.(challenge);
+    }
+    // seta de guia
+    const goal = challenges.target() ?? (state.guide ? { ...state.guide, y: NaN } : null);
+    if (state.guide && !challenges.active && Math.hypot(state.guide.x - state.x, state.guide.z - state.z) < 7) {
+      events.onHint?.(`Chegou: ${state.guide.label}!`);
+      state.guide = null;
+      events.onGuide?.(null);
+      sfx.visit();
+    }
+    arrow.visible = Boolean(goal) && state.mode === 'play';
+    if (goal && arrow.visible) {
+      if (state.firstPerson) {
+        camera.getWorldDirection(forward);
+        arrow.position.copy(camera.position).addScaledVector(forward, 5).add(planeAt.set(0, -1.3, 0));
+      } else if (mount instanceof Plane) {
+        arrow.position.set(mount.x + Math.sin(mount.angle) * 7, mount.alt + 3.2, mount.z + Math.cos(mount.angle) * 7);
+      } else arrow.position.set(state.x, groundY + (mount ? 4.4 : 3.4) + Math.sin(t * 3) * 0.12, state.z);
+      const gy = Number.isNaN(goal.y) ? arrow.position.y : goal.y;
+      arrow.lookAt(goal.x, gy, goal.z);
+      arrow.scale.setScalar(mount instanceof Plane ? 2.2 : 1);
+    }
+
     if (mount !== buggy) buggy.idle(t, dt);
     if (mount !== boat) boat.idle(t, dt);
-    if (mount !== plane) plane.idle(t, dt);
+    planes.forEach((plane) => plane !== mount && plane.idle(t, dt));
 
     const blinking = t > state.blinkAt && t < state.blinkAt + 0.12;
     if (t > state.blinkAt + 0.12) state.blinkAt = t + 2 + Math.random() * 3;
@@ -1636,10 +1900,12 @@ export const createWorld = (
             bestD = d;
           }
         }
-        const dPlane = Math.hypot(plane.x - state.x, plane.z - state.z) - plane.radius;
-        if (dPlane < 2.2 && dPlane < bestD && plane.parked) {
-          best = plane;
-          bestD = dPlane;
+        for (const plane of planes) {
+          const dPlane = Math.hypot(plane.x - state.x, plane.z - state.z) - plane.spec.radius;
+          if (dPlane < 2.2 && dPlane < bestD && plane.parked) {
+            best = plane;
+            bestD = dPlane;
+          }
         }
         const dBuggy = Math.hypot(buggy.x - state.x, buggy.z - state.z) - buggy.radius;
         if (dBuggy < 1.8 && dBuggy < bestD) {
@@ -1729,7 +1995,7 @@ export const createWorld = (
     clearHills(camPos, focusY, state.x, state.z);
     lookTarget.set(
       state.x - Math.sin(state.yaw) * 5,
-      groundY + 2.1 + (mount ? 0.8 : 0),
+      groundY + 2.1 + (mount ? 0.8 : 0) + Math.max(0, -state.pitch) * 9,
       state.z - Math.cos(state.yaw) * 5,
     );
     if (attraction && state.attraction) {
@@ -1759,10 +2025,10 @@ export const createWorld = (
     if (mount instanceof Plane) {
       // câmera de perseguição atrás do avião (arrastar gira em volta)
       const heading = mount.angle + state.yaw - state.boardYaw;
-      const back = 15 + Math.min(1, Math.max(0, mount.speed) / 45) * 5;
+      const back = (15 + Math.min(1, Math.max(0, mount.speed) / 45) * 5) * (0.6 + mount.spec.radius / 6.5) * state.zoom;
       camPos.set(
         mount.x - Math.sin(heading) * back,
-        mount.alt + 5.2 - (mount.grounded ? 0 : Math.sin(mount.pitch) * 5),
+        mount.alt + 5.2 - (mount.grounded ? 0 : Math.sin(mount.pitch) * 5) + state.pitch * back * 0.8,
         mount.z - Math.cos(heading) * back,
       );
       lookTarget.set(
@@ -1780,7 +2046,26 @@ export const createWorld = (
       camera.fov += (fov - camera.fov) * Math.min(1, dt * 2);
       camera.updateProjectionMatrix();
     }
-    if (state.mode === 'intro') {
+    // visão dos olhos: câmera na cabeça do boneco (que some pra não tapar a vista)
+    const eyes = state.firstPerson && state.mode === 'play';
+    player.root.visible = !eyes;
+    if (eyes) {
+      player.head.getWorldPosition(camPos);
+      camPos.y += 0.42;
+      const look = Math.max(-1.2, Math.min(1.2, -state.pitch * 1.6));
+      if (mount instanceof Plane || attraction) {
+        // no avião e nos brinquedos o olhar acompanha o veículo (com o giro que a pessoa deu)
+        const turn = state.yaw - state.boardYaw;
+        eyeEuler.set(look, Math.PI + turn, 0, 'YXZ');
+        camera.quaternion.copy(mount instanceof Plane ? mount.root.quaternion : seatQuat);
+        camera.quaternion.multiply(eyeQuat.setFromEuler(eyeEuler));
+        if (mount instanceof Plane) camPos.add(forward.set(0, 0.25, 0.35).applyQuaternion(mount.root.quaternion));
+      } else {
+        camera.rotation.set(look, state.yaw, 0, 'YXZ');
+        camPos.add(forward.set(-Math.sin(state.yaw) * 0.3, 0, -Math.cos(state.yaw) * 0.3));
+      }
+      camera.position.copy(camPos);
+    } else if (state.mode === 'intro') {
       orbitPos.y = Math.max(orbitPos.y, groundHeight(orbitPos.x, orbitPos.z) + 18);
       camera.position.copy(orbitPos);
       camera.lookAt(orbitLook);
@@ -1920,10 +2205,16 @@ export const createWorld = (
       state.z = z;
       camera.position.set(x, groundHeight(x, z), z).add(followOffset());
     },
+    skip: (seconds) => {
+      kit.time.value += seconds;
+    },
     locate: (kind) => {
       if (kind === 'bugue') return { x: buggy.x, z: buggy.z };
       if (kind === 'barco') return { x: boat.x, z: boat.z };
-      if (kind === 'aviao') return { x: plane.x, z: plane.z };
+      if (kind === 'aviao') {
+        const plane = planes.find((p) => p.ridden) ?? planes[1];
+        return { x: plane.x, z: plane.z };
+      }
       const animal = rideable.find((a) => a.kind === kind && !a.ridden);
       return animal ? { x: animal.x, z: animal.z } : null;
     },
@@ -1932,14 +2223,74 @@ export const createWorld = (
       triangles: renderer.info.render.triangles,
       fps: Math.round(fps),
       mode: state.mode,
-      flight: {
-        alt: Math.round((plane.alt - terrainHeight(plane.x, plane.z)) * 10) / 10,
-        speed: Math.round(plane.speed * 10) / 10,
-        grounded: plane.grounded,
-      },
+      flight: flightOf(planes.find((p) => p.ridden) ?? planes[1]),
       hour: Math.round(state.hour * 10) / 10,
       timeMode: state.timeMode,
+      traffic: traffic.positions().map((p) => [Math.round(p.x), Math.round(p.y), Math.round(p.z)]),
+      time: Math.round(kit.time.value),
     }),
+    hud: () => {
+      const target = challenges.target() ?? state.guide;
+      let guide: HudState['guide'] = null;
+      if (target) {
+        camera.getWorldDirection(forward);
+        const dx = target.x - state.x;
+        const dz = target.z - state.z;
+        const along = dx * forward.x + dz * forward.z;
+        const side = -dx * forward.z + dz * forward.x;
+        guide = { label: target.label, distance: Math.round(Math.hypot(dx, dz)), bearing: Math.atan2(side, along) };
+      }
+      const active = challenges.active;
+      return {
+        flight: state.mount instanceof Plane ? flightOf(state.mount) : null,
+        challenge: active
+          ? {
+              name: active.course.name,
+              emoji: active.course.emoji,
+              color: active.course.color,
+              ring: challenges.next,
+              total: active.rings.length,
+              time: challenges.elapsed(kit.time.value),
+            }
+          : null,
+        guide,
+      };
+    },
+    setGuide: (target) => {
+      state.guide = target;
+    },
+    travel: (x, z) => {
+      if (state.mode !== 'play') return;
+      stopFishing();
+      if (state.attraction) leaveAttraction();
+      if (state.mount) dismount(true);
+      // cai num lugar onde dá pra pisar, perto do ponto pedido
+      let spot: [number, number] = [x, z];
+      for (let r = 0; r < 9 && !canStand(...spot, 0.5); r += 1.5) {
+        const a = r * 2.4;
+        spot = [x + Math.cos(a) * r, z + Math.sin(a) * r];
+      }
+      state.x = spot[0];
+      state.z = spot[1];
+      state.vx = state.vz = 0;
+      state.y = 0;
+      kit.particles.burst([spot[0], groundHeight(...spot) + 1, spot[1]], ['#a78bfa', '#ffd166', '#ffffff'], 18, 2.5);
+      sfx.jump();
+      camera.position.set(spot[0], groundHeight(...spot), spot[1]).add(followOffset());
+      state.rideKey = '';
+      emitRide();
+    },
+    challengeStarts: () =>
+      challenges.starts().map(({ course, x, z }) => ({ id: course.id, name: course.name, emoji: course.emoji, x, z })),
+    setThrottle: (dir) => {
+      state.throttleDir = dir;
+    },
+    toggleView,
+    setCamera: (yaw, pitch) => {
+      state.camYaw = yaw;
+      state.camPitch = pitch;
+    },
+    zoom: zoomCamera,
     dispose: () => {
       cancelAnimationFrame(frame);
       engineDrone(null);
@@ -1951,6 +2302,7 @@ export const createWorld = (
       canvas.removeEventListener('pointermove', onPointerMove);
       canvas.removeEventListener('pointerup', onPointerUp);
       canvas.removeEventListener('pointercancel', onPointerUp);
+      canvas.removeEventListener('wheel', onWheel);
       scene.traverse((object) => {
         if (
           object instanceof THREE.Mesh ||

@@ -329,7 +329,7 @@ export const ROADS = [
   // estrada do aeroporto: sai do curral dos cavalos, corta a serra e chega no pátio
   {
     width: 3.6,
-    points: [[S(3), S(-39)], [-9, -56], [-12.5, -80], ...PASS, [0, -204]] as [number, number][],
+    points: [[S(3), S(-39)], [-9, -56], ...PASS, [0, -132]] as [number, number][],
   },
 ];
 
@@ -354,7 +354,7 @@ export const EGGS: [number, number][] = [
   // e um na ilhota da Lagoa Escondida
   [HIDDEN_ISLAND.x - 0.6, HIDDEN_ISLAND.z + 0.8],
   // e um escondido no fundo do hangar do aeroporto
-  [86, -205],
+  [86, -133],
 ];
 
 /* -------------------------------------------------------------- estações */
