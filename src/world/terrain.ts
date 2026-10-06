@@ -14,7 +14,27 @@ export const WATER_Y = -0.7;
 export const K = 1.4;
 export const S = (v: number) => v * K;
 export const STREAM_HALF = 3.3;
-export const WORLD_RADIUS = S(88);
+/** Até onde dá pra andar no sítio (a serra começa logo depois). */
+export const WORLD_RADIUS = S(97);
+
+/**
+ * Aeroporto: um vale plano depois da serra, ao norte, com a pista no sentido
+ * leste-oeste. Chega-se nele por uma passagem (PASS) que corta a serra.
+ */
+export const AIRPORT = { x: 0, z: -232, w: 320, d: 112 };
+export const AIRPORT_Y = 0.6;
+export const RUNWAY = { x: 0, z: -262, length: 236, width: 16 };
+/** Estrada que sai do sítio, corta a serra e chega no aeroporto. */
+export const PASS: [number, number][] = [
+  [-14, -112],
+  [-6, -140],
+  [0, -166],
+  [0, -180],
+];
+export const PASS_HALF = 9;
+/** Até onde o avião pode ir (fora disso ele faz a curva sozinho). */
+export const SKY_RADIUS = 460;
+export const SKY_CEILING = 150;
 
 /** O riacho desce da cachoeira (oeste) e deságua no lago (leste). */
 const STREAM_POINTS: [number, number][] = (
@@ -124,6 +144,27 @@ export const stillWater = (x: number, z: number) => {
 /** Está na Lagoa Escondida (ou no canal dela)? Lá os peixes são maiores. */
 export const inHidden = (x: number, z: number) => Math.hypot(x - HIDDEN.x, z - HIDDEN.z) < HIDDEN.r + 6;
 
+const segDistance = (x: number, z: number, points: [number, number][]) => {
+  let best = Infinity;
+  for (let i = 0; i < points.length - 1; i++) {
+    const [ax, az] = points[i];
+    const [bx, bz] = points[i + 1];
+    const dx = bx - ax;
+    const dz = bz - az;
+    const k = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz)));
+    best = Math.min(best, Math.hypot(x - ax - dx * k, z - az - dz * k));
+  }
+  return best;
+};
+
+/** Distância até o retângulo do aeroporto (negativa lá dentro). */
+export const airportDistance = (x: number, z: number) =>
+  Math.max(Math.abs(x - AIRPORT.x) - AIRPORT.w / 2, Math.abs(z - AIRPORT.z) - AIRPORT.d / 2);
+
+/** Está no vale do aeroporto (ou na estrada da serra)? */
+export const inAirport = (x: number, z: number) => airportDistance(x, z) < 0;
+const inPass = (x: number, z: number) => segDistance(x, z, PASS) < PASS_HALF;
+
 /** Colina da entrada (sul), morro da trilha (nordeste) e serra da cachoeira (oeste). */
 const ENTRANCE = { x: 0, z: 68, top: 13 };
 const LOOKOUT_HILL = { x: 56, z: -54, top: 10 };
@@ -139,7 +180,19 @@ const baseHeight = (wx: number, wz: number) => {
   h *= 1 - yard * 0.85;
   const d = Math.hypot(x, z);
   const angle = Math.atan2(z, x);
-  h += smoothstep(80, 128, d) * 26 * (0.75 + 0.25 * Math.sin(angle * 5 + 1));
+  // a serra em volta, aberta na passagem e no vale do aeroporto
+  const open = Math.max(
+    1 - smoothstep(0, 42, airportDistance(wx, wz)),
+    1 - smoothstep(PASS_HALF - 2, PASS_HALF + 32, segDistance(wx, wz, PASS)),
+  );
+  // picos e grotas lá em cima (vistos do avião a serra não é um planalto liso)
+  const ridge = smoothstep(90, 138, d);
+  const peaks =
+    0.55 + 0.3 * Math.sin(x * 0.055 + 1.7) * Math.sin(z * 0.047 - 0.6) + 0.15 * Math.sin((x - z) * 0.11 + 0.4);
+  h += ridge * (26 * (0.75 + 0.25 * Math.sin(angle * 5 + 1)) + smoothstep(120, 170, d) * 30 * peaks) * (1 - open);
+  // o vale do aeroporto é bem plano (pista, pátio e prédios)
+  const flat = 1 - smoothstep(-6, 10, airportDistance(wx, wz));
+  h += (AIRPORT_Y - h) * flat;
   h += ENTRANCE.top * (1 - smoothstep(9, 32, Math.hypot(x - ENTRANCE.x, z - ENTRANCE.z)));
   h += LOOKOUT_HILL.top * (1 - smoothstep(4, 30, Math.hypot(x - LOOKOUT_HILL.x, z - LOOKOUT_HILL.z)));
   h += WEST_HILL.top * (1 - smoothstep(5, 21, Math.hypot(x - WEST_HILL.x, z - WEST_HILL.z)));
@@ -189,7 +242,7 @@ export const groundHeight = (x: number, z: number) => {
 
 /** Dá pra pisar aqui? Água só pela ponte; o mundo acaba na serra. */
 export const canStand = (x: number, z: number, margin = 0.3) => {
-  if (Math.hypot(x, z) > WORLD_RADIUS) return false;
+  if (Math.hypot(x, z) > WORLD_RADIUS && !inAirport(x, z) && !inPass(x, z)) return false;
   if (bridgeAt(x, z)) return true;
   return waterDistance(x, z) > margin;
 };

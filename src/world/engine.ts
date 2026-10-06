@@ -23,12 +23,14 @@ import * as L from './life';
 import { Animal, ducks, type RideKind } from './animals';
 import { Buggy } from './buggy';
 import { Boat } from './boat';
+import { Plane, type PlaneEvent } from './plane';
+import { airportGround, buildAirport, PLANE_SPOT } from './airport';
 import { DEFAULT_OUTFIT, type Outfit } from './outfits';
 import * as D from './details';
 import { fishingLine, stretchLine, villagers } from './people';
 import { buildPark, stringLights, type Attraction } from './park';
 import { Sky, localHour } from './sky';
-import { sfx } from './audio';
+import { engineDrone, sfx } from './audio';
 import {
   BRIDGES,
   HIDDEN,
@@ -36,6 +38,7 @@ import {
   ISLAND,
   LAKE,
   LAKE_SOUTH,
+  PASS,
   POND,
   S,
   STREAM_PATH,
@@ -47,6 +50,7 @@ import {
   WATER_Y,
   WORLD_RADIUS,
   inHidden,
+  airportDistance,
   stillWater,
   waterDistance,
 } from './terrain';
@@ -55,7 +59,7 @@ import { makeLabel, textureQuality } from './textures';
 
 export type TimeMode = 'auto' | 'dia' | 'tarde' | 'noite';
 
-type Mount = Animal | Buggy | Boat;
+type Mount = Animal | Buggy | Boat | Plane;
 
 export interface RideState {
   /** No que a pessoa está montada agora. */
@@ -115,6 +119,8 @@ export interface WorldHandle {
     triangles: number;
     fps: number;
     mode: string;
+    /** O avião: altura acima do chão, velocidade e se está no chão. */
+    flight: { alt: number; speed: number; grounded: boolean };
     hour: number;
     timeMode: string;
   };
@@ -166,6 +172,7 @@ const SOUND: Record<RideKind, () => void> = {
   ovelha: sfx.baa,
   bugue: sfx.horn,
   barco: sfx.splash,
+  aviao: sfx.engine,
   brinquedo: sfx.ride,
   pesca: sfx.splash,
 };
@@ -585,6 +592,17 @@ const buildWorld = (kit: Kit) => {
     B.signpost(kit, 104.5, 38, [{ text: 'Lagoa Escondida', toX: HIDDEN.x, toZ: HIDDEN.z }]);
   }
 
+  // aeroporto no vale do norte (a estrada sai do curral dos cavalos e corta a serra)
+  buildAirport(kit);
+  B.signpost(kit, -2.5, -50, [
+    { text: 'Aeroporto', toX: PASS[0][0], toZ: PASS[0][1] },
+    { text: 'Terreiro', toX: YARD.x, toZ: YARD.z },
+  ]);
+  B.signpost(kit, 7, -190, [
+    { text: 'Sítio', toX: 0, toZ: -150 },
+    { text: 'Avião', toX: PLANE_SPOT.x, toZ: PLANE_SPOT.z },
+  ]);
+
   // roças, moinho e garagem
   G.field(kit, FIELDS.milho, 'milho');
   G.field(kit, FIELDS.girassol, 'girassol');
@@ -670,6 +688,8 @@ const buildWorld = (kit: Kit) => {
     [56, 13, 3.5],
     [-6.5, 45, 1.5],
     [S(57), S(-61), 6],
+    [-2.5, -50, 1.5],
+    ...PASS.map(([x, z]) => [x, z, 9] as [number, number, number]),
     [LAKE.x, LAKE.z, LAKE.r + 3],
     [POND.x, POND.z, POND.r + 4],
     ...Object.values(PENS).map((p) => [p.x, p.z, Math.hypot(p.w, p.d) / 2 + 2] as [number, number, number]),
@@ -734,7 +754,7 @@ const buildWorld = (kit: Kit) => {
   // mata em volta (mais densa perto da serra)
   const trees = mobile ? 150 : 260;
   for (let i = 0; i < trees; i++) {
-    const spot = i < trees * 0.45 ? pick(S(70), S(98), 3.2) : pick(S(12), S(78), 4.2);
+    const spot = i < trees * 0.45 ? pick(S(72), S(106), 3.2) : pick(S(12), S(86), 4.2);
     if (!spot) continue;
     const [x, z] = spot;
     const scale = 0.8 + rand() * 0.6;
@@ -751,11 +771,11 @@ const buildWorld = (kit: Kit) => {
     [38, -48],
   ].forEach(([x, z]) => G.ipe(kit, S(x), S(z), 0.9));
   for (let i = 0; i < (mobile ? 75 : 130); i++) {
-    const spot = pick(S(8), S(84), 2, 1.2);
+    const spot = pick(S(8), S(92), 2, 1.2);
     if (spot) G.bush(kit, spot[0], spot[1], 0.7 + rand() * 0.6, i % 3 === 0);
   }
   for (let i = 0; i < 40; i++) {
-    const spot = pick(S(10), S(92), 2.4, 1.2);
+    const spot = pick(S(10), S(100), 2.4, 1.2);
     if (spot) G.rock(kit, spot[0], spot[1], 0.5 + rand() * 1.1);
   }
   const flowers: [number, number][] = [];
@@ -764,12 +784,28 @@ const buildWorld = (kit: Kit) => {
   const tuftCount = mobile ? 900 : 1900;
   for (let i = 0; i < 14000 && (flowers.length < flowerCount || tufts.length < tuftCount); i++) {
     const angle = rand() * Math.PI * 2;
-    const r = Math.sqrt(rand()) * S(86);
+    const r = Math.sqrt(rand()) * S(95);
     const x = Math.cos(angle) * r;
     const z = Math.sin(angle) * r;
     if (!free(x, z, 0.6)) continue;
     if (flowers.length < flowerCount && i % 3 === 0) flowers.push([x, z]);
     else if (tufts.length < tuftCount) tufts.push([x, z]);
+  }
+  // mato em volta do aeroporto (no pé da serra) e grama no gramado dele
+  for (let i = 0; i < (mobile ? 70 : 130); i++) {
+    const x = (rand() - 0.5) * 400;
+    const z = -150 - rand() * 180;
+    const edge = airportDistance(x, z);
+    if (edge < 5 || edge > 45 || nearRoad(x, z, 6) || Math.hypot(x, z) < WORLD_RADIUS + 8) continue;
+    if (terrainHeight(x, z) > 9 || i % 3 === 0) G.pine(kit, x, z, 0.9 + rand() * 0.6);
+    else G.roundTree(kit, x, z, 0.9 + rand() * 0.5, false, i);
+  }
+  for (let i = 0; i < (mobile ? 500 : 1100); i++) {
+    const x = (rand() - 0.5) * 316;
+    const z = -178 - rand() * 108;
+    if (!airportGround(x, z) || nearRoad(x, z, 1)) continue;
+    if (i % 4 === 0) flowers.push([x, z]);
+    else tufts.push([x, z]);
   }
   G.meadow(kit, flowers, tufts);
 
@@ -814,6 +850,7 @@ const buildWorld = (kit: Kit) => {
   ];
   ducks(kit);
   const buggy = new Buggy(kit, S(12.2) - 6.8, S(39) + 0.4, -1.5);
+  const plane = new Plane(kit, PLANE_SPOT.x, PLANE_SPOT.z, PLANE_SPOT.angle);
   // barquinho amarrado no deque do lago
   const deck = BRIDGES.find((bridge) => bridge.flat)!;
   const boat = new Boat(
@@ -828,7 +865,7 @@ const buildWorld = (kit: Kit) => {
   buildPools(kit, groundHeight);
   buildHalos(kit);
   mergeStatics(kit);
-  return { hooks, labels, eggs, animals, buggy, boat, attractions, gatehouse, people };
+  return { hooks, labels, eggs, animals, buggy, boat, plane, attractions, gatehouse, people };
 };
 
 /* ---------------------------------------------------------------- motor */
@@ -841,15 +878,48 @@ export const createWorld = (
   const mobile = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 760;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2));
+  // sombras de verdade do sol (no celular fica só a sombrinha redonda, pra não pesar)
+  const shadows = !mobile;
+  renderer.shadowMap.enabled = shadows;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.12;
   textureQuality.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
   const scene = new THREE.Scene();
   scene.fog = new THREE.Fog('#cdeeff', 90, 300);
-  const camera = new THREE.PerspectiveCamera(55, 1, 0.3, 1200);
+  const camera = new THREE.PerspectiveCamera(55, 1, 0.3, 1600);
 
   const kit = createKit(scene, mobile);
   const sky = new Sky(scene);
-  const { hooks, labels, eggs, animals, buggy, boat, attractions, gatehouse, people } = buildWorld(kit);
+  const { hooks, labels, eggs, animals, buggy, boat, plane, attractions, gatehouse, people } = buildWorld(kit);
+  /** Liga sombra (projeta e recebe) em tudo que é fosco; o chão só recebe. */
+  const shade = (root: THREE.Object3D) => {
+    if (!shadows) return;
+    root.traverse((object) => {
+      if (!(object instanceof THREE.Mesh) || object.receiveShadow) return;
+      const material = object.material as THREE.Material;
+      if (!(material instanceof THREE.MeshLambertMaterial) || material.transparent) return;
+      object.castShadow = true;
+      object.receiveShadow = true;
+    });
+  };
+  if (shadows) {
+    const sun = sky.sunLight;
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    const box = sun.shadow.camera;
+    box.left = box.bottom = -60;
+    box.right = box.top = 60;
+    box.near = 1;
+    box.far = 260;
+    sun.shadow.bias = -0.0006;
+    sun.shadow.normalBias = 0.06;
+    sun.shadow.radius = 2.5;
+    shade(scene);
+    plane.blobShadow = false;
+  }
   let player = buildPlayer(scene, outfit);
+  shade(player.root);
   const rod = fishingLine(kit);
   rod.line.visible = rod.bobber.visible = false;
   const bang = makeLabel('Fisgou! Puxa!', { color: '#ffd166', accent: '#ffd166', height: 0.75 });
@@ -904,6 +974,8 @@ export const createWorld = (
     /** Peixes no balde e o bicho ali do lado que pode ganhar um. */
     bag: 0,
     feedTarget: null as Animal | null,
+    /** Quanto a névoa já recuou (voando alto). */
+    fogLift: 0,
   };
   const keys = new Set<string>();
 
@@ -914,7 +986,9 @@ export const createWorld = (
         ? 'bugue'
         : mount instanceof Boat
           ? 'barco'
-          : (mount.kind as RideKind);
+          : mount instanceof Plane
+            ? 'aviao'
+            : (mount.kind as RideKind);
 
   /** Brinquedo cujo ponto de embarque está bem ali. */
   const nearAttraction = () =>
@@ -932,6 +1006,8 @@ export const createWorld = (
     } else if (near) {
       canMount = 'brinquedo';
       label = near.station.ride!.on;
+    } else if (state.mount instanceof Plane && !state.mount.parked) {
+      label = state.mount.grounded ? 'Pare o avião pra descer' : 'Pouse pra descer';
     } else if (state.fishing) {
       riding = 'pesca';
       label = state.fishing.phase === 'bite' ? 'Puxar agora!' : 'Recolher a linha';
@@ -1132,6 +1208,20 @@ export const createWorld = (
     emitRide();
   };
 
+  /** Som e recadinho do que o avião fez nesse quadro. */
+  const onPlane = (event: PlaneEvent) => {
+    if (event === 'takeoff') {
+      sfx.takeoff();
+      events.onHint?.('Decolou! W sobe, S desce, A/D faz a curva');
+    } else if (event === 'landed') {
+      sfx.touchdown();
+      events.onHint?.('Pousou! Segure S pra frear e F pra descer');
+    } else if (event === 'bump') {
+      sfx.splash();
+      events.onHint?.('Opa! Pouse em chão firme e reto (a pista é o melhor lugar)');
+    } else if (event === 'far') events.onHint?.('Longe demais! Voltando pro sítio...');
+  };
+
   const extra = () => {
     if (state.mode !== 'play' || state.paused) return;
     if (state.fishing) reel();
@@ -1155,6 +1245,14 @@ export const createWorld = (
     } else if (mount instanceof Buggy) {
       mount.honk(kit.time.value);
       sfx.horn();
+    } else if (mount instanceof Plane) {
+      // fumaça colorida (só no ar); no chão é uma buzinadinha de motor
+      if (mount.grounded) sfx.engine();
+      else {
+        mount.smoke = !mount.smoke;
+        events.onHint?.(mount.smoke ? 'Fumaça ligada! Desenhe no céu' : 'Fumaça desligada');
+        sfx.jump();
+      }
     } else if (mount) {
       mount.hop();
       SOUND[mount.kind as RideKind]?.();
@@ -1168,8 +1266,17 @@ export const createWorld = (
   const dismount = (force = false) => {
     const mount = state.mount;
     if (!mount) return true;
-    const radius = mount instanceof Buggy || mount instanceof Boat ? mount.radius : mount.spec.radius;
+    const radius =
+      mount instanceof Buggy || mount instanceof Boat || mount instanceof Plane ? mount.radius : mount.spec.radius;
     let spot: [number, number] | null = null;
+    if (mount instanceof Plane && !mount.parked && !force) {
+      events.onHint?.(mount.grounded ? 'Pare o avião pra descer (segure S)' : 'Pouse o avião primeiro');
+      return false;
+    }
+    if (mount instanceof Plane && !mount.grounded) {
+      // trocando de brinquedo lá no alto: o avião volta pra vaga dele
+      mount.park(PLANE_SPOT.x, PLANE_SPOT.z, PLANE_SPOT.angle);
+    }
     if (mount instanceof Boat) {
       // do barco: procura chão firme (ou o deque) em volta, cada vez mais longe
       for (let r = radius + 0.6; r < 4.6 && !spot; r += 0.5) {
@@ -1204,7 +1311,11 @@ export const createWorld = (
     state.x = x;
     state.z = z;
     state.vx = state.vz = 0;
-    if (mount instanceof Buggy || mount instanceof Boat) mount.ridden = false;
+    if (mount instanceof Plane) {
+      mount.ridden = false;
+      mount.smoke = false;
+      engineDrone(null);
+    } else if (mount instanceof Buggy || mount instanceof Boat) mount.ridden = false;
     else mount.release();
     state.mount = null;
     player.root.quaternion.identity();
@@ -1224,6 +1335,11 @@ export const createWorld = (
       target.ridden = true;
       if (target instanceof Buggy) sfx.engine();
       else if (target instanceof Boat) sfx.splash();
+      else if (target instanceof Plane) {
+        sfx.engine();
+        state.boardYaw = state.yaw;
+        events.onHint?.('W acelera e sobe · S freia e desce · A/D vira · Espaço solta fumaça');
+      }
       else SOUND[target.kind as RideKind]?.();
       state.mountable = null;
     }
@@ -1265,6 +1381,7 @@ export const createWorld = (
     if (state.attraction) base.multiplyScalar(state.attraction.view);
     else if (state.mount instanceof Buggy) base.multiplyScalar(1.3);
     else if (state.mount instanceof Boat) base.multiplyScalar(1.2);
+    else if (state.mount instanceof Plane) base.multiplyScalar(1.6);
     else if (state.mount)
       base.multiplyScalar(state.mount.kind === 'cavalo' || state.mount.kind === 'vaca' ? 1.18 : 1.08);
     return base.applyAxisAngle(UP, state.yaw);
@@ -1343,15 +1460,15 @@ export const createWorld = (
     }
     if (keys.has('q')) state.yaw += 0.03;
     if (keys.has('r')) state.yaw -= 0.03;
-    if (state.mode !== 'play' || state.paused) return [0, 0];
-    // a direção é relativa à câmera
+    if (state.mode !== 'play' || state.paused) return [0, 0, 0, 0];
+    // a direção é relativa à câmera (o avião usa a direção crua: W sobe, A/D vira)
     const c = Math.cos(state.yaw);
     const s = Math.sin(state.yaw);
-    return [ix * c + iz * s, -ix * s + iz * c];
+    return [ix * c + iz * s, -ix * s + iz * c, ix, iz];
   };
 
   const step = (dt: number, t: number) => {
-    const [ix, iz] = readInput();
+    const [ix, iz, rawX, rawZ] = readInput();
     const boost = keys.has('shift');
     const mount = state.mount;
     const attraction = state.attraction;
@@ -1379,6 +1496,23 @@ export const createWorld = (
         state.wheeAt = t;
       }
       state.lastThrill = thrill;
+    } else if (mount instanceof Plane) {
+      onPlane(mount.drive(dt, t, rawX, rawZ, boost));
+      state.x = mount.x;
+      state.z = mount.z;
+      state.angle = mount.angle;
+      mount.seatPosition(seat);
+      player.root.position.copy(seat);
+      player.root.quaternion.copy(mount.root.quaternion);
+      groundY = mount.alt;
+      pose(1, t, 0, 0);
+      // mãos no manche, que vai pra frente e pra trás junto com o nariz
+      const stick = Math.max(-1, Math.min(1, -rawZ));
+      player.arms[0].rotation.set(-1.05, 0, -0.15);
+      player.arms[1].rotation.set(-1.05 + stick * 0.25, 0, 0.15 - mount.steer * 0.2);
+      player.torso.rotation.x = 0;
+      player.head.rotation.y = -mount.steer * 0.6;
+      engineDrone(mount.throttle);
     } else if (mount instanceof Buggy || mount instanceof Boat) {
       if (mount instanceof Boat && state.fishing) {
         // pescando o barco fica parado; remar recolhe a linha
@@ -1473,6 +1607,7 @@ export const createWorld = (
     }
     if (mount !== buggy) buggy.idle(t, dt);
     if (mount !== boat) boat.idle(t, dt);
+    if (mount !== plane) plane.idle(t, dt);
 
     const blinking = t > state.blinkAt && t < state.blinkAt + 0.12;
     if (t > state.blinkAt + 0.12) state.blinkAt = t + 2 + Math.random() * 3;
@@ -1500,6 +1635,11 @@ export const createWorld = (
             best = animal;
             bestD = d;
           }
+        }
+        const dPlane = Math.hypot(plane.x - state.x, plane.z - state.z) - plane.radius;
+        if (dPlane < 2.2 && dPlane < bestD && plane.parked) {
+          best = plane;
+          bestD = dPlane;
         }
         const dBuggy = Math.hypot(buggy.x - state.x, buggy.z - state.z) - buggy.radius;
         if (dBuggy < 1.8 && dBuggy < bestD) {
@@ -1533,9 +1673,10 @@ export const createWorld = (
       }
       emitRide();
 
-      // estação mais perto
+      // estação mais perto (lá do alto, voando, não conta)
+      const aloft = mount instanceof Plane && !mount.grounded;
       let near: Station | null = null;
-      let best = attraction ? -1 : Infinity;
+      let best = attraction || aloft ? -1 : Infinity;
       for (const station of STATIONS) {
         const d = Math.hypot(station.x - state.x, station.z - state.z);
         const radius = (station.kind === 'milestone' ? 2.6 : 3.0) + (mount ? 1 : 0);
@@ -1550,7 +1691,13 @@ export const createWorld = (
         events.onNear(near);
       }
       // ovos de ouro
-      const reach = mount instanceof Buggy || mount instanceof Boat ? 2.4 : mount ? 1.9 : 1.4;
+      const reach = aloft
+        ? -1
+        : mount instanceof Buggy || mount instanceof Boat || mount instanceof Plane
+          ? 2.4
+          : mount
+            ? 1.9
+            : 1.4;
       eggs.forEach((egg, index) => {
         if (egg.collected) return;
         const [ex, ez] = EGGS[index];
@@ -1609,6 +1756,30 @@ export const createWorld = (
       const floor = groundHeight(camPos.x, camPos.z) + 1.4;
       if (camPos.y < floor) camPos.y = floor;
     }
+    if (mount instanceof Plane) {
+      // câmera de perseguição atrás do avião (arrastar gira em volta)
+      const heading = mount.angle + state.yaw - state.boardYaw;
+      const back = 15 + Math.min(1, Math.max(0, mount.speed) / 45) * 5;
+      camPos.set(
+        mount.x - Math.sin(heading) * back,
+        mount.alt + 5.2 - (mount.grounded ? 0 : Math.sin(mount.pitch) * 5),
+        mount.z - Math.cos(heading) * back,
+      );
+      lookTarget.set(
+        mount.x + Math.sin(mount.angle) * 10,
+        mount.alt + 2.6 + Math.sin(mount.pitch) * 9,
+        mount.z + Math.cos(mount.angle) * 10,
+      );
+      const floor = groundHeight(camPos.x, camPos.z) + 1.4;
+      if (camPos.y < floor) camPos.y = floor;
+    }
+    // campo de visão abre um pouco com a velocidade do avião
+    const fov =
+      (portrait ? 66 : 55) + (mount instanceof Plane && !mount.grounded ? Math.min(9, mount.speed / 5) : 0);
+    if (Math.abs(camera.fov - fov) > 0.02) {
+      camera.fov += (fov - camera.fov) * Math.min(1, dt * 2);
+      camera.updateProjectionMatrix();
+    }
     if (state.mode === 'intro') {
       orbitPos.y = Math.max(orbitPos.y, groundHeight(orbitPos.x, orbitPos.z) + 18);
       camera.position.copy(orbitPos);
@@ -1620,7 +1791,8 @@ export const createWorld = (
       camera.lookAt(new THREE.Vector3().lerpVectors(orbitLook, lookTarget, e));
       if (state.flyT >= 1) state.mode = 'play';
     } else {
-      const follow = attraction?.chase ? 9 : attraction ? 4 : mount instanceof Buggy ? 6 : 5;
+      const follow =
+        attraction?.chase || mount instanceof Plane ? 9 : attraction ? 4 : mount instanceof Buggy ? 6 : 5;
       camera.position.lerp(camPos, 1 - Math.exp(-dt * follow));
       const floor = groundHeight(camera.position.x, camera.position.z) + 1.4;
       if (camera.position.y < floor) camera.position.y = floor;
@@ -1638,6 +1810,13 @@ export const createWorld = (
     diff = ((diff + 36) % 24) - 12;
     state.hour = (state.hour + diff * Math.min(1, dt * 1.2) + 24) % 24;
     sky.update(state.hour, camera.position, t);
+    // voando alto dá pra ver longe: a névoa recua
+    const flying = state.mount instanceof Plane && !state.mount.grounded;
+    const lift = flying ? Math.max(0, Math.min(1, ((state.mount as Plane).alt - 8) / 70)) : 0;
+    state.fogLift += (lift - state.fogLift) * Math.min(1, dt * 0.8);
+    const fog = scene.fog as THREE.Fog;
+    fog.near *= 1 + state.fogLift * 1.2;
+    fog.far *= 1 + state.fogLift * 0.6;
     kit.env.dusk = sky.twilight;
     const night = 1 - sky.day;
     if (Math.abs(night - lastNight) > 0.002) {
@@ -1710,6 +1889,7 @@ export const createWorld = (
       // (as geometrias do boneco antigo podem ser as compartilhadas; ficam aí, é pouca coisa)
       old.shadow.geometry.dispose();
       player = buildPlayer(scene, next);
+      shade(player.root);
       player.root.position.copy(old.root.position);
       player.root.quaternion.copy(old.root.quaternion);
       kit.particles.burst(
@@ -1731,7 +1911,8 @@ export const createWorld = (
     teleport: (x, z) => {
       if (state.attraction) leaveAttraction();
       const mount = state.mount;
-      if (mount) {
+      if (mount instanceof Plane) mount.park(x, z, mount.angle);
+      else if (mount) {
         mount.x = x;
         mount.z = z;
       }
@@ -1742,6 +1923,7 @@ export const createWorld = (
     locate: (kind) => {
       if (kind === 'bugue') return { x: buggy.x, z: buggy.z };
       if (kind === 'barco') return { x: boat.x, z: boat.z };
+      if (kind === 'aviao') return { x: plane.x, z: plane.z };
       const animal = rideable.find((a) => a.kind === kind && !a.ridden);
       return animal ? { x: animal.x, z: animal.z } : null;
     },
@@ -1750,11 +1932,17 @@ export const createWorld = (
       triangles: renderer.info.render.triangles,
       fps: Math.round(fps),
       mode: state.mode,
+      flight: {
+        alt: Math.round((plane.alt - terrainHeight(plane.x, plane.z)) * 10) / 10,
+        speed: Math.round(plane.speed * 10) / 10,
+        grounded: plane.grounded,
+      },
       hour: Math.round(state.hour * 10) / 10,
       timeMode: state.timeMode,
     }),
     dispose: () => {
       cancelAnimationFrame(frame);
+      engineDrone(null);
       resizeObserver.disconnect();
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);

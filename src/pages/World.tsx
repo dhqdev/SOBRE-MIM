@@ -7,7 +7,18 @@ import { burstConfetti } from '@/lib/confetti';
 import { downloadCv, openExternal, openGame } from '@/lib/site';
 import { createWorld, type RideState, type TimeMode, type WorldHandle } from '@/world/engine';
 import { EGGS, PENS, RIDES, ROADS, STATIONS, type Station, type StationAction } from '@/world/stations';
-import { CHANNEL, CHANNEL_HALF, POND, POOLS, STREAM_HALF, STREAM_PATH, WORLD_RADIUS } from '@/world/terrain';
+import {
+  AIRPORT,
+  CHANNEL,
+  CHANNEL_HALF,
+  POND,
+  POOLS,
+  RUNWAY,
+  STREAM_HALF,
+  STREAM_PATH,
+  WORLD_RADIUS,
+} from '@/world/terrain';
+import { APRON } from '@/world/airport';
 import { setMuted, sfx, unlockAudio } from '@/world/audio';
 import { music, TRACKS, type TrackId } from '@/world/music';
 import type { RideKind } from '@/world/animals';
@@ -82,6 +93,7 @@ const MOUNT_TEXT: Record<RideKind, { on: string; off: string }> = {
   ovelha: { on: 'Montar na ovelha', off: 'Descer da ovelha' },
   bugue: { on: 'Dirigir o bugue', off: 'Sair do bugue' },
   barco: { on: 'Andar de barco', off: 'Descer do barco' },
+  aviao: { on: 'Pilotar o avião', off: 'Descer do avião' },
   brinquedo: { on: 'Andar no brinquedo', off: 'Descer do brinquedo' },
   pesca: { on: 'Pescar', off: 'Recolher a linha' },
 };
@@ -172,8 +184,15 @@ const Minimap = ({
     const ctx = canvas.getContext('2d')!;
     ctx.scale(dpr, dpr);
     const scale = size / 2 / (WORLD_RADIUS + 4);
-    const toMap = (x: number, z: number) => [size / 2 + x * scale, size / 2 + z * scale] as const;
+    // fora do sítio (aeroporto, voando) o mapa acompanha a pessoa
+    const center = { x: 0, z: 0 };
+    const toMap = (x: number, z: number) =>
+      [size / 2 + (x - center.x) * scale, size / 2 + (z - center.z) * scale] as const;
     const draw = () => {
+      const me = world.player();
+      const away = Math.hypot(me.x, me.z) > WORLD_RADIUS + 2;
+      center.x += ((away ? me.x : 0) - center.x) * 0.35;
+      center.z += ((away ? me.z : 0) - center.z) * 0.35;
       ctx.clearRect(0, 0, size, size);
       ctx.save();
       ctx.beginPath();
@@ -183,8 +202,17 @@ const Minimap = ({
       ctx.fillRect(0, 0, size, size);
       ctx.fillStyle = '#5fae4c';
       ctx.beginPath();
-      ctx.arc(size / 2, size / 2, WORLD_RADIUS * scale * 0.9, 0, Math.PI * 2);
+      ctx.arc(...toMap(0, 0), WORLD_RADIUS * scale * 0.9, 0, Math.PI * 2);
       ctx.fill();
+      // aeroporto: o vale, o pátio e a pista
+      const rect = (r: { x: number; z: number; w: number; d: number }, color: string) => {
+        ctx.fillStyle = color;
+        const [x, y] = toMap(r.x - r.w / 2, r.z - r.d / 2);
+        ctx.fillRect(x, y, r.w * scale, r.d * scale);
+      };
+      rect(AIRPORT, '#5fae4c');
+      rect(APRON, '#b9b7ae');
+      rect({ x: RUNWAY.x, z: RUNWAY.z, w: RUNWAY.length, d: RUNWAY.width }, '#3d3f46');
       // estradas
       ctx.strokeStyle = '#d6b27a';
       ctx.lineCap = 'round';
@@ -242,7 +270,14 @@ const Minimap = ({
         ctx.fill();
         ctx.stroke();
       });
-      const player = world.player();
+      const plane = world.locate('aviao');
+      if (plane) {
+        ctx.font = '11px system-ui';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('✈️', ...toMap(plane.x, plane.z));
+      }
+      const player = me;
       const [x, y] = toMap(player.x, player.z);
       ctx.translate(x, y);
       ctx.rotate(-player.angle + Math.PI);
@@ -556,11 +591,13 @@ const World = () => {
       ? 'Buzina'
       : ride.riding === 'barco'
         ? 'Remar'
-        : ride.riding === 'brinquedo'
-          ? 'Gritar'
-          : ride.riding === 'pesca'
-            ? 'Puxar'
-            : 'Pular';
+        : ride.riding === 'aviao'
+          ? 'Fumaça'
+          : ride.riding === 'brinquedo'
+            ? 'Gritar'
+            : ride.riding === 'pesca'
+              ? 'Puxar'
+              : 'Pular';
   const TimeIcon = TIME_ICON[timeMode];
 
   return (
@@ -601,6 +638,7 @@ const World = () => {
               ['🎢', 'Projetos são brinquedos'],
               ['🐴', 'Monte nos bichos'],
               ['🚣', 'Reme e pesque no lago'],
+              ['✈️', 'Pilote o avião do aeroporto'],
               ['🥚', `Ache ${EGGS.length} ovos de ouro`],
             ].map(([icon, text]) => (
               <li

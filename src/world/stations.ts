@@ -1,5 +1,5 @@
 import { projects } from '@/lib/projects';
-import { HIDDEN_ISLAND, ISLAND, S } from './terrain';
+import { HIDDEN_ISLAND, ISLAND, PASS, S } from './terrain';
 import { milestones } from '@/lib/milestones';
 import { EMAIL, LINKEDIN_URL } from '@/lib/site';
 import { GITHUB_URL } from '@/lib/github';
@@ -321,10 +321,17 @@ const RAW_ROADS: { points: [number, number][]; width: number }[] = [
     ],
   },
 ];
-export const ROADS = RAW_ROADS.map((road) => ({
-  width: road.width,
-  points: road.points.map(([x, z]) => [S(x), S(z)] as [number, number]),
-}));
+export const ROADS = [
+  ...RAW_ROADS.map((road) => ({
+    width: road.width,
+    points: road.points.map(([x, z]) => [S(x), S(z)] as [number, number]),
+  })),
+  // estrada do aeroporto: sai do curral dos cavalos, corta a serra e chega no pátio
+  {
+    width: 3.6,
+    points: [[S(3), S(-39)], [-9, -56], [-12.5, -80], ...PASS, [0, -204]] as [number, number][],
+  },
+];
 
 /** Ovos de ouro escondidos pelo sítio. */
 const RAW_EGGS: [number, number][] = [
@@ -346,6 +353,8 @@ export const EGGS: [number, number][] = [
   [ISLAND.x - 1.6, ISLAND.z + 1.4],
   // e um na ilhota da Lagoa Escondida
   [HIDDEN_ISLAND.x - 0.6, HIDDEN_ISLAND.z + 0.8],
+  // e um escondido no fundo do hangar do aeroporto
+  [86, -205],
 ];
 
 /* -------------------------------------------------------------- estações */
