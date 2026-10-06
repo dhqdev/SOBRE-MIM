@@ -159,13 +159,13 @@ export const buildTerrain = (kit: Kit, roads: Road[], patches: Patch[]) => {
   };
   const inner = buildPlane(INNER, kit.env.mobile ? 200 : 270, paint);
   // vale do aeroporto e a estrada da serra (fora do miolo)
-  const VALLEY = { x0: -200, x1: 200, z0: -320, z1: -INNER / 2 };
+  const VALLEY = { x0: -200, x1: 200, z0: -260, z1: -INNER / 2 };
   const valley = buildPlane(
     VALLEY.x1 - VALLEY.x0,
     kit.env.mobile ? 100 : 200,
     paint,
     VALLEY.z1 - VALLEY.z0,
-    kit.env.mobile ? 45 : 90,
+    kit.env.mobile ? 30 : 60,
     [(VALLEY.x0 + VALLEY.x1) / 2, (VALLEY.z0 + VALLEY.z1) / 2],
   );
   const valleyMesh = new THREE.Mesh(valley, material);

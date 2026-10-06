@@ -1,24 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Clock, Moon, Music, Shirt, Sun, Sunset, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, Briefcase, Clock, Map as MapIcon, Moon, Music, Shirt, Sun, Sunset, Volume2, VolumeX } from 'lucide-react';
 import FlappyGame from '@/components/FlappyGame';
 import OutfitShop from '@/components/OutfitShop';
 import { burstConfetti } from '@/lib/confetti';
 import { downloadCv, openExternal, openGame } from '@/lib/site';
-import { createWorld, type RideState, type TimeMode, type WorldHandle } from '@/world/engine';
-import { EGGS, PENS, RIDES, ROADS, STATIONS, type Station, type StationAction } from '@/world/stations';
+import { createWorld, type GuideTarget, type RideState, type TimeMode, type WorldHandle } from '@/world/engine';
+import { EGGS, STATIONS, type Station, type StationAction } from '@/world/stations';
 import {
-  AIRPORT,
-  CHANNEL,
-  CHANNEL_HALF,
-  POND,
-  POOLS,
-  RUNWAY,
-  STREAM_HALF,
-  STREAM_PATH,
-  WORLD_RADIUS,
-} from '@/world/terrain';
-import { APRON } from '@/world/airport';
+  BigMap,
+  CameraControls,
+  LiveHud,
+  Minimap,
+  PortfolioPanel,
+  WelcomeCard,
+} from '@/components/WorldHud';
+import { formatTime, panel } from '@/world/ui';
 import { setMuted, sfx, unlockAudio } from '@/world/audio';
 import { music, TRACKS, type TrackId } from '@/world/music';
 import type { RideKind } from '@/world/animals';
@@ -32,6 +29,8 @@ const OWNED_KEY = 'sitio:roupas';
 const FISH_KEY = 'sitio:peixes';
 const MUSIC_KEY = 'sitio:musica';
 const AMBIENCE_KEY = 'sitio:ambiente';
+const WELCOME_KEY = 'sitio:boas-vindas';
+const RECORDS_KEY = 'sitio:desafios';
 
 const readList = (key: string): string[] => {
   try {
@@ -81,10 +80,6 @@ const saveSetting = (key: string, value: string) => {
     // tudo bem
   }
 };
-
-/** Vidro escuro com borda roxa: legível por cima do dia e da noite. */
-const panel =
-  'rounded-2xl border border-violet-300/30 bg-[#140c26]/80 shadow-lg shadow-black/30 backdrop-blur-md';
 
 const MOUNT_TEXT: Record<RideKind, { on: string; off: string }> = {
   cavalo: { on: 'Montar no cavalo', off: 'Descer do cavalo' },
@@ -163,151 +158,6 @@ const Joystick = ({ onMove }: { onMove: (x: number, z: number) => void }) => {
   );
 };
 
-/* ---------------------------------------------------------------- minimapa */
-
-const Minimap = ({
-  world,
-  visited,
-  size,
-}: {
-  world: WorldHandle | null;
-  visited: Set<string>;
-  size: number;
-}) => {
-  const ref = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const canvas = ref.current;
-    if (!canvas || !world) return;
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    canvas.width = size * dpr;
-    canvas.height = size * dpr;
-    const ctx = canvas.getContext('2d')!;
-    ctx.scale(dpr, dpr);
-    const scale = size / 2 / (WORLD_RADIUS + 4);
-    // fora do sítio (aeroporto, voando) o mapa acompanha a pessoa
-    const center = { x: 0, z: 0 };
-    const toMap = (x: number, z: number) =>
-      [size / 2 + (x - center.x) * scale, size / 2 + (z - center.z) * scale] as const;
-    const draw = () => {
-      const me = world.player();
-      const away = Math.hypot(me.x, me.z) > WORLD_RADIUS + 2;
-      center.x += ((away ? me.x : 0) - center.x) * 0.35;
-      center.z += ((away ? me.z : 0) - center.z) * 0.35;
-      ctx.clearRect(0, 0, size, size);
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
-      ctx.clip();
-      ctx.fillStyle = '#4f9f3f';
-      ctx.fillRect(0, 0, size, size);
-      ctx.fillStyle = '#5fae4c';
-      ctx.beginPath();
-      ctx.arc(...toMap(0, 0), WORLD_RADIUS * scale * 0.9, 0, Math.PI * 2);
-      ctx.fill();
-      // aeroporto: o vale, o pátio e a pista
-      const rect = (r: { x: number; z: number; w: number; d: number }, color: string) => {
-        ctx.fillStyle = color;
-        const [x, y] = toMap(r.x - r.w / 2, r.z - r.d / 2);
-        ctx.fillRect(x, y, r.w * scale, r.d * scale);
-      };
-      rect(AIRPORT, '#5fae4c');
-      rect(APRON, '#b9b7ae');
-      rect({ x: RUNWAY.x, z: RUNWAY.z, w: RUNWAY.length, d: RUNWAY.width }, '#3d3f46');
-      // estradas
-      ctx.strokeStyle = '#d6b27a';
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ROADS.forEach((road) => {
-        ctx.lineWidth = Math.max(1.2, road.width * scale);
-        ctx.beginPath();
-        road.points.forEach(([x, z], i) => (i ? ctx.lineTo(...toMap(x, z)) : ctx.moveTo(...toMap(x, z))));
-        ctx.stroke();
-      });
-      // riacho, lago e poço
-      ctx.strokeStyle = '#4cb3d9';
-      ctx.lineWidth = Math.max(2, STREAM_HALF * 2 * scale);
-      ctx.beginPath();
-      STREAM_PATH.forEach(([x, z], i) => (i ? ctx.lineTo(...toMap(x, z)) : ctx.moveTo(...toMap(x, z))));
-      ctx.stroke();
-      ctx.fillStyle = '#4cb3d9';
-      for (const pool of [...POOLS, POND]) {
-        ctx.beginPath();
-        ctx.arc(...toMap(pool.x, pool.z), pool.r * scale, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.lineWidth = Math.max(2, CHANNEL_HALF * 2 * scale);
-      ctx.beginPath();
-      CHANNEL.forEach(([x, z], i) => (i ? ctx.lineTo(...toMap(x, z)) : ctx.moveTo(...toMap(x, z))));
-      ctx.stroke();
-      // currais e feira
-      ctx.strokeStyle = 'rgba(122,74,42,0.9)';
-      ctx.lineWidth = 1;
-      Object.values(PENS).forEach((p) => {
-        const [x, y] = toMap(p.x - p.w / 2, p.z - p.d / 2);
-        ctx.strokeRect(x, y, p.w * scale, p.d * scale);
-      });
-      // brinquedos do parque (a montanha-russa é o anel grande)
-      RIDES.forEach((ride) => {
-        ctx.beginPath();
-        if (ride.type === 'coaster') {
-          ctx.strokeStyle = 'rgba(244,240,255,0.9)';
-          ctx.lineWidth = 1.5;
-          ctx.ellipse(...toMap(ride.bx, ride.bz), 11 * scale, 8 * scale, 0, 0, Math.PI * 2);
-          ctx.stroke();
-        } else {
-          ctx.fillStyle = 'rgba(216,192,138,0.95)';
-          ctx.arc(...toMap(ride.bx, ride.bz), ride.plaza * scale, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      });
-      STATIONS.forEach((station) => {
-        const [x, y] = toMap(station.x, station.z);
-        const done = visited.has(station.id);
-        ctx.fillStyle = done ? '#ffd166' : station.kind === 'milestone' ? '#5ec8f2' : '#a78bfa';
-        ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-        ctx.beginPath();
-        ctx.arc(x, y, station.kind === 'milestone' ? 1.8 : 2.8, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-      });
-      const plane = world.locate('aviao');
-      if (plane) {
-        ctx.font = '11px system-ui';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('✈️', ...toMap(plane.x, plane.z));
-      }
-      const player = me;
-      const [x, y] = toMap(player.x, player.z);
-      ctx.translate(x, y);
-      ctx.rotate(-player.angle + Math.PI);
-      ctx.fillStyle = '#ffffff';
-      ctx.strokeStyle = '#140c26';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(0, -6);
-      ctx.lineTo(4.5, 5);
-      ctx.lineTo(-4.5, 5);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
-    };
-    draw();
-    const timer = window.setInterval(draw, 120);
-    return () => window.clearInterval(timer);
-  }, [world, visited, size]);
-
-  return (
-    <canvas
-      ref={ref}
-      style={{ width: size, height: size }}
-      className="rounded-full border-2 border-violet-300/60 shadow-lg shadow-black/30"
-      aria-label="Mapa do sítio"
-    />
-  );
-};
-
 /* ------------------------------------------------------------------ página */
 
 const World = () => {
@@ -327,6 +177,7 @@ const World = () => {
   });
   const [touch] = useState(() => window.matchMedia('(pointer: coarse)').matches);
   const [compact, setCompact] = useState(() => window.innerWidth < 640);
+  const [narrow, setNarrow] = useState(() => window.innerWidth < 1000);
   const toastId = useRef(0);
   const [shop, setShop] = useState(false);
   const [outfitId, setOutfitId] = useState(() => outfitById(readSetting(OUTFIT_KEY)).id);
@@ -339,6 +190,11 @@ const World = () => {
   });
   const [ambience, setAmbience] = useState(() => readSetting(AMBIENCE_KEY) !== '0');
   const [musicMenu, setMusicMenu] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
+  const [portfolio, setPortfolio] = useState(false);
+  const [welcome, setWelcome] = useState(false);
+  const [guide, setGuide] = useState<GuideTarget | null>(null);
+  const [firstPerson, setFirstPerson] = useState(false);
 
   const visited = new Set(progress.visited);
   const points = STATIONS.length;
@@ -351,7 +207,10 @@ const World = () => {
 
   useEffect(() => {
     document.title = 'Sítio do David · portfólio 3D';
-    const onResize = () => setCompact(window.innerWidth < 640);
+    const onResize = () => {
+      setCompact(window.innerWidth < 640);
+      setNarrow(window.innerWidth < 1000);
+    };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
@@ -399,6 +258,29 @@ const World = () => {
           onRide: (state) => setRide(state),
           onNight: (value) => setNight(value),
           onHint: (text) => pushToast(text, 'visit'),
+          onView: (value) => setFirstPerson(value),
+          onGuide: (target) => setGuide(target),
+          onChallenge: (event) => {
+            const { course } = event;
+            if (event.type === 'start') pushToast(`🏁 ${course.name}: passe por ${course.rings.length - 1} argolas!`, 'egg');
+            else if (event.type === 'fail') pushToast(`${course.emoji} Desafio cancelado: ${event.reason}`, 'visit');
+            else if (event.type === 'done') {
+              let records: Record<string, number> = {};
+              try {
+                records = JSON.parse(readSetting(RECORDS_KEY) ?? '{}') as Record<string, number>;
+              } catch {
+                records = {};
+              }
+              const best = records[course.id];
+              const record = !best || event.time < best;
+              if (record) saveSetting(RECORDS_KEY, JSON.stringify({ ...records, [course.id]: event.time }));
+              pushToast(
+                `🏆 ${course.name} em ${formatTime(event.time)}${record ? ' · novo recorde!' : ` · recorde ${formatTime(best)}`}`,
+                'win',
+              );
+              burstConfetti(window.innerWidth / 2, window.innerHeight / 3, 70);
+            }
+          },
           onFeed: (name) => {
             pushToast(`🐟 ${name[0].toUpperCase()}${name.slice(1)} adorou o peixe!`, 'visit');
             setFish((count) => {
@@ -478,6 +360,10 @@ const World = () => {
     sfx.start();
     world.start();
     setStarted(true);
+    if (readSetting(WELCOME_KEY) !== '1') {
+      setWelcome(true);
+      saveSetting(WELCOME_KEY, '1');
+    }
   }, [world, started]);
 
   const openCard = useCallback((station: Station | null) => {
@@ -490,7 +376,27 @@ const World = () => {
     setCard(null);
   }, []);
 
-  useEffect(() => world?.setPaused(Boolean(card) || shop), [world, card, shop]);
+  const modal = Boolean(card) || shop || mapOpen || portfolio || welcome;
+  useEffect(() => world?.setPaused(modal), [world, modal]);
+
+  const chooseGuide = useCallback(
+    (target: GuideTarget | null) => {
+      setGuide(target);
+      world?.setGuide(target);
+    },
+    [world],
+  );
+  const travel = useCallback(
+    (x: number, z: number) => {
+      setMapOpen(false);
+      setPortfolio(false);
+      setCard(null);
+      chooseGuide(null);
+      // espera o jogo despausar pra viagem valer
+      window.setTimeout(() => world?.travel(x, z), 0);
+    },
+    [world, chooseGuide],
+  );
 
   const wear = useCallback(
     (outfit: Outfit) => {
@@ -542,11 +448,21 @@ const World = () => {
         if (key === 'escape') setShop(false);
         return;
       }
-      if (key === 'e' || key === 'enter') primary();
+      if (mapOpen || portfolio || welcome) {
+        if (key === 'escape' || (key === 'm' && mapOpen) || (key === 'p' && portfolio)) {
+          setMapOpen(false);
+          setPortfolio(false);
+          setWelcome(false);
+        }
+        return;
+      }
+      if (key === 'm') setMapOpen(true);
+      else if (key === 'p') setPortfolio(true);
+      else if (key === 'e' || key === 'enter') primary();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [started, card, shop, start, closeCard, primary]);
+  }, [started, card, shop, mapOpen, portfolio, welcome, start, closeCard, primary]);
 
   const runAction = (action: StationAction) => {
     if (action.href) openExternal(action.href);
@@ -620,7 +536,7 @@ const World = () => {
       {world && !started && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-[radial-gradient(ellipse_at_center,rgba(15,10,30,0.78)_0%,rgba(15,10,30,0.5)_55%,rgba(15,10,30,0.15)_100%)] px-5 text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-300 sm:text-sm">
-            Um portfólio pra explorar
+            Portfólio interativo · David Fernandes
           </p>
           <h1
             className="mt-4 animate-[world-bob_2.6s_ease-in-out_infinite] text-5xl font-extrabold leading-[0.95] tracking-tight sm:text-7xl"
@@ -631,14 +547,16 @@ const World = () => {
             David
           </h1>
           <p className="mt-5 text-[15px] text-white/85 sm:text-base">
-            Ande pelo sítio e conheça meu trabalho.
+            Sou desenvolvedor full-stack. Ande pelo sítio pra conhecer meus projetos, minha carreira e como falar
+            comigo.
           </p>
           <ul className="mt-5 grid w-full max-w-md grid-cols-2 gap-2 text-left text-[13px] font-medium sm:text-sm">
             {[
-              ['🎢', 'Projetos são brinquedos'],
-              ['🐴', 'Monte nos bichos'],
-              ['🚣', 'Reme e pesque no lago'],
-              ['✈️', 'Pilote o avião do aeroporto'],
+              ['🎡', 'Projetos são brinquedos'],
+              ['🏡', 'A casa conta quem eu sou'],
+              ['🧭', 'A trilha mostra a carreira'],
+              ['✈️', '3 aviões e desafios de voo'],
+              ['🐴', 'Monte nos bichos e reme'],
               ['🥚', `Ache ${EGGS.length} ovos de ouro`],
             ].map(([icon, text]) => (
               <li
@@ -661,8 +579,8 @@ const World = () => {
           </button>
           <p className="mt-5 text-xs leading-relaxed text-white/65 sm:text-sm">
             {touch
-              ? 'Joystick anda · arraste pra girar · A usa · B pula'
-              : 'WASD anda · E abre · F monta · G pesca'}
+              ? 'Joystick anda · arraste pra girar e subir a câmera · A usa · B pula'
+              : 'WASD anda · E abre · F monta · V olhos · M mapa · P portfólio'}
           </p>
           {(progress.visited.length > 0 || progress.collected.length > 0) && (
             <p className="mt-3 text-xs text-white/60 sm:text-sm">
@@ -689,11 +607,40 @@ const World = () => {
       {/* HUD */}
       {started && (
         <>
-          <div className="absolute left-3 top-3 flex items-center gap-2 sm:left-4 sm:top-4">
-            <Link to="/" className={`${panel} flex items-center gap-1.5 px-3 py-2 text-sm font-medium`}>
+          <div
+            className="absolute left-3 top-3 flex flex-wrap items-center gap-2 sm:left-4 sm:top-4"
+            style={{ maxWidth: compact ? 'calc(100vw - 9.5rem)' : undefined }}
+          >
+            <Link to="/" aria-label="Voltar pro site" className={`${panel} flex h-9 items-center gap-1.5 px-3 text-sm font-medium`}>
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              Site
+              {!compact && 'Site'}
             </Link>
+            <button
+              type="button"
+              onClick={() => {
+                sfx.open();
+                setPortfolio(true);
+              }}
+              className="flex h-9 items-center gap-1.5 rounded-2xl border border-amber-200/50 bg-violet-600/90 px-3 text-sm font-semibold shadow-lg shadow-black/30 backdrop-blur-md"
+              aria-label="Portfólio: projetos, sobre mim e contato (P)"
+              title="Portfólio (P)"
+            >
+              <Briefcase className="h-4 w-4 text-amber-200" aria-hidden="true" />
+              Portfólio
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                sfx.open();
+                setMapOpen(true);
+              }}
+              className={`${panel} flex h-9 items-center gap-1.5 px-3 text-sm font-medium`}
+              aria-label="Mapa do sítio (M)"
+              title="Mapa (M)"
+            >
+              <MapIcon className="h-4 w-4 text-emerald-300" aria-hidden="true" />
+              {!narrow && 'Mapa'}
+            </button>
             <button
               type="button"
               onClick={toggleMute}
@@ -712,7 +659,7 @@ const World = () => {
                 className={`h-4 w-4 ${night ? 'text-indigo-200' : 'text-amber-300'}`}
                 aria-hidden="true"
               />
-              {!compact && TIME_LABEL[timeMode]}
+              {!narrow && TIME_LABEL[timeMode]}
             </button>
             <button
               type="button"
@@ -724,7 +671,7 @@ const World = () => {
               aria-label="Trocar a roupa do boneco"
             >
               <Shirt className="h-4 w-4 text-pink-300" aria-hidden="true" />
-              {!compact && 'Roupas'}
+              {!narrow && 'Roupas'}
             </button>
             <div className="relative">
               <button
@@ -786,15 +733,27 @@ const World = () => {
               </span>
               {fish > 0 && <span title="Peixes no balde (dá pra dar pros bichos)">🐟 {fish}</span>}
             </div>
-            <Minimap world={world} visited={visited} size={compact ? 96 : 140} />
+            <Minimap
+              world={world}
+              visited={visited}
+              size={compact ? 96 : 140}
+              guide={guide}
+              onOpen={() => {
+                sfx.open();
+                setMapOpen(true);
+              }}
+            />
+            {world && !modal && <CameraControls world={world} firstPerson={firstPerson} />}
           </div>
+
+          {world && <LiveHud world={world} touch={touch} onClearGuide={() => chooseGuide(null)} />}
 
           {/* avisos */}
           <div className="pointer-events-none absolute left-1/2 top-16 flex -translate-x-1/2 flex-col items-center gap-2 sm:top-5">
             {toasts.map((toast) => (
               <p
                 key={toast.id}
-                className={`${panel} animate-[world-pop_0.35s_ease-out] whitespace-nowrap px-4 py-2 text-sm font-semibold ${
+                className={`${panel} animate-[world-pop_0.35s_ease-out] max-w-[92vw] px-4 py-2 text-center text-sm font-semibold ${
                   toast.tone === 'win'
                     ? 'text-emerald-300'
                     : toast.tone === 'egg'
@@ -862,7 +821,9 @@ const World = () => {
 
           {!touch && !card && !promptText && !secondPrompt && !milestoneNear && (
             <p className="absolute bottom-4 left-4 text-xs leading-relaxed text-white/80 [text-shadow:0_1px_3px_rgba(0,0,0,0.6)]">
-              WASD anda · Shift corre · Espaço pula · E abre · F monta · G pesca/dá peixe
+              WASD anda · Shift corre · Espaço pula · E abre · F monta · G pesca
+              <br />
+              Arraste ou X/C sobe e desce a câmera · roda do mouse aproxima · V visão dos olhos · M mapa · P portfólio
             </p>
           )}
 
@@ -904,6 +865,48 @@ const World = () => {
             </>
           )}
         </>
+      )}
+
+      {mapOpen && world && (
+        <BigMap
+          world={world}
+          visited={visited}
+          guide={guide}
+          onGuide={(place) => {
+            chooseGuide({ x: place.x, z: place.z, label: place.label });
+            setMapOpen(false);
+            pushToast(`Siga a seta amarela até ${place.label}`, 'visit');
+          }}
+          onTravel={(place) => travel(place.x, place.z)}
+          onClose={() => setMapOpen(false)}
+        />
+      )}
+
+      {portfolio && (
+        <PortfolioPanel
+          visited={visited}
+          onOpen={(station) => {
+            setPortfolio(false);
+            openCard(station);
+          }}
+          onTravel={(station) => travel(station.x, station.z)}
+          onRide={(station) => {
+            setPortfolio(false);
+            window.setTimeout(() => world?.ride(station.id), 0);
+          }}
+          onCv={downloadCv}
+          onClose={() => setPortfolio(false)}
+        />
+      )}
+
+      {welcome && (
+        <WelcomeCard
+          onProjects={() => {
+            setWelcome(false);
+            setPortfolio(true);
+          }}
+          onClose={() => setWelcome(false)}
+        />
       )}
 
       {shop && (

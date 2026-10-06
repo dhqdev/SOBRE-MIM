@@ -19,6 +19,7 @@ import {
 } from './props';
 import { signBoard } from './buildings';
 import { canvasTexture, makeCanvas, TEXT_FONT } from './textures';
+import type { PlaneKind } from './plane';
 
 /**
  * Aeroporto do sítio: pista com faixas e luzes, pátio, terminal, torre de
@@ -38,13 +39,19 @@ const PURPLE = '#7c3aed';
 const YELLOW = '#ffd166';
 
 /** Pátio (concreto) na frente do terminal, ligado à pista por duas taxiways. */
-export const APRON = { x: -6, z: -224, w: 150, d: 30 };
+export const APRON = { x: -6, z: -152, w: 150, d: 30 };
 export const TAXIWAYS = [-60, 46];
-/** Onde o aviãozinho fica estacionado (e pra onde ele volta se sumir). */
-export const PLANE_SPOT = { x: 46, z: -217, angle: Math.PI };
-const TOWER = { x: 16, z: -199 };
-const TERMINAL = { x: -44, z: -199, w: 46, d: 12 };
-const HANGAR = { x: 92, z: -212, w: 26, d: 22 };
+/** Pátio de carga do oeste (a segunda vaga dos aviões de carga). */
+export const CARGO_PAD = { x: -106, z: -158, w: 34, d: 30 };
+/** Vaga de cada avião no pátio (e pra onde ele volta se sumir). */
+export const PLANE_SPOTS: { kind: PlaneKind; x: number; z: number; angle: number }[] = [
+  { kind: 'jato', x: 20, z: -146, angle: Math.PI },
+  { kind: 'biplano', x: 42, z: -145, angle: Math.PI },
+  { kind: 'ultraleve', x: 61, z: -145, angle: Math.PI },
+];
+const TOWER = { x: 16, z: -127 };
+const TERMINAL = { x: -44, z: -127, w: 46, d: 12 };
+const HANGAR = { x: 92, z: -140, w: 26, d: 22 };
 
 /** Número da cabeceira pintado no chão. */
 const runwayNumber = (text: string) => {
@@ -97,6 +104,9 @@ const pavement = (kit: Kit) => {
   }
   // pátio de concreto e as taxiways até a pista
   box(g, [APRON.w, 0.3, APRON.d], [APRON.x, y - 0.155, APRON.z], lambert(CONCRETE));
+  box(g, [CARGO_PAD.w, 0.3, CARGO_PAD.d], [CARGO_PAD.x, y - 0.155, CARGO_PAD.z], lambert(CONCRETE));
+  box(g, [24, 0.3, 12], [-108, y - 0.16, -178], lambert(CONCRETE));
+  box(g, [0.35, 0.04, CARGO_PAD.d - 6], [-108, y + 0.01, CARGO_PAD.z + 1], lambert(YELLOW));
   for (let px = APRON.x - APRON.w / 2 + 7.5; px < APRON.x + APRON.w / 2; px += 15)
     box(g, [0.12, 0.04, APRON.d - 1], [px, y + 0.005, APRON.z], lambert('#96948c'));
   const yellow = lambert('#f2c230');
@@ -111,13 +121,13 @@ const pavement = (kit: Kit) => {
     box(g, [12, 0.04, 0.3], [tx, y + 0.01, bottom + 2.9], yellow);
   }
   // vagas pintadas no pátio (o "T" amarelo onde o avião para)
-  for (const spot of [PLANE_SPOT.x, -44]) {
+  for (const spot of [...PLANE_SPOTS.map((p) => p.x), -44]) {
     box(g, [0.35, 0.04, APRON.d - 4], [spot, y + 0.01, APRON.z], yellow);
     box(g, [5, 0.04, 0.35], [spot, y + 0.01, APRON.z + APRON.d / 2 - 4], yellow);
   }
   // estacionamento de carros atrás do terminal
-  box(g, [40, 0.3, 10], [-44, y - 0.16, -184], lambert('#55575d'));
-  for (let px = -62; px <= -26; px += 4) box(g, [0.15, 0.04, 4.5], [px, y + 0.01, -181.5], paint);
+  box(g, [40, 0.3, 10], [-44, y - 0.16, -112], lambert('#55575d'));
+  for (let px = -62; px <= -26; px += 4) box(g, [0.15, 0.04, 4.5], [px, y + 0.01, -109.5], paint);
 };
 
 /** Altura de cima do asfalto (o vale do aeroporto é plano). */
@@ -377,11 +387,10 @@ const hangar = (kit: Kit) => {
 /* ------------------------------------------------------- avião grande */
 
 /** Jato de passageiros estacionado na ponte de embarque (só enfeite). */
-const airliner = (kit: Kit, x: number, z: number, angle: number) => {
-  const g = group(kit, x, z);
-  g.rotation.y = angle;
+/** Avião de carga grandão (o do tráfego do aeroporto), montado dentro de `g`. */
+export const airlinerBody = (kit: Kit, g: THREE.Object3D, stripe = PURPLE) => {
   const white = lambert('#f4f4f6');
-  const purple = lambert(PURPLE);
+  const purple = lambert(stripe);
   const grey = lambert('#a0a4ac');
   const Y = 3.4;
   // fuselagem
@@ -454,16 +463,6 @@ const airliner = (kit: Kit, x: number, z: number, angle: number) => {
     );
     box(g, [0.3, 0.3, 0.3], [tip.x, Y - 0.7, tip.z], glow(side < 0 ? '#ff4d4d' : '#3dff8a'));
   }
-  // escada e carrinhos de bagagem
-  const stairs = box(g, [1.6, 0.25, 6], [-3.6, 1.8, 8], lambert('#e0e2e8'));
-  stairs.rotation.x = 0.55;
-  solid(kit, g, 0, 8, 2.4);
-  solid(kit, g, 0, 2, 2.4);
-  solid(kit, g, 0, -4, 2.4);
-  solid(kit, g, 0, -10, 2.4);
-  solid(kit, g, 0, -15, 2);
-  solid(kit, g, -5, 0, 1.4);
-  solid(kit, g, 5, 0, 1.4);
 };
 
 /* ---------------------------------------------------------- enfeites */
@@ -580,26 +579,24 @@ export const buildAirport = (kit: Kit) => {
   controlTower(kit);
   terminal(kit);
   hangar(kit);
-  airliner(kit, -44, -229, 0);
-  windsock(kit, -96, -244);
-  windsock(kit, 104, -279);
-  fuelTruck(kit, 62, -224, 0.4);
-  baggageTrain(kit, -32, -214, -Math.PI / 2);
+  windsock(kit, -80, -203);
+  windsock(kit, 104, -207);
+  fuelTruck(kit, -10, -150, 0.4);
+  baggageTrain(kit, -72, -146, -Math.PI / 2);
   cones(kit, [
-    [-38, -212],
-    [-36, -212],
-    [-50, -212],
-    [30, -210],
+    [-58, -140],
+    [-56, -140],
+    [30, -138],
   ]);
   [
     ['#d23b2e', -58],
     ['#2f6fd6', -50],
     ['#eceae4', -42],
     ['#3a8a4f', -30],
-  ].forEach(([color, px]) => car(kit, Number(px), -181.5, 0, String(color)));
-  floodlight(kit, -72, -206, !mobile);
-  floodlight(kit, 4, -206, !mobile);
-  floodlight(kit, 64, -206, false);
+  ].forEach(([color, px]) => car(kit, Number(px), -109.5, 0, String(color)));
+  floodlight(kit, -72, -134, !mobile);
+  floodlight(kit, 4, -134, !mobile);
+  floodlight(kit, 64, -134, false);
 };
 
 /** Gramado do aeroporto (fora da pista, do pátio e dos prédios): pra mato e flor. */
@@ -608,9 +605,10 @@ export const airportGround = (x: number, z: number, margin = 2) => {
     Math.abs(x - cx) < w / 2 + margin && Math.abs(z - cz) < d / 2 + margin;
   if (inRect(RUNWAY.x, RUNWAY.z, RUNWAY.length + 70, RUNWAY.width + 8)) return false;
   if (inRect(APRON.x, APRON.z, APRON.w, APRON.d)) return false;
+  if (inRect(CARGO_PAD.x, CARGO_PAD.z - 4, CARGO_PAD.w, CARGO_PAD.d + 10)) return false;
   if (TAXIWAYS.some((tx) => inRect(tx, (APRON.z + RUNWAY.z) / 2, 13, APRON.z - RUNWAY.z))) return false;
   if (inRect(TERMINAL.x, TERMINAL.z, TERMINAL.w + 4, TERMINAL.d + 8)) return false;
-  if (inRect(-44, -184, 42, 12)) return false;
+  if (inRect(-44, -112, 42, 12)) return false;
   if (inRect(TOWER.x, TOWER.z, 9, 9)) return false;
   if (inRect(HANGAR.x, HANGAR.z - 4, HANGAR.w + 2, HANGAR.d + 10)) return false;
   return true;
