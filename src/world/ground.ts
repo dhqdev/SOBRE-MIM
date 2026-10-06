@@ -14,6 +14,8 @@ import {
   terrainHeight,
   waterDistance,
   stillWater,
+  airportDistance,
+  inAirport,
 } from './terrain';
 import { box, glow, group, lambert, live, mesh, seeded, shared, type Kit } from './props';
 
@@ -80,9 +82,13 @@ const buildPlane = (
   size: number,
   segments: number,
   height: (x: number, z: number) => { h: number; color: THREE.Color },
+  depth = size,
+  depthSegments = segments,
+  center: [number, number] = [0, 0],
 ) => {
-  const geometry = new THREE.PlaneGeometry(size, size, segments, segments);
+  const geometry = new THREE.PlaneGeometry(size, depth, segments, depthSegments);
   geometry.rotateX(-Math.PI / 2);
+  geometry.translate(center[0], 0, center[1]);
   const position = geometry.attributes.position;
   const colors = new Float32Array(position.count * 3);
   for (let i = 0; i < position.count; i++) {
@@ -111,9 +117,9 @@ export const buildTerrain = (kit: Kit, roads: Road[], patches: Patch[]) => {
 
   // miolo detalhado (onde se anda)
   const INNER = 280;
-  const inner = buildPlane(INNER, kit.env.mobile ? 200 : 270, (x, z) => {
-    const far = Math.hypot(x, z) > S(112);
-    const w = far ? 40 : waterDistance(x, z);
+  const paint = (x: number, z: number) => {
+    const far = Math.hypot(x, z) > S(112) && !inAirport(x, z) && airportDistance(x, z) > 40;
+    const w = far || airportDistance(x, z) < 30 ? 40 : waterDistance(x, z);
     const h = terrainFrom(x, z, w);
     grassColor(x, z, h, color);
     // barranco de terra molhada e o fundo do riacho
@@ -150,20 +156,40 @@ export const buildTerrain = (kit: Kit, roads: Road[], patches: Patch[]) => {
       }
     }
     return { h, color };
-  });
+  };
+  const inner = buildPlane(INNER, kit.env.mobile ? 200 : 270, paint);
+  // vale do aeroporto e a estrada da serra (fora do miolo)
+  const VALLEY = { x0: -200, x1: 200, z0: -320, z1: -INNER / 2 };
+  const valley = buildPlane(
+    VALLEY.x1 - VALLEY.x0,
+    kit.env.mobile ? 100 : 200,
+    paint,
+    VALLEY.z1 - VALLEY.z0,
+    kit.env.mobile ? 45 : 90,
+    [(VALLEY.x0 + VALLEY.x1) / 2, (VALLEY.z0 + VALLEY.z1) / 2],
+  );
+  const valleyMesh = new THREE.Mesh(valley, material);
+  valleyMesh.matrixAutoUpdate = false;
+  valleyMesh.receiveShadow = true;
+  kit.scene.add(valleyMesh);
   const innerMesh = new THREE.Mesh(inner, material);
   innerMesh.matrixAutoUpdate = false;
+  innerMesh.receiveShadow = true;
   kit.scene.add(innerMesh);
 
   // anel grosso até o horizonte (fica por baixo do miolo)
-  const outer = buildPlane(640, 64, (x, z) => {
+  const outer = buildPlane(1800, 150, (x, z) => {
     const insideInner = Math.max(Math.abs(x), Math.abs(z)) < INNER / 2 - 1;
-    const h = terrainHeight(x, z) - (insideInner ? 1.5 : 0);
+    // no vale a serra é íngreme: bem longe da borda o anel afunda mais, pra não furar o chão fino
+    const valleyEdge = Math.min(x - VALLEY.x0, VALLEY.x1 - x, z - VALLEY.z0, VALLEY.z1 - z);
+    const sink = insideInner ? 1.5 : valleyEdge > 14 ? 10 : valleyEdge > 1 ? 1.5 : 0;
+    const h = terrainHeight(x, z) - sink;
     grassColor(x, z, h, color);
     return { h, color };
   });
   const outerMesh = new THREE.Mesh(outer, material);
   outerMesh.matrixAutoUpdate = false;
+  outerMesh.receiveShadow = true;
   kit.scene.add(outerMesh);
 };
 
@@ -1046,7 +1072,7 @@ export const farHills = (kit: Kit) => {
   const tones = ['#5b8a63', '#4f7d5f', '#678f6a'];
   for (let i = 0; i < 34; i++) {
     const a = (i / 34) * Math.PI * 2 + rand() * 0.15;
-    const r = 300 + rand() * 60;
+    const r = 400 + rand() * 70;
     const h = 22 + rand() * 26;
     const m = mesh(kit.statics, BLOB, lambert(tones[i % 3]), [Math.cos(a) * r, 16, Math.sin(a) * r]);
     m.scale.set(h * 2.4, h, h * 1.8);

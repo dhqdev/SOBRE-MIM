@@ -8,7 +8,16 @@ import { bake, box, collide, flatten, lambert, mesh, shared, type Kit } from './
  */
 
 export type AnimalKind = 'cavalo' | 'vaca' | 'porco' | 'ovelha' | 'galinha' | 'cachorro' | 'pato';
-export type RideKind = 'cavalo' | 'vaca' | 'porco' | 'ovelha' | 'bugue' | 'barco' | 'brinquedo' | 'pesca';
+export type RideKind =
+  | 'cavalo'
+  | 'vaca'
+  | 'porco'
+  | 'ovelha'
+  | 'bugue'
+  | 'barco'
+  | 'aviao'
+  | 'brinquedo'
+  | 'pesca';
 
 interface Rig {
   root: THREE.Group;

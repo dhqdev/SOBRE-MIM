@@ -103,6 +103,13 @@ export const sfx = {
   bite: () => [1319, 1568, 1319].forEach((f, i) => tone(f, i * 0.08, 0.08, 'square', 0.04)),
   /** Pegou o peixe! */
   catch: () => [523, 784, 1046, 1568].forEach((f, i) => tone(f, i * 0.08, 0.16, 'triangle', 0.06)),
+  /** Decolou! Um "vuuum" subindo. */
+  takeoff: () => slide(160, 420, 0.9, 0.04, 'sawtooth'),
+  /** Pousou: dois quiques de pneu. */
+  touchdown: () => {
+    slide(260, 120, 0.12, 0.05, 'square');
+    slide(240, 110, 0.12, 0.04, 'square', 0.16);
+  },
   /** Remada e respingo. */
   splash: () => {
     slide(1800, 300, 0.22, 0.03, 'sawtooth');
@@ -112,4 +119,44 @@ export const sfx = {
     [523, 659, 784, 1046, 784, 1046, 1319].forEach((f, i) =>
       tone(f, i * 0.12, 0.22, i % 2 ? 'square' : 'triangle'),
     ),
+};
+
+/**
+ * Ronco contínuo do motor do avião: `level` de 0 a 1 muda o tom e o volume;
+ * `null` desliga.
+ */
+let drone: { osc: OscillatorNode; sub: OscillatorNode; gain: GainNode } | null = null;
+export const engineDrone = (level: number | null) => {
+  if (!ctx || muted || level === null) {
+    if (drone) {
+      const { osc, sub, gain } = drone;
+      const now = ctx?.currentTime ?? 0;
+      gain.gain.setTargetAtTime(0, now, 0.08);
+      osc.stop(now + 0.4);
+      sub.stop(now + 0.4);
+      drone = null;
+    }
+    return;
+  }
+  if (!drone) {
+    const osc = ctx.createOscillator();
+    const sub = ctx.createOscillator();
+    const filter = ctx.createBiquadFilter();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    sub.type = 'square';
+    filter.type = 'lowpass';
+    filter.frequency.value = 520;
+    gain.gain.value = 0;
+    osc.connect(filter);
+    sub.connect(filter);
+    filter.connect(gain).connect(ctx.destination);
+    osc.start();
+    sub.start();
+    drone = { osc, sub, gain };
+  }
+  const now = ctx.currentTime;
+  drone.osc.frequency.setTargetAtTime(55 + level * 85, now, 0.15);
+  drone.sub.frequency.setTargetAtTime(27 + level * 42, now, 0.15);
+  drone.gain.gain.setTargetAtTime(0.012 + level * 0.022, now, 0.15);
 };
