@@ -56,12 +56,12 @@ export const projects: Project[] = [
     game: true,
   },
   {
-    title: 'Planejai - Gestão financeira',
+    title: 'MeuPlanejai - Gestão financeira',
     summary: 'SaaS de finanças que mostra pra onde vai o seu dinheiro e acompanha suas metas.',
     description:
       'Um software SaaS de gestão financeira desenvolvido para todo tipo de cliente que deseja ter um maior controle sobre o que gasta.',
     icon: Wallet,
-    link: 'https://planejai.tekvosoft.com/',
+    link: 'https://meuplanejai.com/',
     tags: ['SaaS', 'Gestão Financeira', 'Web App'],
     image: '/media/projects/planejai.webp',
   },
